@@ -1,0 +1,154 @@
+Version=1.0
+BuildSupport=Managed
+BuildCommand=%makeprefix% make --no-print-directory
+GlobalMacro.Name=PROJECT_TYPE
+GlobalMacro.PROJECT_TYPE.Value=RTP
+GlobalMacro.Name=DEFINES
+GlobalMacro.DEFINES.Value=
+GlobalMacro.Name=DO_STRIP
+GlobalMacro.DO_STRIP.Value=0
+GlobalMacro.Name=EXPAND_DBG
+GlobalMacro.EXPAND_DBG.Value=0
+GlobalMacro.Name=APICHECK_OPTIONS
+GlobalMacro.APICHECK_OPTIONS.Value=-warning
+Macro.Name=VX_CPU_FAMILY
+Macro.Name=CPU
+Macro.Name=TOOL_FAMILY
+Macro.Name=TOOL_VERSION
+Macro.Name=_CC_VERSION
+Macro.Name=TOOL
+Macro.Name=TOOL_PATH
+Macro.Name=CC_ARCH_SPEC
+Macro.Name=LIBPATH
+Macro.Name=LIBS
+Macro.Name=VSB_DIR
+Macro.Name=VSB_CONFIG_FILE
+Macro.Name=BDGEN_VSB_INCLUDE
+Macro.Name=APICHECK_CMD
+Macro.Name=APICHECK
+BuildTool.Name=C-Compiler
+BuildTool.C-Compiler.InputSuffixes=*.c
+BuildTool.C-Compiler.OutputIsObject=true
+BuildTool.C-Compiler.OutputCanBePassed=false
+BuildTool.Name=C++-Compiler
+BuildTool.C++-Compiler.InputSuffixes=*.cpp;*.CPP;*.C;*.cxx;*.cc
+BuildTool.C++-Compiler.OutputIsObject=true
+BuildTool.C++-Compiler.OutputCanBePassed=false
+BuildTool.Name=Linker
+BuildTool.Linker.InputSuffixes=
+BuildTool.Linker.OutputIsObject=false
+BuildTool.Linker.OutputCanBePassed=false
+BuildTool.Name=Librarian
+BuildTool.Librarian.InputSuffixes=
+BuildTool.Librarian.OutputIsObject=false
+BuildTool.Librarian.OutputCanBePassed=true
+BuildTool.Name=Assembler
+BuildTool.Assembler.InputSuffixes=*.s;*.S
+BuildTool.Assembler.OutputIsObject=true
+BuildTool.Assembler.OutputCanBePassed=false
+BuildSpec.Name=L20_VSB_ARMARCH7llvm_lld
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.VX_CPU_FAMILY.Value=arm
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.CPU.Value=ARMARCH7
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.TOOL_FAMILY.Value=llvm
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.TOOL_VERSION.Value=llvm_2016_04
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro._CC_VERSION.Value=llvm_11_1_0_1
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.TOOL.Value=llvm
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.TOOL_PATH.Value=#WIND_HOME#/compilers/llvm-11.1.0.1/#WIND_VX7_LLVM_HOST_TYPE#/bin
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.CC_ARCH_SPEC.Value=--target=arm-eabi -mcpu=cortex-a15 -mfpu=vfpv4 -mfloat-abi=hard
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.LIBPATH.Value=
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.LIBS.Value=--as-needed  -lc   -lc_internal   -lllvm   -lcplusplus   -lllvmcplus   -ldl 
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.VSB_DIR.Value=D:/JerryW/SoftwareRelease/L20_Refresh/L20_VSB
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.VSB_CONFIG_FILE.Value=#VSB_DIR#/h/config/vsbConfig.h
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.BDGEN_VSB_INCLUDE.Value=#VSB_DIR#/h/config/auto.conf
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.APICHECK_CMD.Value=apicheck.sh -r "#VSB_DIR#/usr/apicheck/forbidden_api.lst" -n "nmarm" -u -s "$<" "$@" #APICHECK_OPTIONS#
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Macro.APICHECK.Value=0
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Default=
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.IncludeSearchPath=
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.IncludeSearchPath=-I#VSB_DIR#/share/h
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.IncludeSearchPath=-isystem#VSB_DIR#/usr/h/public
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.IncludeSearchPath=
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.IncludeSearchPath=
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Symbol=-D_VX_CPU=_VX_#CPU#
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Symbol=-D_VX_TOOL_FAMILY=#TOOL_FAMILY#
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Symbol=-D_VX_TOOL=#TOOL#
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Symbol=-D_VSB_CONFIG_FILE=\"#VSB_DIR#/h/config/vsbConfig.h\"
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.Symbol=-DARMEL 
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.SymbolList=
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.C-Compiler.DerivedFileSignatures=*.o
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.C-Compiler.DebugFlags=-gdwarf-3
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.C-Compiler.NonDebugFlags= -O2 
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.C-Compiler.ToolFlags=#CC_ARCH_SPEC# -std=c11 -fno-strict-aliasing  -fno-builtin -D__vxworks -D__VXWORKS__ -D__RTP__ -D__ELF__ -nostdlibinc -nostdinc++ -mllvm -two-entry-phi-node-folding-threshold=2 -D_USE_INIT_ARRAY -fasm -Wall -Wconversion -Wno-sign-conversion    -MD -MP 
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.C-Compiler.Command=echo "building $@";%ccompilerprefix% #TOOL_PATH#/clang %DebugModeFlags% %ToolFlags% %Defines% #DEFINES# #ADDED_CFLAGS# %Includes% #ADDED_INCLUDES# -o %OutFile% -c %InFile% && if [ "#APICHECK#" = "1" ]; then #APICHECK_CMD#;fi
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.C++-Compiler.DerivedFileSignatures=*.o
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.C++-Compiler.DebugFlags=-gdwarf-3
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.C++-Compiler.NonDebugFlags= -O2 
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.C++-Compiler.ToolFlags=#CC_ARCH_SPEC# -ansi -fno-strict-aliasing  -fno-builtin -D__vxworks -D__VXWORKS__ -D__RTP__ -D__ELF__ -nostdlibinc -nostdinc++ -mllvm -two-entry-phi-node-folding-threshold=2 -D_USE_INIT_ARRAY -std=c++14    -MD -MP 
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.C++-Compiler.Command=echo "building $@";%cppcompilerprefix% #TOOL_PATH#/clang %DebugModeFlags% %ToolFlags% %Defines% #DEFINES# #ADDED_C++FLAGS# %Includes% #ADDED_INCLUDES# -o %OutFile% -c %InFile% && if [ "#APICHECK#" = "1" ]; then #APICHECK_CMD#;fi
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Linker.DerivedFileSignatures=*.vxe
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Linker.DebugFlags=
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Linker.NonDebugFlags=
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Linker.ToolFlags=--defsym __wrs_rtp_base=0x80000000 -u __wr_need_frame_add -u __tls__ -T#VSB_DIR#/usr/ldscripts/rtp.ld  -EL -static -z norelro --no-rosegment -z noseparate-code #VSB_DIR#/usr/lib/common/crt0.o
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Linker.Command=echo "building $@";  %cpplinkerprefix% #TOOL_PATH#/ld.lld.exe  %DebugModeFlags% %ToolFlags% -o %OutFile% %Objects% #ADDED_OBJECTS# #LIBPATH# -L#VSB_DIR#/usr/lib/common #ADDED_LIBPATH# --start-group #LIBS# %Libraries% #ADDED_LIBS# --end-group && if [ "#DO_STRIP#" = "1" ]; then mv -f "$@" "$@.unstripped" && #TOOL_PATH#/striparm -g -o "$@" "$@.unstripped";fi && if [ "#EXPAND_DBG#" = "1" ]; then plink "$@";fi  && $(if $(_WRS_CONFIG_SECURE_LOADER),signtool  --key=$(_WRS_CONFIG_SECURE_LOADER_PRIVATE_SIGNING_KEY_FILE) --cert=$(_WRS_CONFIG_SECURE_LOADER_PUBLIC_SIGNING_CERT_FILE) --type=ELF $@,true) && true
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Librarian.DerivedFileSignatures=*.a
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Librarian.DebugFlags=
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Librarian.NonDebugFlags=
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Librarian.ToolFlags=crus
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Librarian.Command=echo "building $@";%archiverprefix% #TOOL_PATH#/ararm %ToolFlags% %OutFile% %Objects% #ADDED_OBJECTS#
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Assembler.DerivedFileSignatures=*.o
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Assembler.DebugFlags=-gdwarf-3
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Assembler.NonDebugFlags= -O2 
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Assembler.ToolFlags=#CC_ARCH_SPEC# -std=c11 -fno-strict-aliasing  -fno-builtin -D__vxworks -D__VXWORKS__ -D__RTP__ -D__ELF__ -nostdlibinc -nostdinc++ -mllvm -two-entry-phi-node-folding-threshold=2 -D_USE_INIT_ARRAY -fasm  -xassembler-with-cpp  -MD -MP 
+BuildSpec.L20_VSB_ARMARCH7llvm_lld.BuildTool.Assembler.Command=echo "building $@";%assemblerprefix% #TOOL_PATH#/clang %DebugModeFlags% %ToolFlags% %Defines% #DEFINES# #ADDED_CFLAGS# %Includes% #ADDED_INCLUDES# -o %OutFile% -c %InFile%
+BuildSpec.Name=L20_VSB_ARMARCH7llvm_ld
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.VX_CPU_FAMILY.Value=arm
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.CPU.Value=ARMARCH7
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.TOOL_FAMILY.Value=llvm
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.TOOL_VERSION.Value=llvm_2016_04
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro._CC_VERSION.Value=llvm_11_1_0_1
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.TOOL.Value=llvm
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.TOOL_PATH.Value=#WIND_HOME#/compilers/llvm-11.1.0.1/#WIND_VX7_LLVM_HOST_TYPE#/bin
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.CC_ARCH_SPEC.Value=--target=arm-eabi -mcpu=cortex-a15 -mfpu=vfpv4 -mfloat-abi=hard
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.LIBPATH.Value=
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.LIBS.Value=--as-needed  -lc   -lc_internal   -lllvm   -lcplusplus   -lllvmcplus   -ldl 
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.VSB_DIR.Value=D:/JerryW/SoftwareRelease/L20_Refresh/L20_VSB
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.VSB_CONFIG_FILE.Value=#VSB_DIR#/h/config/vsbConfig.h
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.BDGEN_VSB_INCLUDE.Value=#VSB_DIR#/h/config/auto.conf
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.APICHECK_CMD.Value=apicheck.sh -r "#VSB_DIR#/usr/apicheck/forbidden_api.lst" -n "nmarm" -u -s "$<" "$@" #APICHECK_OPTIONS#
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Macro.APICHECK.Value=0
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Default=true
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.IncludeSearchPath=
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.IncludeSearchPath=-I#VSB_DIR#/share/h
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.IncludeSearchPath=-isystem#VSB_DIR#/usr/h/public
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.IncludeSearchPath=
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.IncludeSearchPath=
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Symbol=-D_VX_CPU=_VX_#CPU#
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Symbol=-D_VX_TOOL_FAMILY=#TOOL_FAMILY#
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Symbol=-D_VX_TOOL=#TOOL#
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Symbol=-D_VSB_CONFIG_FILE=\"#VSB_DIR#/h/config/vsbConfig.h\"
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.Symbol=-DARMEL 
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.SymbolList=
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.C-Compiler.DerivedFileSignatures=*.o
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.C-Compiler.DebugFlags=-gdwarf-3
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.C-Compiler.NonDebugFlags= -O2 
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.C-Compiler.ToolFlags=#CC_ARCH_SPEC# -std=c11 -fno-strict-aliasing  -fno-builtin -D__vxworks -D__VXWORKS__ -D__RTP__ -D__ELF__ -nostdlibinc -nostdinc++ -mllvm -two-entry-phi-node-folding-threshold=2 -D_USE_INIT_ARRAY -fasm -Wall -Wconversion -Wno-sign-conversion    -MD -MP 
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.C-Compiler.Command=echo "building $@";%ccompilerprefix% #TOOL_PATH#/clang %DebugModeFlags% %ToolFlags% %Defines% #DEFINES# #ADDED_CFLAGS# %Includes% #ADDED_INCLUDES# -o %OutFile% -c %InFile% && if [ "#APICHECK#" = "1" ]; then #APICHECK_CMD#;fi
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.C++-Compiler.DerivedFileSignatures=*.o
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.C++-Compiler.DebugFlags=-gdwarf-3
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.C++-Compiler.NonDebugFlags= -O2 
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.C++-Compiler.ToolFlags=#CC_ARCH_SPEC# -ansi -fno-strict-aliasing  -fno-builtin -D__vxworks -D__VXWORKS__ -D__RTP__ -D__ELF__ -nostdlibinc -nostdinc++ -mllvm -two-entry-phi-node-folding-threshold=2 -D_USE_INIT_ARRAY -std=c++14    -MD -MP 
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.C++-Compiler.Command=echo "building $@";%cppcompilerprefix% #TOOL_PATH#/clang %DebugModeFlags% %ToolFlags% %Defines% #DEFINES# #ADDED_C++FLAGS# %Includes% #ADDED_INCLUDES# -o %OutFile% -c %InFile% && if [ "#APICHECK#" = "1" ]; then #APICHECK_CMD#;fi
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Linker.DerivedFileSignatures=*.vxe
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Linker.DebugFlags=
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Linker.NonDebugFlags=
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Linker.ToolFlags=--defsym __wrs_rtp_base=0x80000000 -u __wr_need_frame_add -u __tls__ -T#VSB_DIR#/usr/ldscripts/rtp.ld  -EL -static  #VSB_DIR#/usr/lib/common/crt0.o
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Linker.Command=echo "building $@";  %cpplinkerprefix% #TOOL_PATH#/ldarm  %DebugModeFlags% %ToolFlags% -o %OutFile% %Objects% #ADDED_OBJECTS# #LIBPATH# -L#VSB_DIR#/usr/lib/common #ADDED_LIBPATH# --start-group #LIBS# %Libraries% #ADDED_LIBS# --end-group && if [ "#DO_STRIP#" = "1" ]; then mv -f "$@" "$@.unstripped" && #TOOL_PATH#/striparm -g -o "$@" "$@.unstripped";fi && if [ "#EXPAND_DBG#" = "1" ]; then plink "$@";fi  && $(if $(_WRS_CONFIG_SECURE_LOADER),signtool  --key=$(_WRS_CONFIG_SECURE_LOADER_PRIVATE_SIGNING_KEY_FILE) --cert=$(_WRS_CONFIG_SECURE_LOADER_PUBLIC_SIGNING_CERT_FILE) --type=ELF $@,true) && true
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Librarian.DerivedFileSignatures=*.a
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Librarian.DebugFlags=
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Librarian.NonDebugFlags=
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Librarian.ToolFlags=crus
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Librarian.Command=echo "building $@";%archiverprefix% #TOOL_PATH#/ararm %ToolFlags% %OutFile% %Objects% #ADDED_OBJECTS#
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Assembler.DerivedFileSignatures=*.o
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Assembler.DebugFlags=-gdwarf-3
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Assembler.NonDebugFlags= -O2 
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Assembler.ToolFlags=#CC_ARCH_SPEC# -std=c11 -fno-strict-aliasing  -fno-builtin -D__vxworks -D__VXWORKS__ -D__RTP__ -D__ELF__ -nostdlibinc -nostdinc++ -mllvm -two-entry-phi-node-folding-threshold=2 -D_USE_INIT_ARRAY -fasm  -xassembler-with-cpp  -MD -MP 
+BuildSpec.L20_VSB_ARMARCH7llvm_ld.BuildTool.Assembler.Command=echo "building $@";%assemblerprefix% #TOOL_PATH#/clang %DebugModeFlags% %ToolFlags% %Defines% #DEFINES# #ADDED_CFLAGS# %Includes% #ADDED_INCLUDES# -o %OutFile% -c %InFile%

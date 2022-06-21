@@ -1,0 +1,163 @@
+/************************************************************************** 
+
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2018
+ 
+     This program is the property of Branson Ultrasonics Corporation
+     Copying of this software is expressly forbidden, without the prior
+     written consent of Branson Ultrasonics Corporation.
+ 
+***************************************************************************/
+#include <stdio.h>
+#include <cstring>
+#ifndef WELDRESULTS_H_
+#define WELDRESULTS_H_
+#define L20REFRESH 							1
+#define USER_NAME_SIZE						16
+#define BARCODE_DATA_SIZE					50
+using namespace std;
+class WeldResults {
+public:
+	enum WELD_RESULT_IDX
+	{
+		MAX_WELD_FORCE,
+		END_HOLD_FORCE,
+		WELD_ABSOLUTE,
+		TOTAL_ABSOLUTE,
+		CYCLE_COUNTER,
+		RECIPE_NUM,
+		WELD_TIME,
+		CYCLE_TIME,
+		TOTAL_ENERGY,
+		PEAK_POWER,
+		START_FREQ,
+		FREQ_CHANGE,
+		WELD_COLLAPSE_DIST,
+		HOLD_COLLAPSE_DIST,
+		TOTAL_COLLAPSE_DIST,
+		TRIGGER_TIME,		/* T-W-H points */
+		WELD_SONIC_TIME,
+		HOLD_TIME,
+		VELOCITY,
+		TRIGGER_DISTANCE,
+		IS_ALARM,
+		RECIPE_REV_NUM,
+		WELD_MODE,
+		STACK_SERIAL_NUM,
+		WELD_STATUS,
+		WELD_RECIPE_STATUS,
+		WELD_ALARM,
+		TRIGGER_PRESSURE,
+		WELD_PRESSURE,
+		WELD_AMPLITUDE,
+		PREHEIGHT,
+		POST_HEIGHT,
+		ACTUAL_WIDTH,
+		ACTUAL_AMPLITUDE
+	};
+	
+private:
+#if GSX
+	struct WELD_RESULT
+	{
+		UINT32	MaxWeldForce;
+		UINT32  EndHoldForce;
+		UINT32	WeldAbsolute;
+		UINT32	TotalAbsolute;
+		UINT32  CycleCounter;
+		UINT32  RecipeNumber;
+		UINT32  RecipeRevNumber;
+		UINT32  WeldTime;
+		UINT32  CycleTime;  
+		UINT32  TotalEnergy;
+		UINT32  PeakPower;
+		UINT32  StartFrequency;
+		INT32   FrequencyChange;
+		UINT32  Velocity;
+		UINT32  TriggerDistance;
+		INT32   WeldCollapseDistance;
+		INT32   HoldCollapseDistance;
+		INT32   TotalCollapseDistance;
+		UINT32	TriggerTime;
+		UINT32	WeldSonicTime;
+		UINT32	HoldTime;
+		UINT32  WeldMode;
+		UINT32  StackSerialNo;
+		UINT8	WeldStatus;
+		UINT8 	recipeStatus;
+		bool 	bIsAlarmflag;	
+		char	UserName[USER_NAME_SIZE];
+		char 	PartID[BARCODE_DATA_SIZE];
+	};
+#elif L20REFRESH
+	enum WELD_STATUS
+	{
+		WELDABORT 	= -1,
+		WELDDONE 	= 0
+	};
+	
+	struct WELD_RESULT
+	{
+		char	RecipeName[USER_NAME_SIZE];
+		char 	PartID[BARCODE_DATA_SIZE];
+		UINT32  CycleCounter;
+		UINT32  RecipeNumber;
+		UINT32  RecipeRevNumber;
+		UINT32	WeldStatus;
+		UINT32	TotalEnergy;
+		UINT32	ActualWidth;
+		UINT32	Amplitude;
+		UINT32	TriggerPressure;
+		UINT32	WeldPressure;
+		UINT32	WeldTime;
+		UINT32	PeakPower;
+		UINT32	PreHeight;
+		UINT32	PostHeight;
+		union
+		{
+			UINT32	ALARMflags;
+			/* There is a little endian for structure bit field alignment for alarm */
+			struct
+			{
+				UINT32	Overload			: 1; //bit 0
+				UINT32	HeightSystemFailure	: 1; //bit 1
+				UINT32	WeldAborted			: 1; //bit 2
+				
+				UINT32	TimeMin				: 1; //bit 3
+				UINT32	PowerMin			: 1; //bit 4
+				UINT32	PreHeightMin		: 1; //bit 5
+				UINT32	PostHeightMin		: 1; //bit 6
+				
+				UINT32	TimeMax				: 1; //bit 7
+				UINT32	PowerMax			: 1; //bit 8
+				UINT32	PreHeightMax		: 1; //bit 9
+				UINT32	PostHeightMax		: 1; //bit 10
+				
+				UINT32	HeightEncoderBad	: 1; //bit 11
+				UINT32	FootPedalAbort		: 1; //bit 12
+				UINT32	SafetySwitch		: 1; //bit 13
+				UINT32	WidthError			: 1; //bit 14
+				
+				UINT32	CutterSwitch			: 1; //bit 15
+				
+				
+			} AlarmFlags;
+		} ALARMS;
+	};
+#endif
+private:
+	WELD_RESULT m_WeldResult;
+public:
+				WeldResults		();
+	virtual 	~WeldResults	();
+	UINT32		Get				(const WELD_RESULT_IDX idx);
+	void		Set				(const WELD_RESULT_IDX idx, const UINT32 data);
+	string		GetRecipeName	();
+	void		SetRecipeName	(const char* name);
+	string		GetUserName		();
+	void		SetUserName		(const char* name);
+	string		GetPartID		();
+	void		SetPartID		(const char* partid);
+	WELD_RESULT	GetWeldData		();
+};
+
+#endif /* WELDRESULTS_H_ */
