@@ -27,8 +27,6 @@ private:
 	MSG_Q_ID		UI_MSG_Q_ID;
 	MSG_Q_ID		INTERFACE_MSG_Q_ID;
 	MSG_Q_ID		DATA_MSG_Q_ID;
-	
-	void			sendHeartbeatResponse	();
 };
 
 #endif /* SOCKETRECEIVERHMI_H_ */

@@ -12,7 +12,8 @@
 #define AUXCLOCKTASK_H_
 
 #include "SCTask.h"
-
+#include "CommunicationInterfaceCAN.h"
+#define O_TEST_PIN 0x5d //GPIO3_29
 class AuxClockTask: public SCTask 
 {
 public:
@@ -26,8 +27,10 @@ private:
 	AuxClockTask();
 	virtual ~AuxClockTask();
 	/* Following code is only for the auxiliary clock debug testing */
-	void debugAssignGPIO();
 	void debugFlipGPIOLevel();
+	
+	CommunicationInterface_CAN* _objDCan;
+	static CommunicationInterface_CAN::TX_MESSAGE m_Pressure;
 };
 
 #endif /* AUXCLOCKTASK_H_ */

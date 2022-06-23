@@ -14,12 +14,18 @@
 **********************************************************************************************************/
 
 #include "AuxClockTask.h"
+#include "ADC_SPI.h"
+#include "Utility.h"
+#include "SCStateMachine.h"
+#include "GPIO.h"
+#include "HeightEncoder.h"
 extern "C"
 {
-	#include "customSystemCall.h"	
+	#include "subsys/gpio/vxbGpioLib.h"	
 }
 
 AuxClockTask* AuxClockTask::m_AuxTaskObj = nullptr;
+CommunicationInterface_CAN::TX_MESSAGE AuxClockTask::m_Pressure;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -30,7 +36,7 @@ AuxClockTask* AuxClockTask::m_AuxTaskObj = nullptr;
 ******************************************************************************/
 AuxClockTask::AuxClockTask() {
 	// TODO Auto-generated constructor stub
-//	debugAssignGPIO();
+	_objDCan = CommunicationInterface_CAN::GetInstance();
 }
 
 /**************************************************************************//**
@@ -88,38 +94,19 @@ void AuxClockTask::AuxClock_Task(void* _obj)
 	tick1++;
 	if((tick1 % 1000) == 0)
 	{
-		LOGERR((char *) "AuxClock : AuxClock running!!!",0,0,0);
+		if(SCStateMachine::getInstance()->GetStateMachineState() == false)
+		{
+			m_Pressure.DAC_Pressure = Utility::Pressure2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure); 
+			if(auxClockObj->_objDCan->Sending(&m_Pressure) == ERROR)
+			{
+				//TODO need to send a alarm to UIC.
+			}
+		}
 	}
-//	auxClockObj->debugFlipGPIOLevel();
-}
 
-/**************************************************************************//**
-* \brief   - Test PIN Initialization
-*
-* \param   - None.
-*
-* \return  - None.
-*
-******************************************************************************/
-void AuxClockTask::debugAssignGPIO()
-{
-//    if(GpioAlloc(TEST_PIN) != OK)
-//    {
-//        printf("failed to allocate pin, try to free it first\n");
-//        return;
-//    }
-//    
-//    if(GpioSetDir(TEST_PIN, GPIO_DIR_OUTPUT) != OK)
-//    {
-//        printf("failed to switch to output direction\n");
-//        return;
-//    }
-//    
-//    if(GpioSetValue(TEST_PIN, GPIO_VALUE_HIGH) != OK)
-//    {
-//        printf("failed to output value\n");
-//        return;
-//    }
+	ADC_AD7689::RunADCSample();
+	SCStateMachine::getInstance()->RunStateMachine();
+//	auxClockObj->debugFlipGPIOLevel();
 }
 
 /**************************************************************************//**
@@ -132,14 +119,14 @@ void AuxClockTask::debugAssignGPIO()
 ******************************************************************************/
 void AuxClockTask::debugFlipGPIOLevel()
 {
-//	static int voltage = GPIO_VALUE_HIGH;
-//	if(voltage == GPIO_VALUE_HIGH)
-//		voltage = GPIO_VALUE_LOW;
-//	else
-//		voltage = GPIO_VALUE_HIGH;
-//    if(GpioSetValue(TEST_PIN, voltage) != OK)
-//    {
-//        printf("failed to output value\n");
-//    }
+	static int voltage = GPIO_VALUE_HIGH;
+	if(voltage == GPIO_VALUE_HIGH)
+		voltage = GPIO_VALUE_LOW;
+	else
+		voltage = GPIO_VALUE_HIGH;
+    if(vxbGpioSetValue(O_TEST_PIN, voltage) != OK)
+    {
+        printf("failed to output value\n");
+    }
 }
 

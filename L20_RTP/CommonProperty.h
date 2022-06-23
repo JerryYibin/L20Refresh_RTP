@@ -14,15 +14,14 @@
 #include <iostream>
 #include <cstring>
 #include <map>
-
+#include <vector>
 #include "Common.h"
 #include "WeldResults.h"
-//#include "recipeobjectdef.h"
+#include "recipedef.h"
 #define TOTAL_NUM_OF_TASK			CommonProperty::END_OF_TASKS
 using namespace std;
 class CommonProperty {
 public:
-	/* enum for Task Indices of Task names */
 	enum TASK_INDEX
 	{
 		CTRL_T		= 0,
@@ -43,9 +42,17 @@ public:
 		HMI_SOCKET_T,
 		ACT_SOCKET_T,
 		DIG_SOCKET_T,
+		CAN_SOCKET_T,
 		FWUPGRADE_T,
 		
 		END_OF_TASKS
+	};
+	struct WELD_SIGNATURE
+	{
+		unsigned int Frquency;
+		unsigned int Power;
+		unsigned int Height;
+		unsigned int Amplitude;
 	};
 public:
 
@@ -65,10 +72,11 @@ public:						/* Public member data */
 
 	bool					m_bTaskRun;
 	// static member for global access
-	static WeldResults		m_WeldResults;
-//	WeldRecipe_SC			m_RecipeSC;
-//	WeldRecipePC			m_RecipePC;
-//	WeldRecipeAC			m_RecipeAC;
+	static WELD_RESULT				WeldResult;
+	static WeldRecipeSC				ActiveRecipeSC;
+	static SYSTEM_INFO				SystemInfo;
+	static SYSTEM_CONFIG			SystemConfig;
+	static vector<WELD_SIGNATURE> 	WeldSignatureVector;
 	
 private:					/* Private member functions */
 	

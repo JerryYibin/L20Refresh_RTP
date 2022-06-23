@@ -10,6 +10,7 @@
 
 #include "CommunicationInterface.h"
 #include "EmrsnSocket.h"
+#include "EmrsnDCan.h"
 
 /**************************************************************************//**
 * 
@@ -37,6 +38,7 @@ CommunicationInterface::CommunicationInterface(int type)
 		m_objImplementor = new EmrsnSocket();
 		break;
 	case CommunicationInterface::SENSOR_CAN_CONNECTION:
+		m_objImplementor = new EmrsnDCan();
 		break;
 	default:
 		m_objImplementor = nullptr;

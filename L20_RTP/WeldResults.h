@@ -15,47 +15,6 @@
 #define USER_NAME_SIZE						16
 #define BARCODE_DATA_SIZE					50
 using namespace std;
-class WeldResults {
-public:
-	enum WELD_RESULT_IDX
-	{
-		MAX_WELD_FORCE,
-		END_HOLD_FORCE,
-		WELD_ABSOLUTE,
-		TOTAL_ABSOLUTE,
-		CYCLE_COUNTER,
-		RECIPE_NUM,
-		WELD_TIME,
-		CYCLE_TIME,
-		TOTAL_ENERGY,
-		PEAK_POWER,
-		START_FREQ,
-		FREQ_CHANGE,
-		WELD_COLLAPSE_DIST,
-		HOLD_COLLAPSE_DIST,
-		TOTAL_COLLAPSE_DIST,
-		TRIGGER_TIME,		/* T-W-H points */
-		WELD_SONIC_TIME,
-		HOLD_TIME,
-		VELOCITY,
-		TRIGGER_DISTANCE,
-		IS_ALARM,
-		RECIPE_REV_NUM,
-		WELD_MODE,
-		STACK_SERIAL_NUM,
-		WELD_STATUS,
-		WELD_RECIPE_STATUS,
-		WELD_ALARM,
-		TRIGGER_PRESSURE,
-		WELD_PRESSURE,
-		WELD_AMPLITUDE,
-		PREHEIGHT,
-		POST_HEIGHT,
-		ACTUAL_WIDTH,
-		ACTUAL_AMPLITUDE
-	};
-	
-private:
 #if GSX
 	struct WELD_RESULT
 	{
@@ -97,8 +56,9 @@ private:
 	
 	struct WELD_RESULT
 	{
-		char	RecipeName[USER_NAME_SIZE];
+		UINT32	RecipeNum;
 		char 	PartID[BARCODE_DATA_SIZE];
+		char	UserName[USER_NAME_SIZE];
 		UINT32  CycleCounter;
 		UINT32  RecipeNumber;
 		UINT32  RecipeRevNumber;
@@ -137,27 +97,13 @@ private:
 				UINT32	SafetySwitch		: 1; //bit 13
 				UINT32	WidthError			: 1; //bit 14
 				
-				UINT32	CutterSwitch			: 1; //bit 15
+				UINT32	CutterSwitch		: 1; //bit 15
 				
 				
 			} AlarmFlags;
 		} ALARMS;
 	};
 #endif
-private:
-	WELD_RESULT m_WeldResult;
-public:
-				WeldResults		();
-	virtual 	~WeldResults	();
-	UINT32		Get				(const WELD_RESULT_IDX idx);
-	void		Set				(const WELD_RESULT_IDX idx, const UINT32 data);
-	string		GetRecipeName	();
-	void		SetRecipeName	(const char* name);
-	string		GetUserName		();
-	void		SetUserName		(const char* name);
-	string		GetPartID		();
-	void		SetPartID		(const char* partid);
-	WELD_RESULT	GetWeldData		();
-};
+
 
 #endif /* WELDRESULTS_H_ */

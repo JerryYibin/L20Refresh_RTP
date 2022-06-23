@@ -17,6 +17,7 @@ and we should have the a unify ProcessTaskMessage interface definition in here.
 
 #include "Common.h"
 #include "CommonProperty.h"
+#include "HMI_LRC_comms.h"
 
 class SCTask
 {

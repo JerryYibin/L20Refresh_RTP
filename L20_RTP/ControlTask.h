@@ -19,6 +19,13 @@
 class ControlTask: public SCTask 
 {
 public:
+	enum MESSAGE_IDENTIFY
+	{
+		/* Macro defined to UIC */
+		TO_CTRL_OPERATE_MODE_IDX = 0,
+	};
+	
+public:
 	ControlTask();
 	~ControlTask();
 	
@@ -29,6 +36,9 @@ private:
 	//Just list out all the external Message ID, don't include itself.
 	MSG_Q_ID 		UI_MSG_Q_ID;
 	MSG_Q_ID 		DATA_MSG_Q_ID_CTRL;
+	int				m_OperationMode;
+private:
+	void			updateOperationMode			(char*);
 };
 
 #endif /* CONTROLTASK_H_ */

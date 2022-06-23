@@ -19,7 +19,7 @@ SocketReceiver_HMI owned using the class object pointer.
 
 #include "SocketReceiverHMI.h"
 #include "CommunicationInterfaceHMI.h"
-#include "HMI_LRC_comms.h"
+#include "UserInterface.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -70,52 +70,30 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 {
 	switch(message.msgID)
 	{
-	case RES_HEART_BEAT_IND:
-		sendHeartbeatResponse();
+	case REQ_HEART_BEAT_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_HEART_BEAT;
+		SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
+	case REQ_ACTIVE_RECIPE_INFO_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_ACTIVE_RECIPE_INFO;
+		SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
+	case REQ_SETUP_WELD_PARAM_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_SETUP_WELD_PARAM;
+		SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
+	case REQ_SETUP_QUALITY_PARAM_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_SETUP_QUALITY_PARAM;
+		SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
+	case REQ_SETUP_ADVANCED_PARAM_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_SETUP_ADVANCED_PARAM;
+		SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	default:
 		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : ", message.msgID, 0, 0);
 		break;
 	}
-}
-
-/**************************************************************************//**
-* 
-* \brief   - Sends response to UIC for heart beat request with parts  per minute
-* 			 counter. 
-*
-* \param   - None
-*
-* \return  - None
-*
-******************************************************************************/
-void SocketReceiver_HMI::sendHeartbeatResponse()
-{
-	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
-	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
-	
-	sendMsg.msgID	= RES_HEART_BEAT_IND;
-	sendMsg.msgLen  = 0;
-	sendMsg.rspCode = 0;
-	
-	HEARTBEAT stHeartbeat;
-	stHeartbeat.AlarmCode = 0;
-	stHeartbeat.Amplitude = CommonProperty::m_WeldResults.Get(WeldResults::ACTUAL_AMPLITUDE);
-	stHeartbeat.CycleCounter = CommonProperty::m_WeldResults.Get(WeldResults::CYCLE_COUNTER);
-	stHeartbeat.PeakPower = CommonProperty::m_WeldResults.Get(WeldResults::PEAK_POWER);
-	stHeartbeat.PostHeight = CommonProperty::m_WeldResults.Get(WeldResults::POST_HEIGHT);
-	stHeartbeat.PreHeight = CommonProperty::m_WeldResults.Get(WeldResults::PREHEIGHT);
-	stHeartbeat.RecipeNumber = CommonProperty::m_WeldResults.Get(WeldResults::RECIPE_NUM);
-	stHeartbeat.TotalEnergy = CommonProperty::m_WeldResults.Get(WeldResults::TOTAL_ENERGY);
-	stHeartbeat.TriggerPress = CommonProperty::m_WeldResults.Get(WeldResults::TRIGGER_PRESSURE);
-	stHeartbeat.WeldPress = CommonProperty::m_WeldResults.Get(WeldResults::WELD_PRESSURE);
-	stHeartbeat.WeldTime = CommonProperty::m_WeldResults.Get(WeldResults::WELD_TIME);
-	
-	memcpy(sendMsg.Buffer, &stHeartbeat, sizeof(HEARTBEAT));
-	sendMsg.msgLen = sizeof(HEARTBEAT);
-	
-	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
-	
 }
 
 /**************************************************************************//**

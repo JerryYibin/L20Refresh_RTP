@@ -15,8 +15,15 @@
 #include "DataTask.h"
 #include "DataInterface.h"
 #include "SocketReceiverHMI.h"
+//#include "SocketSenderDIG.h"
 #include "AuxClockTask.h"
+#include "SocketReceiverCAN.h"
 #include "GPIO.h"
+#include "DAC_SPI.h"
+#include "ADC_SPI.h"
+#include "Utility.h"
+#include "HeightEncoder.h"
+#include <sysLib.h>
 extern "C"
 {
 	#include "timerDev.h"	
@@ -52,6 +59,7 @@ MainTask::MainTask()
 										(char *) "HMI_Socket_Task", 
 										(char *) "ACT_Socket_Task", 
 										(char *) "DIG_Socket_Task",
+										(char *) "CAN_Socket_Task",
 										(char *) "FW_Upgrade_Task"};
 	
 	for(t_index = 0; t_index < TOTAL_NUM_OF_TASK; t_index++)
@@ -220,6 +228,12 @@ bool MainTask::CreateTasks()
 	else
 		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::DATA_T], tID);
 	
+	tID = taskSpawn((char*)CommonProperty::cTaskName[CommonProperty::CAN_SOCKET_T], CAN_SOCKET_T_PRIORITY, VX_FP_TASK, CAN_SOCKET_T_STACK_SIZE, (FUNCPTR)SocketReceiver_CAN::Socket_CAN_Task, 0,0,0,0,0,0,0,0,0,0);
+	if (tID == TASK_ID_ERROR)
+		bSuccess = false;
+	else
+		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::CAN_SOCKET_T], tID);
+	
 //	for(UINT32 t_index=0; t_index < NUM_OF_BL_TASK; t_index++)
 //	{
 //		if(t_index == CTRL_T)
@@ -368,6 +382,10 @@ int main()
 	bool bDataStruct  	= true;
 	TASK_ID tid			= taskIdSelf();
 	GPIO::InitGPIO();
+	DAC_TLV5604::InitDAConverter();
+	ADC_AD7689::InitADConverter();
+	HeightEncoder::SetInitCount(30000);
+	HeightEncoder::SetMaxCount(0xffff);
 	MainTask *MT 		= new(nothrow) MainTask();
 	if(NULL != MT)
 	{
@@ -400,7 +418,12 @@ int main()
 //		SendMsg.msgID = TO_DATA_TASK_ALARM_CONFIG_RW_REQ;		
 //		memset(SendMsg.Buffer, 0x00, sizeof(SendMsg.Buffer));	
 //		MT->PostMessageToTask(SendMsg);
+		
+		DAC_TLV5604::SetFrequencyOffset(0x1ff);
+		DAC_TLV5604::SetTunePoint(0x1ff);
+		
 		LOG("System Clock Value = %d\n", sysClkRateGet());
+		
 		if(bDataStruct)
 		{
 			while(MT->bIsTaskRunStatus())

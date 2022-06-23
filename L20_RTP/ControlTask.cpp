@@ -15,7 +15,7 @@ ControlTask owned using the class object pointer.
 ***************************************************************************/
 
 #include "ControlTask.h"
-
+#include "SCStateMachine.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -30,6 +30,7 @@ extern "C"
 * \return  - None.
 ******************************************************************************/
 ControlTask::ControlTask()
+	:m_OperationMode(SCStateMachine::NO_OPERATION)
 {
 	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 	string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
@@ -52,6 +53,25 @@ ControlTask::~ControlTask() {
 }
 
 /**************************************************************************//**
+* \brief   - Load states following current operation mode
+*
+* \param   - message buffer
+* 
+* \return  - None.
+*
+******************************************************************************/
+void ControlTask::updateOperationMode(char* buff)
+{
+	unsigned int* tmpOperationMode = (unsigned int*)buff;
+	if(SCStateMachine::getInstance()->GetStateMachineState() == false)
+		m_OperationMode = SCStateMachine::NO_OPERATION;
+	if(m_OperationMode == *tmpOperationMode)
+		return;
+	if(SCStateMachine::getInstance()->LoadStatesHandler(*tmpOperationMode) == OK)
+		m_OperationMode = *tmpOperationMode;
+}
+
+/**************************************************************************//**
 * \brief   - Process commands(WELD,SEEK,SETUP, SCAN or ALARM) received from MsgQ.
 *
 * \param   - struct Message&.
@@ -63,6 +83,9 @@ void ControlTask::ProcessTaskMessage(MESSAGE& message)
 {
 	switch(message.msgID)
 	{
+	case TO_CTRL_OPERATE_MODE_IDX:
+		updateOperationMode(message.Buffer);
+		break;
 	default:
 		LOGERR((char *)"CTRL_T : ----------Unknown Message ID------------- : %d",message.msgID, 0, 0);
 		break;
