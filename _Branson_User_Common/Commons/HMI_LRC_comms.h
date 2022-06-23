@@ -23,8 +23,28 @@ enum RequestIdentities
 	SCBL_WELD_RECIPE_LIST_READ_REQ				= 6,
 	SCBL_SYSINFO_READ_REQ						= 7,
 	SCBL_WELDRECIPE_REQ							= 8,
+	SCBL_GRAPH_READ_REQ,
+	SCBL_RECIPE_LIBRARY_READ_REQ,
+	SCBL_GET_RECIPE_INFO_READ_REQ,
+	SCBL_CREATE_NEW_RECIPE_READ_REQ,
+	SCBL_INSERT_RECIPE_READ_REQ,
+	SCBL_UPDATE_RECIPE_READ_REQ,
+	SCBL_DELETE_RECIPE_READ_REQ,
+	SCBL_SET_ACTIVE_RECIPE_READ_REQ,
+	SCBL_SETUP_WELD_PARAM_WRITE_REQ,
+	SCBL_SETUP_QUALITY_PARAM_WRITE_REQ,
+	SCBL_SETUP_ADVANCED_PARAM_WRITE_REQ,
+	SCBL_ACTIVE_RECIPE_VALIDATE_REQ,
+	SCBL_TEACH_RECIPE_READ_REQ,
+	SCBL_TEACH_RECIPE_INITIAL_REQ,
+	SCBL_TEAHMODE_RECIPE_VALIDATE_REQ,
+	SCBL_TEACH_RECIPE_ACCEPT_REQ,
+	SCBL_ALARM_RESET_READ_REQ,
+	SCBL_GET_PERMISSION_SCREEN_REQ,
+	SCBL_SET_PERMISSION_SCREEN_REQ,
+	SCBL_GET_PASSCODE_LIST_REQ,
+	SCBL_UPDATE_PASSCODE_REQ,
 	DUMMY
-
 };
 
 enum SCREENINDEX
@@ -62,7 +82,7 @@ enum SCREENINDEX
 //system information structure for the HMI response parsing 
 #define SYSINFO_SIZE						16
 #define MAC_ADDR_SIZE      					18
-struct SYSTEMINFO
+struct SYSTEM_INFO
 {
 	INT32	psLifeCounter;
 	INT32   actuatorlifecounter;
@@ -89,6 +109,30 @@ struct SYSTEMINFO
 	UINT16  crc_SC;
 //		UINT16  crc_PC;
 	UINT16  crc_AC;
+};
+enum COOLING
+{
+	DISABLE = -1,
+	SECOND_PER_100JOULE,
+	STANDARD
+};
+struct SYSTEM_CONFIG
+{
+	bool HeightEncoder;
+	bool Seek;
+	bool FootPedalAbort;
+	bool LockOnAlarm;
+	bool GraphData;
+	bool DoubleHitMode;
+	COOLING CoolingType;
+	unsigned int CoolingDuration;
+	unsigned int CoolingDelay;
+	unsigned int PowerSupply;
+	unsigned int VerifiedAmplitude;
+	unsigned int SystemFrequency;
+	unsigned int FrequencyOffset;
+	unsigned int TunePoint;
+	unsigned int HomePosition;
 };
 
 struct HEARTBEAT

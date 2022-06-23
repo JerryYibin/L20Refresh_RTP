@@ -41,11 +41,18 @@
 #define P1_BASE_DB_FILE_PATH_EMMC		MMC_EMMC_DEV_NAME PATH_SEPARATOR P1_BASE_DB_FILE_NAME
 #define L20_DB_FILE_PATH_EMMC			MMC_EMMC_DEV_NAME PATH_SEPARATOR L20_DB_FILE_NAME
 
-#define CONVERTER_COOLING 7
 #define MIN_TRIGGER_FORCE 3  // Newtons
 
 #define HMI_SOCKET_PORT   1600
 #define AC_SOCKET_PORT    1601
+
+// ACInputs bits of TxPDO_AC
+#define SS1MASK 					0x01
+#define SS2MASK 					0x02
+#define GRDDETMASK 					0x04 
+#define ULSMASK 					0x08
+#define TRSMASK 					0x10 
+#define BOTHSTARTSWITCHMASK 		0x03  	
 
 /*
  * defines event bits in the master events byte in the PC RX PDO
@@ -53,10 +60,17 @@
  */
 typedef struct RxPDO_PC
 {
-	UINT16	MasterState;
-	UINT16	Amplitudechange;
-	UINT16	MasterEvents;
-	UINT32  Frequency;
+	UINT32	MasterState;
+	UINT32	TargetAmplitude;
+	UINT32	MasterEvents;
+	UINT32  StartFrequency;
+	UINT32  AmplitudeRampTime;
+	INT32   AmpProportionalGain;
+	INT32   AmpIntegralGain;
+	INT32   AmpDerivativeGain;
+	INT32   PhaseProportionalGain;
+	INT32   PhaseIntegralGain;
+	INT32   PhaseDerivativeGain;
 }RxPDO_PC;
 
 typedef struct RxPDO_AC
@@ -68,13 +82,13 @@ typedef struct RxPDO_AC
 
 typedef struct TxPDO_PC
 {
-	UINT16  Amplitude;
-	INT16  	Phase;
-	UINT16  Power;
+	UINT32  Amplitude;
+	INT32  	Phase;
+	UINT32  Power;
 	UINT32  Frequency;
-	UINT16  Current;
-	UINT8   PC_StatusEvent;
-	UINT8	PCState;
+	UINT32  Current;
+	UINT32  PC_StatusEvent;
+	UINT32	PCState;
 }TxPDO_PC;
 
 typedef struct TxPDO_AC
@@ -110,6 +124,15 @@ typedef enum
 
 typedef enum
 {
+	SONICS_ON_OFF_STATUS,
+	POWER_OVERLOAD,    
+	VOLTAGE_OVERLOAD,
+	CURRENT_OVERLOAD,
+	TEMPERATURE_OVERLOAD
+}DSP_TX_STATUS;
+
+typedef enum
+{
 	EVENT_STEP_FORCE,
 	EVENT_AC_CLEAR_ALARMS
 } AC_CONTROL_EVENTS;
@@ -120,6 +143,12 @@ typedef enum {
 	HOME_POS,
 	READY_POS
 } AC_STATUS_EVENTS;
+
+
+typedef enum
+{
+	CONVERTER_COOLING = 7
+} AC_OUTPUT_BIT;
 
 // alarms process limits ID ranges
 enum
@@ -200,14 +229,14 @@ typedef enum
 typedef enum
 {
 	PC_READY,
-	WELD_RUN,
-	SEEK_RUN,
-	WELD_HD_RUN,
+	PC_WELD_RUN,
+	PC_SEEK_RUN,
+	PC_WELD_HD_RUN,
 	PC_ALARM, 
-	SCAN_RUN,
-	TEST_RUN
+	PC_SCAN_RUN,
+	PC_TEST_RUN,
+	PC_ESTOP
 } PCSTATES;
-
 
 /* Macros and variables */
 extern TxPDO_PC *PC_TX;
