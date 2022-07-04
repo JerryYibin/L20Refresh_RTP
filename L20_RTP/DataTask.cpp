@@ -22,7 +22,7 @@ DataTask class owned using the class object pointer.
 
 extern "C"
 {
-	#include "customSystemCall.h"	
+#include "customSystemCall.h"
 }
 
 /**************************************************************************//**
@@ -34,19 +34,17 @@ extern "C"
 * \return  - None.
 ******************************************************************************/
 DataTask::DataTask()
-{
-	ConnectDB();
-	// Load the data message Q name
-	string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
-	SELF_MSG_Q_ID_CTRL = CP->getMsgQId(Data_Task + "/Control");
-	SELF_MSG_Q_ID_DATA = CP->getMsgQId(Data_Task + "/Data");
-	SELF_MSG_Q_ID_REQUEST = CP->getMsgQId(Data_Task + "/Request");
-	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
-	INTERFACE_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T]);
-	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
-	
-
-}
+    {
+    ConnectDB();
+    // Load the data message Q name
+    string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
+    SELF_MSG_Q_ID_CTRL = CP->getMsgQId(Data_Task + "/Control");
+    SELF_MSG_Q_ID_DATA = CP->getMsgQId(Data_Task + "/Data");
+    SELF_MSG_Q_ID_REQUEST = CP->getMsgQId(Data_Task + "/Request");
+    UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
+    INTERFACE_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T]);
+    CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
+    }
 
 /**************************************************************************//**
 * 
@@ -58,9 +56,9 @@ DataTask::DataTask()
 *
 ******************************************************************************/
 DataTask::~DataTask() 
-{
-	CloseDB();
-}
+    {
+    CloseDB();
+    }
 
 /*************************************************************************//**
  * \brief   - Connect Database.
@@ -71,14 +69,14 @@ DataTask::~DataTask()
  *
  ******************************************************************************/
 int DataTask::ConnectDB()
-{
-	int nErrCode = SQLITE_ERROR;
-	m_DbConn = new DBAccessL20DB();
-	nErrCode = m_DbConn->ConnectDB();
-	if(nErrCode > SQLITE_OK)
-		LOGERR("DB Connection Open Error! ErrCode = %d\n",nErrCode, 0, 0);
-	return nErrCode;
-}
+    {
+    int nErrCode = SQLITE_ERROR;
+    m_DbConn = new DBAccessL20DB();
+    nErrCode = m_DbConn->ConnectDB();
+    if(nErrCode > SQLITE_OK)
+        LOGERR("DB Connection Open Error! ErrCode = %d\n", nErrCode, 0, 0);
+    return nErrCode;
+    }
 
 /*************************************************************************//**
  * \brief   - Close Database
@@ -89,13 +87,13 @@ int DataTask::ConnectDB()
  *
  ******************************************************************************/
 int DataTask::CloseDB()
-{
-	int nErrCode = SQLITE_ERROR;
-	nErrCode = m_DbConn->CloseDataBaseConnection();
-	if(nErrCode > SQLITE_OK)
-		LOGERR("DB Close Error! ErrCode = %d\n",nErrCode, 0, 0);
-	return nErrCode;
-}
+    {
+    int nErrCode = SQLITE_ERROR;
+    nErrCode = m_DbConn->CloseDataBaseConnection();
+    if(nErrCode > SQLITE_OK)
+        LOGERR("DB Close Error! ErrCode = %d\n",nErrCode, 0, 0);
+    return nErrCode;
+    }
 
 /*************************************************************************//**
  * \brief   - Process the received message from DATA_MSG_Q.
@@ -106,11 +104,14 @@ int DataTask::CloseDB()
  *
  ******************************************************************************/
 void DataTask::ProcessTaskMessage(MESSAGE& message)
-{
-	processTaskControlMessage();
-	processTaskDataMessage();
-	processTaskRequestMessage();
-}
+    {
+    do
+        {
+        processTaskControlMessage();
+        processTaskDataMessage();
+        processTaskRequestMessage();
+        }while(unfinished);
+    }
 
 /*************************************************************************//**
  * \brief   - Process the received Data Control message from DATA_MSG_Q_ID_CTRL.
@@ -121,24 +122,19 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
  *
  ******************************************************************************/
 void DataTask::processTaskControlMessage()
-{
-	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
-	MESSAGE	tmpMsg;
-	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
-	while(msgQNumMsgs(SELF_MSG_Q_ID_CTRL) > 0)
-	{
-		if(msgQReceive(SELF_MSG_Q_ID_CTRL, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-		{
-			Decode(tmpMsgBuffer, tmpMsg);
-			switch(tmpMsg.msgID)
-			{
-			default:
-				LOGERR((char *)"Control_DB_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
-				break;
-			}
-		}
-	}
-}
+    {
+    MESSAGE tmpMsgBuffer;
+    while(msgQReceive(SELF_MSG_Q_ID_CTRL, (char *)&tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+        {
+        switch(tmpMsgBuffer.msgID)
+            {
+            default:
+                LOGWARN((char *)"Control_DB_T : %#x %s", tmpMsgBuffer.msgID, (int)tmpMsgBuffer.Buffer, 0);
+                break;
+            }
+        }
+    unfinished = FALSE;
+    }
 
 /*************************************************************************//**
  * \brief   - Process the received Data message from DATA_MSG_Q_ID_DATA.
@@ -149,24 +145,19 @@ void DataTask::processTaskControlMessage()
  *
  ******************************************************************************/
 void DataTask::processTaskDataMessage()
-{
-	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
-	MESSAGE	tmpMsg;
-	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
-	while(msgQNumMsgs(SELF_MSG_Q_ID_DATA) > 0)
-	{
-		if(msgQReceive(SELF_MSG_Q_ID_DATA, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-		{
-			Decode(tmpMsgBuffer, tmpMsg);
-			switch(tmpMsg.msgID)
-			{
-			default:
-				LOGERR((char *)"Data_DB_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
-				break;
-			}
-		}
-	}
-}
+    {
+    MESSAGE tmpMsgBuffer;
+    if(msgQReceive(SELF_MSG_Q_ID_DATA, (char *)&tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+        {
+        unfinished = TRUE;
+        switch(tmpMsgBuffer.msgID)
+            {
+            default:
+                LOGWARN((char *)"Data_DB_T : %#x %s", tmpMsgBuffer.msgID, (int)tmpMsgBuffer.Buffer, 0);
+                break;
+            }
+        }
+    }
 
 /*************************************************************************//**
  * \brief   - Process the received Data message from DATA_MSG_Q_ID_REQUEST.
@@ -177,24 +168,22 @@ void DataTask::processTaskDataMessage()
  *
  ******************************************************************************/
 void DataTask::processTaskRequestMessage()
-{
-	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
-	MESSAGE	tmpMsg;
-	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
-	while(msgQNumMsgs(SELF_MSG_Q_ID_REQUEST) > 0)
-	{
-		if(msgQReceive(SELF_MSG_Q_ID_REQUEST, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-		{
-			Decode(tmpMsgBuffer, tmpMsg);
-			switch(tmpMsg.msgID)
-			{
-			default:
-				LOGERR((char *)"Request_DB_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
-				break;
-			}
-		}
-	}
-}
+    {
+    MESSAGE tmpMsgBuffer;
+    if(!unfinished)
+        {
+        if(msgQReceive(SELF_MSG_Q_ID_REQUEST, (char *)&tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+            {
+            unfinished = TRUE;
+            switch(tmpMsgBuffer.msgID)
+                {
+                default:
+                    LOGWARN((char *)"Request_DB_T : %#x %s", tmpMsgBuffer.msgID, (int)tmpMsgBuffer.Buffer, 0);
+                    break;
+                }
+            }
+        }
+    }
 
 /**************************************************************************//**
 * 
@@ -206,30 +195,31 @@ void DataTask::processTaskRequestMessage()
 *
 ******************************************************************************/
 void DataTask::Data_Task(void)
-{
-	MESSAGE		ProcessBuffer;
-	char		MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0x00};	
-	UINT32		events;
-	MESSAGE		message;
+    {
+    MESSAGE ProcessBuffer;
+    char    MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0x00}; 
+    UINT32  events;
+    MESSAGE message;
 
-	DataTask *DBInit = new(nothrow) DataTask();
-	if(NULL != DBInit)
-	{
-		while(DBInit->bIsTaskRunStatus())
-		{
-			// wait for any one event
-			if(eventReceive(DATA_TASK_EVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
-			{
-				DBInit->ProcessTaskMessage(message);
-			}
-		}
-		
-		delete DBInit;
-	}
-	else
-	{
-		LOGERR((char *)"DATA_T : ----------------Memory allocation failed----------------", 0, 0, 0);
-	}
-	DBInit = NULL;
-	taskSuspend(taskIdSelf());
-}
+    DataTask *DBInit = new(nothrow) DataTask();
+    if(NULL != DBInit)
+        {
+        while(DBInit->bIsTaskRunStatus())
+            {
+            // wait for any one event
+            if(eventReceive(DATA_TASK_EVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
+                {
+                DBInit->ProcessTaskMessage(message);
+                }
+            }
+
+        delete DBInit;
+        }
+    else
+        {
+        LOGERR((char *)"DATA_T : ----------------Memory allocation failed----------------", 0, 0, 0);
+        }
+    DBInit = NULL;
+    taskSuspend(taskIdSelf());
+    }
+
