@@ -14,9 +14,8 @@
 **********************************************************************************************************/
 
 #include "AuxClockTask.h"
-#include "ADC_SPI.h"
 #include "Utility.h"
-#include "SCStateMachine.h"
+#include "SCStateMachine/SCStateMachine.h"
 #include "GPIO.h"
 #include "HeightEncoder.h"
 extern "C"
@@ -104,8 +103,11 @@ void AuxClockTask::AuxClock_Task(void* _obj)
 		}
 	}
 
-	ADC_AD7689::RunADCSample();
 	SCStateMachine::getInstance()->RunStateMachine();
+	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_RX_EVENT) != OK)
+		LOGERR((char*) "AUX_T: eventSend: Error\n",0,0,0);
+	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_TX_EVENT) != OK)
+		LOGERR((char*) "AUX_T: eventSent: Error\n",0,0,0);
 //	auxClockObj->debugFlipGPIOLevel();
 }
 

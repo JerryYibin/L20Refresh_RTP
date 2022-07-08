@@ -15,7 +15,7 @@ ControlTask owned using the class object pointer.
 ***************************************************************************/
 
 #include "ControlTask.h"
-#include "SCStateMachine.h"
+#include "SCStateMachine/SCStateMachine.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -65,10 +65,11 @@ void ControlTask::updateOperationMode(char* buff)
 	unsigned int* tmpOperationMode = (unsigned int*)buff;
 	if(SCStateMachine::getInstance()->GetStateMachineState() == false)
 		m_OperationMode = SCStateMachine::NO_OPERATION;
-	if(m_OperationMode == *tmpOperationMode)
-		return;
-	if(SCStateMachine::getInstance()->LoadStatesHandler(*tmpOperationMode) == OK)
-		m_OperationMode = *tmpOperationMode;
+	if(m_OperationMode != *tmpOperationMode)
+	{
+		if(SCStateMachine::getInstance()->LoadStatesHandler(*tmpOperationMode) == OK)
+			m_OperationMode = *tmpOperationMode;
+	}
 }
 
 /**************************************************************************//**

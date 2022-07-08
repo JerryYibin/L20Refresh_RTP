@@ -14,7 +14,7 @@
 #include <sqlite3.h>
 #include <cstring>
 #include <iostream>
-#include "Common.h"
+#include "../Common.h"
 //Values read from database are separated by comma
 #define DB_VALUE_SEPARATOR	","
 

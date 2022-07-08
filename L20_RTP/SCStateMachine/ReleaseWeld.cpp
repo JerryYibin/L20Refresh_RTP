@@ -9,7 +9,7 @@
 
 ReleaseWeld::ReleaseWeld() {
 	m_Actions = SCState::INIT;
-	m_State = SCState::RELEASE_PART;
+	m_State = SCState::WAIT_FOR_READY_POSITION;
 	m_Timeout = 0;
 }
 

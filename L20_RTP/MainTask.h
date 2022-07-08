@@ -10,6 +10,7 @@
 
 #ifndef MAINTASK_H_
 #define MAINTASK_H_
+#include "commons.h"
 #include "SCTask.h"
 
 /* Message queue OFFSETS */
@@ -29,7 +30,7 @@ enum TASK_PRIORITY
 	CTRL_T_PRIORITY				= 220,
 	ACT_SOCKET_T_PRIORITY,
 	ACT_PROCESS_T_PRIORITY,
-	DSP_T_PRIORITY 				= 222,
+	PS_T_PRIORITY 				= 222,
 	ACT_SYSTEM_T_PRIORITY,
 	UI_T_PRIORITY,
 	DATA_T_PRIORITY,
@@ -50,7 +51,7 @@ enum TASK_PRIORITY
 #define CONSOLE_T_STACK_SIZE			(1024 * 6)
 #define CTRL_T_STACK_SIZE				(1024 * 6)
 #define ACT_PROCESS_T_STACK_SIZE		(1024 * 6)
-#define DSP_T_STACK_SIZE				(1024 * 6)
+#define PS_T_STACK_SIZE					(1024 * 6)
 #define ACT_SYSTEM_T_STACK_SIZE			(1024 * 6)
 #define SDO_T_STACK_SIZE				(1024 * 6)
 #define ALARM_T_STACK_SIZE				(1024 * 6)
@@ -68,23 +69,31 @@ enum TASK_PRIORITY
 #define MAINTENANCE_T_STACK_SIZE		(1024 * 8)
 #define GATEWAY_SOCKET_T_STACK_SIZE		(1024 * 8)
 
+/* Shared data object size for PDO data */
+#define SD_SIZE					512
+
+/* Shared data public object name */
+#define RX_DATA_PC				"/RxPDO_PC"
+#define RX_DATA_AC				"/RxPDO_AC"
+#define TX_DATA_PC				"/TxPDO_PC"
+#define TX_DATA_AC				"/TxPDO_AC"
+
+/* Global structure object for PDO DATA */
+extern TxPDO_AC *AC_TX;
+extern RxPDO_AC *AC_RX;
+
 /* List of business logic tasks function routine declaration*/
 
-//void Socket_HMI_Task		(void);
 void Socket_ACT_Task		(void);
 //void Socket_DIG_Task		(void);
 void ConsoleApp_Task		(void);
 void FirmwareUpgrade_Task	(void);
 
-//void Control_Task			(void);
-//void UserInterface_Task	(void);
-//void Data_Task			(void);
-//void DataInterface_Task	(void);
 void Alarm_Task				(void);
 void BarcodeReader_Task		(void);
 void Maintenance_Task		(void);
 void Actuator_Process_Task	(void);
-void DSP_Task				(void);
+
 void ScDgtOutput_Task 		(void);
 void ScDgtInput_Task		(void);
 void Actuator_System_Task	(void);
@@ -101,19 +110,20 @@ public:
 	MainTask();
 	~MainTask();
 
-	bool			CreateMsgQ							();
-	bool			CreateTasks							();
+	bool 			CreateSD				();
+	bool			CreateMsgQ				();
+	bool			CreateTasks				();
 
-	void			ReleaseMemory						();
-	bool			DestroyAllMsgQ						();
-	void			TerminateTasks						();
-	void			SetTaskId							(string T_Name, TASK_ID TID);
-	void 			DeleteTasks							();
+	void			ReleaseMemory			();
+	bool			DestroyAllMsgQ			();
+	void			TerminateTasks			();
+	void			SetTaskId				(string T_Name, TASK_ID TID);
+	void 			DeleteTasks				();
 		
-	void 			CleanUp								();
-	void 			InitAuxClk							();
+	void 			CleanUp					();
+	void 			InitAuxClk				();
 protected:
-	virtual void 	ProcessTaskMessage					(MESSAGE& message){};
+	virtual void 	ProcessTaskMessage		(MESSAGE& message){};
 private:
 	struct TaskInfo
 	{

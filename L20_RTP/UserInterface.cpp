@@ -20,7 +20,7 @@ UserInterface owned using the class object pointer.
 #include "Recipe.h"
 #include "CommunicationInterfaceHMI.h"
 #include "ControlTask.h"
-#include "SCStateMachine.h"
+#include "SCStateMachine/SCStateMachine.h"
 extern "C"
 {
 	#include "customSystemCall.h"	

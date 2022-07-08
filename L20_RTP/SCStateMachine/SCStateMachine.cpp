@@ -12,7 +12,7 @@
 #include "WeldSonicOn.h"
 #include "WaitForTrigger.h"
 #include "ReleaseWeld.h"
-#include "Logger.h"
+#include "../Logger.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -58,9 +58,9 @@ void SCStateMachine::initStateMap()
 	_objStateMap->insert(pair<int, int>(SCState::PRE_READY, TRUE));
 	_objStateMap->insert(pair<int, int>(SCState::READY, TRUE));
 	_objStateMap->insert(pair<int, int>(SCState::START_SWITCH, TRUE));
-	_objStateMap->insert(pair<int, int>(SCState::WAIT_TRIGGER, TRUE));
-	_objStateMap->insert(pair<int, int>(SCState::SONICS_ON, FALSE));
-	_objStateMap->insert(pair<int, int>(SCState::RELEASE_PART, TRUE));
+	_objStateMap->insert(pair<int, int>(SCState::WAIT_FOR_TRIGGER, FALSE));
+	_objStateMap->insert(pair<int, int>(SCState::WELD_SONIC_ON, FALSE));
+	_objStateMap->insert(pair<int, int>(SCState::WAIT_FOR_READY_POSITION, TRUE));
 }
 
 void SCStateMachine::RunStateMachine()
@@ -156,6 +156,8 @@ int SCStateMachine::LoadStatesHandler(int operation)
 		case WELD:
 			SelectWeldSequence();
 			break;
+		case CALIBRATION:
+			break;
 		default:
 			break;
 		}
@@ -189,6 +191,11 @@ void SCStateMachine::SelectWeldSequence(void)
 	m_objState = new ReleaseWeld();
 	_objStateList->push_back(m_objState);
 
+}
+
+void SCStateMachine::SelectHeightCalSequence(void)
+{
+	
 }
 
 void SCStateMachine::XTickTock()

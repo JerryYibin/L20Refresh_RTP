@@ -15,7 +15,7 @@
 
 
 #include "SQLiteDB.h"
-#include "Logger.h"
+#include "../Logger.h"
 /******************************************************************************
 * \brief - Constructor.
 *

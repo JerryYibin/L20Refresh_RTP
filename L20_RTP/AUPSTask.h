@@ -8,21 +8,18 @@
  
 ***************************************************************************/
 
-#ifndef HEIGHTENCODER_H_
-#define HEIGHTENCODER_H_
+#ifndef AUPSTASK_H_
+#define AUPSTASK_H_
 
-class HeightEncoder 
+#include "PowerSupplyTask.h"
+
+class AUPSTask: public PowerSupplyTask 
 {
 public:
-	HeightEncoder();
-	virtual ~HeightEncoder();
-public:
-	static int SetInitCount(const unsigned int count);
-	static int GetInitCount();
-	static int SetMaxCount(const unsigned int count);
-	static int GetMaxCount();
-	static int GetPositionCount();
-	static int GetDirection();
+	AUPSTask();
+	virtual				~AUPSTask					();
+	virtual void		PDOUploadRequest			() override;
+	virtual void		PDODownloadRequest			() override;
 };
 
-#endif /* HEIGHTENCODER_H_ */
+#endif /* AUPSTASK_H_ */

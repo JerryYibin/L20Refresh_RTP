@@ -26,7 +26,7 @@ public:
 	{
 		CTRL_T		= 0,
 		ACTUATOR_PROCESS_T,
-		DSP_T,
+		POWER_SUPPLY_T,
 		ACTUATOR_SYSTEM_T,
 		UI_T,
 		DATA_T,

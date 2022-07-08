@@ -23,13 +23,20 @@
 #include "ADC_SPI.h"
 #include "Utility.h"
 #include "HeightEncoder.h"
+#include "PowerSupplyTask.h"
+#include "PCStateMachine/PCStateMachine.h"
 #include <sysLib.h>
+#include <sdLib.h>
 extern "C"
 {
 	#include "timerDev.h"	
 	#include "customSystemCall.h"
 }
 using namespace std;
+
+/* Global structure object for PDO DATA */
+TxPDO_AC *AC_TX;
+RxPDO_AC *AC_RX;
 /**************************************************************************//**
 * \brief   - Initialize the task info structure
 *
@@ -44,7 +51,7 @@ MainTask::MainTask()
 	char* taskName[TOTAL_NUM_OF_TASK] = {
 										(char *) "/Ctrl_Task", 
 										(char *) "Actuator_Process_Task",
-										(char *) "DSP_Task", 
+										(char *) "PS_Task", 
 										(char *) "Actuator_System_Task", 
 										(char *) "UI_Task", 
 										(char *) "Data_Task", 
@@ -70,15 +77,17 @@ MainTask::MainTask()
 	/* Enabling the flag allows business logic tasks to run continuously   */
 	CP->m_bTaskRun = true;
 	
-	UINT32	g_Priority[NUM_OF_BL_TASK] 			= {CTRL_T_PRIORITY, ACT_PROCESS_T_PRIORITY, DSP_T_PRIORITY, ACT_SYSTEM_T_PRIORITY, UI_T_PRIORITY, DATA_T_PRIORITY, 
+	UINT32	g_Priority[NUM_OF_BL_TASK] 			= {CTRL_T_PRIORITY, ACT_PROCESS_T_PRIORITY, PS_T_PRIORITY, ACT_SYSTEM_T_PRIORITY, UI_T_PRIORITY, DATA_T_PRIORITY, 
 													INTERFACE_T_PRIORITY, ALARM_T_PRIORITY, BARCODE_READER_T_PRIORITY, DGTIN_T_PRIORITY, DGTOUT_T_PRIORITY,
 													MAINTENANCE_T_PRIORITY};
 	
-	FUNC*	g_TaskFunc[NUM_OF_BL_TASK] 			= {ControlTask::Control_Task, Actuator_Process_Task, DSP_Task, Actuator_System_Task, UserInterface::UserInterface_Task, DataTask::Data_Task, DataInterface::DataInterface_Task, Alarm_Task,
+	FUNC*	g_TaskFunc[NUM_OF_BL_TASK] 			= {ControlTask::Control_Task, Actuator_Process_Task, PowerSupplyTask::PowerSupply_Task, 
+													Actuator_System_Task, UserInterface::UserInterface_Task, DataTask::Data_Task, 
+													DataInterface::DataInterface_Task, Alarm_Task,
 													BarcodeReader_Task, ScDgtInput_Task, ScDgtOutput_Task, Maintenance_Task};
 	
-	UINT32	g_StackSize[NUM_OF_BL_TASK]			= {CTRL_T_STACK_SIZE, ACT_PROCESS_T_STACK_SIZE, DSP_T_STACK_SIZE, ACT_SYSTEM_T_STACK_SIZE, UI_T_STACK_SIZE,
-													DATA_T_STACK_SIZE, INTERFACE_T_STACK_SIZE, ALARM_T_STACK_SIZE, BARCODE_READER_T_STACK_SIZE, DGTIN_T_STACK_SIZE, DGTOUT_T_STACK_SIZE,
+	UINT32	g_StackSize[NUM_OF_BL_TASK]			= {CTRL_T_STACK_SIZE, ACT_PROCESS_T_STACK_SIZE, PS_T_STACK_SIZE, ACT_SYSTEM_T_STACK_SIZE, 
+													UI_T_STACK_SIZE, DATA_T_STACK_SIZE, INTERFACE_T_STACK_SIZE, ALARM_T_STACK_SIZE, BARCODE_READER_T_STACK_SIZE, DGTIN_T_STACK_SIZE, DGTOUT_T_STACK_SIZE,
 													MAINTENANCE_T_STACK_SIZE};
 	
 	for(t_index=0; t_index < NUM_OF_BL_TASK; t_index++)
@@ -187,6 +196,12 @@ bool MainTask::CreateTasks()
 		LOG("\nMain_T : CTRL_T task Id: %d\n",tID);
 	}
 	
+	tID = taskSpawn((char *)CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T], PS_T_PRIORITY, VX_FP_TASK, PS_T_STACK_SIZE, (FUNCPTR)PowerSupplyTask::PowerSupply_Task, 0,0,0,0,0,0,0,0,0,0);
+	if (tID == TASK_ID_ERROR)
+		bSuccess = false;
+	else
+		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T], tID);
+	
 	//TO_BE_DONE - Added ENABLE_DIG_CLIENT #define so that 
 	//other developers using this stream can enable/disable
 	//the DIG  client functionality easily. This #define will 
@@ -255,6 +270,48 @@ bool MainTask::CreateTasks()
 //		}
 //	}
 
+	return bSuccess;
+}
+
+/**************************************************************************//**
+* \brief   - Creates the shared data region for PDO DATA. 
+*
+* \param   - None
+*
+* \return  - bool
+*
+******************************************************************************/
+bool MainTask::CreateSD()
+{
+	bool bSuccess = true ;
+	SD_ID RxSD_PC = sdOpen((char *) RX_DATA_PC, 0, OM_CREATE, SD_SIZE, 0, SD_ATTR_RWX | SD_CACHE_OFF, (void **) &PCStateMachine::PC_RX);
+	if(SD_ID_NULL == RxSD_PC)
+	{
+		cout << "MAIN : Error on SD creation - PC : " << RxSD_PC << endl;
+		bSuccess = false;
+	}
+
+	SD_ID RxSD_AC = sdOpen((char *) RX_DATA_AC, 0, OM_CREATE, SD_SIZE, 0, SD_ATTR_RWX | SD_CACHE_OFF, (void **) &AC_RX);
+	if(SD_ID_NULL == RxSD_AC)
+	{
+		cout << "MAIN : Error on SD creation - AC : " << RxSD_AC << endl;
+		bSuccess = false;
+	}
+
+	SD_ID TxSD_PC = sdOpen((char *) TX_DATA_PC, 0, OM_CREATE, SD_SIZE, 0, SD_ATTR_RWX | SD_CACHE_OFF, (void **) &PCStateMachine::PC_TX);
+	if(SD_ID_NULL == TxSD_PC)
+	{
+		cout << "MAIN : Error on SD creation - PC_TX : " << TxSD_PC << endl;
+		bSuccess = false;
+	}
+
+	SD_ID TxSD_AC = sdOpen((char *) TX_DATA_AC, 0, OM_CREATE, SD_SIZE, 0, SD_ATTR_RWX | SD_CACHE_OFF, (void **) &AC_TX);
+	if(SD_ID_NULL == TxSD_AC)
+	{
+		cout << "MAIN : Error on SD creation - AC_TX : " << TxSD_AC << endl;
+		bSuccess = false;
+	}
+	
 	return bSuccess;
 }
 
@@ -391,7 +448,13 @@ int main()
 	{
 		MT->SetTaskId(CommonProperty::cTaskName[CommonProperty::MAIN_T], tid);
 		
-		bDataStruct = MT->CreateMsgQ();
+		bDataStruct = MT->CreateSD();
+
+		if(bDataStruct)
+		{
+			LOG("\nMAIN_T: Create SD: OK\n");
+			bDataStruct = MT->CreateMsgQ();
+		}
 
 		MT->CleanUp();
 
@@ -418,9 +481,6 @@ int main()
 //		SendMsg.msgID = TO_DATA_TASK_ALARM_CONFIG_RW_REQ;		
 //		memset(SendMsg.Buffer, 0x00, sizeof(SendMsg.Buffer));	
 //		MT->PostMessageToTask(SendMsg);
-		
-		DAC_TLV5604::SetFrequencyOffset(0x1ff);
-		DAC_TLV5604::SetTunePoint(0x1ff);
 		
 		LOG("System Clock Value = %d\n", sysClkRateGet());
 		
@@ -521,11 +581,6 @@ void Socket_Gateway_Task(void)
 }
 
 void Actuator_Process_Task(void)
-{
-	
-}
-
-void DSP_Task(void)
 {
 	
 }

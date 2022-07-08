@@ -4,12 +4,13 @@
  *  Created on: May 5, 2022
  *      Author: JerryW.Wang
  */
-#include <math.h>
+
 #include "WaitForTrigger.h"
+#include "Utils.h"
 
 WaitForTrigger::WaitForTrigger() {
 	m_Actions = SCState::INIT;
-	m_State = SCState::WAIT_TRIGGER;
+	m_State = SCState::WAIT_FOR_TRIGGER;
 	m_Timeout = 0;
 }
 
@@ -115,6 +116,6 @@ unsigned int WaitForTrigger::AverageSpeed(unsigned int EncoderPosition)
 	DeltaPosition[3] = EncoderPosition - OldPosition;
 	OldPosition = EncoderPosition;
 	tmpSpeed = (DeltaPosition[3] * 30 + DeltaPosition[2] * 30 + DeltaPosition[1] * 20 + DeltaPosition[0] * 20); //100 total
-	tmpSpeed = abs(tmpSpeed);
+	tmpSpeed = _ABS(tmpSpeed);
 	return tmpSpeed;
 }

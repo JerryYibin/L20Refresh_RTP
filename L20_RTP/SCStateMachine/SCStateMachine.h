@@ -40,6 +40,7 @@ public:
 	int 					LoadStatesHandler(int operation);
 	
 	void 					SelectWeldSequence(void);
+	void					SelectHeightCalSequence(void);
 	void 					XTickTock();
 private:
 	SCStateMachine();

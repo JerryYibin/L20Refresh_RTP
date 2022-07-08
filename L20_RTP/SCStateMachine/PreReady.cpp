@@ -6,7 +6,7 @@
  */
 
 #include "PreReady.h"
-#include "HeightEncoder.h"
+#include "../HeightEncoder.h"
 PreReady::PreReady() {
 	m_Actions = SCState::INIT;
 	m_State = SCState::PRE_READY;

@@ -1,9 +1,14 @@
-/*
- * WeldSonicOn.h
- *
- *  Created on: May 5, 2022
- *      Author: JerryW.Wang
- */
+/************************************************************************** 
+
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2021
+ 
+     This program is the property of Branson Ultrasonics Corporation
+     Copying of this software is expressly forbidden, without the prior
+     written consent of Branson Ultrasonics Corporation.
+ ---------------------------- MODULE DESCRIPTION ----------------------------
+    
+ 
+***************************************************************************/
 
 #ifndef WELDSONICON_H_
 #define WELDSONICON_H_
@@ -16,7 +21,8 @@
 #define JOULE500		500
 #define DELAY5SEC		5000
 using namespace std;
-class WeldSonicOn: public SCState {
+class WeldSonicOn: public SCState 
+{
 	public:
 	enum WELD_STEP
 	{
@@ -33,6 +39,8 @@ private:
 	unsigned long m_EnergyAccumulator;
 	unsigned long m_EnergyTarget;
 	WELD_STEP m_WeldStep;
+	static unsigned int PwrBuffer[PWR_SIZE];
+	static unsigned int PwrIndex;
 public:
 	WeldSonicOn();
 	virtual ~WeldSonicOn();
@@ -43,7 +51,8 @@ public:
 private:
 	void CaptureWeldData();
 	void ClearWeldData();
-	unsigned int GetFilteredPower(bool clearPwr);
+	void InitPowerBuffer(void);
+	unsigned int GetFilteredPower(void);
 	void CoolAirControl(unsigned int delay, unsigned duration);
 };
 

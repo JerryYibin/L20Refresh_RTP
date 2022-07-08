@@ -21,6 +21,7 @@ void Seek::Init()
 	//TODO still need to add output signal handler.
 	vxbGpioSetValue(GPIO::O_EXT_SEEK_PSI, GPIO_VALUE_HIGH);
 	m_Actions = SCState::LOOP;
+	m_Timeout = 0;
 }
 
 void Seek::Loop()

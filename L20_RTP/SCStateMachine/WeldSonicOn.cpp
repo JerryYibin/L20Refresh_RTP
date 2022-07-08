@@ -1,19 +1,46 @@
-/*
- * WeldSonicOn.cpp
- *
- *  Created on: May 5, 2022
- *      Author: JerryW.Wang
- */
+/************************************************************************** 
+
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2021
+ 
+     This program is the property of Branson Ultrasonics Corporation
+     Copying of this software is expressly forbidden, without the prior
+     written consent of Branson Ultrasonics Corporation.
+ ---------------------------- MODULE DESCRIPTION ----------------------------
+    
+ 
+***************************************************************************/
 
 #include "WeldSonicOn.h"
 #include "SCStateMachine.h"
-#include "SocketReceiverCAN.h"
-WeldSonicOn::WeldSonicOn() {
+#include "../SocketReceiverCAN.h"
+
+unsigned int WeldSonicOn::PwrBuffer[PWR_SIZE] = {0};
+unsigned int WeldSonicOn::PwrIndex = 0;
+
+/**************************************************************************//**
+* 
+* \brief   - Constructor - initialize the data members of WeldSonicOn.
+*
+* \param   - None.
+*
+* \return  - None.
+******************************************************************************/
+WeldSonicOn::WeldSonicOn() 
+{
 	m_Actions = SCState::INIT;
-	m_State = SCState::SONICS_ON;
+	m_State = SCState::WELD_SONIC_ON;
 	m_Timeout = 0;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Destructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 WeldSonicOn::~WeldSonicOn() {
 	m_Actions = SCState::INIT;
 	m_State = SCState::NO_STATE;
@@ -58,7 +85,7 @@ void WeldSonicOn::Init()
 		}
 		else
 		{
-			GetFilteredPower(true);
+			InitPowerBuffer();
 			m_WeldTime = 0;
 			m_PeakPower = 0;
 			m_EnergyAccumulator = 0;
@@ -94,7 +121,7 @@ void WeldSonicOn::Loop()
 		}
 		else
 		{
-			GetFilteredPower(true);
+			InitPowerBuffer();
 			m_WeldTime = 0;
 			m_PeakPower = 0;
 			m_EnergyAccumulator = 0;
@@ -109,7 +136,7 @@ void WeldSonicOn::Loop()
 		break;
 	case WeldSonicOn::RUN_SONICS:
 		m_WeldTime += 1;
-		tmpWeldSignature.Power = GetFilteredPower(false);
+		tmpWeldSignature.Power = GetFilteredPower();
 		if (tmpWeldSignature.Power > m_PeakPower)
 			m_PeakPower = tmpWeldSignature.Power;
 		m_EnergyAccumulator += tmpWeldSignature.Power;
@@ -199,7 +226,7 @@ void WeldSonicOn::Loop()
 	case WeldSonicOn::EXTEND_SAMPLE:
 		if (m_Timeout < 5)
 		{
-			tmpWeldSignature.Power = GetFilteredPower(false);
+			tmpWeldSignature.Power = GetFilteredPower();
 			if (tmpWeldSignature.Power > m_PeakPower)
 				m_PeakPower = tmpWeldSignature.Power;
 			tmpWeldSignature.Height = SocketReceiver_CAN::GetHeight();
@@ -316,34 +343,49 @@ void WeldSonicOn::ClearWeldData()
 	CommonProperty::WeldResult.ALARMS.AlarmFlags.Overload = 0;
 }
 
-unsigned int WeldSonicOn::GetFilteredPower(bool clearPwr)
+/**************************************************************************//**
+* 
+* \brief   - Initialize power buffer.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void WeldSonicOn::InitPowerBuffer()
 {
-	static unsigned int PwrBuffer[PWR_SIZE];
-	static unsigned int PwrIndex = 0;
+	/* Clear FIR buffer and return one unfiltered value */
+	for (int cnt = 0; cnt < PWR_SIZE; cnt++)
+		PwrBuffer[cnt] = 0;
+	PwrIndex = 0;
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Get power average value.
+*
+* \param   - None.
+*
+* \return  - power average value.
+*
+******************************************************************************/
+unsigned int WeldSonicOn::GetFilteredPower()
+{
+
 	unsigned int PwrSum;
-	int result, cnt;
-	if (clearPwr == true)
-	{
-		/* Clear FIR buffer and return one unfiltered value */
-		for (cnt = 0; cnt < PWR_SIZE; cnt++)
-			PwrBuffer[cnt] = 0;
+	unsigned int result;
+
+	/* Keep a running average */
+	PwrBuffer[PwrIndex] = ADC_AD7689::GetPower();
+	PwrIndex++;
+	if (PwrIndex >= PWR_SIZE)
 		PwrIndex = 0;
-		result = ADC_AD7689::GetPower();
-	}
-	else
-	{
-		/* Keep a running average */
-		PwrBuffer[PwrIndex] = ADC_AD7689::GetPower();
-		PwrIndex++;
-		if (PwrIndex >= PWR_SIZE)
-			PwrIndex = 0;
 
-		PwrSum = 0;
-		for (cnt = 0; cnt < PWR_SIZE; cnt++)
-			PwrSum += (unsigned int)PwrBuffer[cnt];
+	PwrSum = 0;
+	for (int cnt = 0; cnt < PWR_SIZE; cnt++)
+		PwrSum += PwrBuffer[cnt];
 
-		result = (int)(PwrSum / PWR_SIZE);
-	}
+	result = PwrSum / PWR_SIZE;
 	return result;
 }
 

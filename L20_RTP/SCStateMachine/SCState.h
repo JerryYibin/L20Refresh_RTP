@@ -7,13 +7,13 @@
 
 #ifndef SCSTATE_H_
 #define SCSTATE_H_
-#include "CommonProperty.h"
-#include "GPIO.h"
-#include "Logger.h"
-#include "CommunicationInterfaceCAN.h"
-#include "ADC_SPI.h"
-#include "Utility.h"
-#include "DAC_SPI.h"
+#include "../CommonProperty.h"
+#include "../GPIO.h"
+#include "../Logger.h"
+#include "../CommunicationInterfaceCAN.h"
+#include "../ADC_SPI.h"
+#include "../Utility.h"
+#include "../DAC_SPI.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"	
@@ -30,9 +30,11 @@ public:
 		PRE_READY,
 		READY,
 		START_SWITCH,
-		WAIT_TRIGGER,
-		SONICS_ON,
-		RELEASE_PART
+		WAIT_FOR_TRIGGER,
+		WELD_SONIC_ON,
+		SEEK_SONIC_ON,
+		HOLD,
+		WAIT_FOR_READY_POSITION
 	};
 	enum ACTIONS
 	{
@@ -46,17 +48,17 @@ public:
 		PUSH,						/* Save current state index for possible POP  */
 	};
 public:
-	unsigned int	m_Actions;
-	unsigned int	m_State;
+	ACTIONS			m_Actions;
+	STATE			m_State;
 	unsigned int	m_Timeout;
 	unsigned int	m_StepIndex;	
 public:
 	SCState();
 	virtual ~SCState();
 public:
-	virtual void Init() = 0;	/* Function to call on entry       */
-	virtual void Loop() = 0;	/* Function to call every pass     */
-	virtual void Fail() = 0;	/* Function to call on normal exit */
+	virtual void Init() = 0;	/* Function to call on entry          */
+	virtual void Loop() = 0;	/* Function to call every pass        */
+	virtual void Fail() = 0;	/* Function to call on alarm handling */
 	
 	//virtual bool SendToMsgQ(MESSAGE& msgBuffer, const int& msgQID);
 	bool DefeatWeldAbortHandler(void);
