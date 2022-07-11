@@ -25,6 +25,7 @@ class PCState
 public:
 	enum PCSTATES
 	{
+		PC_POWERUP,
 		PC_READY,
 		PC_WELD_RUN,
 		PC_SEEK_RUN,

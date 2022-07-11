@@ -44,6 +44,8 @@ DataTask::DataTask()
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	INTERFACE_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T]);
 	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
+	
+
 }
 
 /**************************************************************************//**
@@ -104,22 +106,22 @@ int DataTask::CloseDB()
  *
  ******************************************************************************/
 void DataTask::ProcessTaskMessage(MESSAGE& message)
-    {
-    do
-        {
-        /* assume no loop is necessary */
-        unFinished = FALSE;
+{
+	do
+	{
+		/* assume no loop is necessary */
+		m_bMsgEmpty = true;
 
-        /* process Control message firstly */
-        processTaskControlMessage();
+		/* process Control message firstly */
+		processTaskControlMessage();
 
-        /* then, process Data message */
-        processTaskDataMessage();
+		/* then, prcess Data message */
+		processTaskDataMessage();
 
-        /* at last, process Request message */
-        processTaskRequestMessage();
-        }while(unFinished);
-    }
+		/* last, process Request message */
+		processTaskRequestMessage();
+	}while(!m_bMsgEmpty);
+}
 
 /*************************************************************************//**
  * \brief   - Process the received Data Control message from DATA_MSG_Q_ID_CTRL.
@@ -130,20 +132,23 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
  *
  ******************************************************************************/
 void DataTask::processTaskControlMessage()
-    {
-    MESSAGE tmpMsgBuffer;
+{
+	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
+	MESSAGE	tmpMsg;
+	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
 
-    /* all Control message must be processed */
-    while(msgQReceive(SELF_MSG_Q_ID_CTRL, (char *)&tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-        {
-        switch(tmpMsgBuffer.msgID)
-            {
-            default:
-                LOGWARN((char *)"Control_DB_T : %#x %s", tmpMsgBuffer.msgID, (int)tmpMsgBuffer.Buffer, 0);
-                break;
-            }
-        }
-    }
+	/* all Control message must be processed */
+	while(msgQReceive(SELF_MSG_Q_ID_CTRL, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+	{
+		Decode(tmpMsgBuffer, tmpMsg);
+		switch(tmpMsg.msgID)
+		{
+		default:
+			LOGERR((char *)"Control_DB_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
+			break;
+		}
+	}
+}
 
 /*************************************************************************//**
  * \brief   - Process the received Data message from DATA_MSG_Q_ID_DATA.
@@ -154,20 +159,24 @@ void DataTask::processTaskControlMessage()
  *
  ******************************************************************************/
 void DataTask::processTaskDataMessage()
-    {
-    MESSAGE tmpMsgBuffer;
-    if(msgQReceive(SELF_MSG_Q_ID_DATA, (char *)&tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-        {
-        /* as long as one Data message, the loop is necessary for checking Control message */
-        unFinished = TRUE;
-        switch(tmpMsgBuffer.msgID)
-            {
-            default:
-                LOGWARN((char *)"Data_DB_T : %#x %s", tmpMsgBuffer.msgID, (int)tmpMsgBuffer.Buffer, 0);
-                break;
-            }
-        }
-    }
+{
+	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
+	MESSAGE	tmpMsg;
+	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
+
+	if(msgQReceive(SELF_MSG_Q_ID_DATA, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+	{
+		Decode(tmpMsgBuffer, tmpMsg);
+		switch(tmpMsg.msgID)
+		{
+		default:
+			LOGERR((char *)"Data_DB_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
+			break;
+		}
+		/* The loop is necessary for checking Control message as long as a Data message is received */
+        m_bMsgEmpty = false;
+	}
+}
 
 /*************************************************************************//**
  * \brief   - Process the received Data message from DATA_MSG_Q_ID_REQUEST.
@@ -178,25 +187,27 @@ void DataTask::processTaskDataMessage()
  *
  ******************************************************************************/
 void DataTask::processTaskRequestMessage()
-    {
-    MESSAGE tmpMsgBuffer;
-
-    /* if any Data message, a new loop is needed to check Control message firstly */
-    if(!unFinished)
-        {
-        if(msgQReceive(SELF_MSG_Q_ID_REQUEST, (char *)&tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-            {
-            /* as long as one Request message, the loop is necessary for checking Control message and Data message */
-            unFinished = TRUE;
-            switch(tmpMsgBuffer.msgID)
-                {
-                default:
-                    LOGWARN((char *)"Request_DB_T : %#x %s", tmpMsgBuffer.msgID, (int)tmpMsgBuffer.Buffer, 0);
-                    break;
-                }
-            }
-        }
-    }
+{
+	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
+	MESSAGE	tmpMsg;
+	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
+	/* if there is any Data message received, a new loop is needed to check Control message firstly */
+	if(m_bMsgEmpty == true)
+	{
+		if(msgQReceive(SELF_MSG_Q_ID_REQUEST, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+		{
+			Decode(tmpMsgBuffer, tmpMsg);
+			switch(tmpMsg.msgID)
+			{
+			default:
+				LOGERR((char *)"Request_DB_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
+				break;
+			}
+			/* The loop is necessary for checking Control message and Data message as long as a Request message. */
+			m_bMsgEmpty = false;
+		}
+	}
+}
 
 /**************************************************************************//**
 * 
@@ -209,7 +220,7 @@ void DataTask::processTaskRequestMessage()
 ******************************************************************************/
 void DataTask::Data_Task(void)
 {
-	MESSAGE		ProcessBuffer;
+	MESSAGE		ProcessBuffer;	
 	UINT32		events;
 
 	DataTask *DBInit = new(nothrow) DataTask();
@@ -233,4 +244,3 @@ void DataTask::Data_Task(void)
 	DBInit = NULL;
 	taskSuspend(taskIdSelf());
 }
-

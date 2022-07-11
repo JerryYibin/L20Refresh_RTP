@@ -8,23 +8,24 @@
  
 ***************************************************************************/
 
-#ifndef HEIGHTENCODER_H_
-#define HEIGHTENCODER_H_
+#include "L20ActuatorTask.h"
 
-class HeightEncoder 
+L20ActuatorTask::L20ActuatorTask() {
+	// TODO Auto-generated constructor stub
+
+}
+
+L20ActuatorTask::~L20ActuatorTask() {
+	// TODO Auto-generated destructor stub
+}
+
+void L20ActuatorTask::PDOUploadRequest()
 {
-public:
-	HeightEncoder();
-	virtual ~HeightEncoder();
-public:
-	static int SetInitCount(const unsigned int count);
-	static int GetInitCount();
-	static int SetMaxCount(const unsigned int count);
-	static int GetMaxCount();
-	static int GetPositionCount();
-	static int GetDirection();
 	
-	
-};
+}
 
-#endif /* HEIGHTENCODER_H_ */
+void L20ActuatorTask::PDODownloadRequest()
+{
+	
+}
+

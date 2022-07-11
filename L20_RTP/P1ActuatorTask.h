@@ -8,23 +8,18 @@
  
 ***************************************************************************/
 
-#ifndef HEIGHTENCODER_H_
-#define HEIGHTENCODER_H_
+#ifndef P1ACTUATORTASK_H_
+#define P1ACTUATORTASK_H_
 
-class HeightEncoder 
+#include "ActuatorTask.h"
+
+class P1ActuatorTask: public ActuatorTask 
 {
 public:
-	HeightEncoder();
-	virtual ~HeightEncoder();
-public:
-	static int SetInitCount(const unsigned int count);
-	static int GetInitCount();
-	static int SetMaxCount(const unsigned int count);
-	static int GetMaxCount();
-	static int GetPositionCount();
-	static int GetDirection();
-	
-	
+	P1ActuatorTask();
+	virtual ~P1ActuatorTask();
+	virtual void		PDOUploadRequest() override;
+	virtual void		PDODownloadRequest() override;
 };
 
-#endif /* HEIGHTENCODER_H_ */
+#endif /* P1ACTUATORTASK_H_ */

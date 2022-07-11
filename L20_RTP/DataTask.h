@@ -45,7 +45,7 @@ private:
 	MSG_Q_ID			CTRL_MSG_Q_ID;
 	
 	DBAccess			*m_DbConn;
-	BOOL unFinished;
+	bool				m_bMsgEmpty;
 };
 
 #endif /* DATATASK_H_ */

@@ -8,25 +8,16 @@
  
 ***************************************************************************/
 
-#ifndef POWERSUPPLYTASK_H_
-#define POWERSUPPLYTASK_H_
+#ifndef ACTUATORTASK_H_
+#define ACTUATORTASK_H_
 
 #include "SCTask.h"
-class PowerSupplyTask: public SCTask 
+
+class ActuatorTask: public SCTask 
 {
 public:
-	enum PS_TX_STATUS
-	{
-		SONICS_ON_OFF_STATUS,
-		POWER_OVERLOAD,    
-		VOLTAGE_OVERLOAD,
-		CURRENT_OVERLOAD,
-		TEMPERATURE_OVERLOAD
-	};
-	
-public:
-	PowerSupplyTask();
-	virtual				~PowerSupplyTask();
+	ActuatorTask();
+	virtual				~ActuatorTask();
 	
 	void 				ProcessTaskMessage					(MESSAGE& message) override;
 	
@@ -36,13 +27,13 @@ public:
 	static unsigned int	GetCoreState						();
 	static void			SetCoreState						(unsigned int coreState);
 	
-	static void			PowerSupply_Task					(void);
+	static void			Actuator_System_Task				(void);
 private:
-	MSG_Q_ID			CTRL_MSG_Q_ID;
-	MSG_Q_ID 			MAINTENANCE_MSG_Q_ID;
+	MSG_Q_ID		CTRL_MSG_Q_ID;
+	MSG_Q_ID 		MAINTENANCE_MSG_Q_ID;
 	
 	static unsigned int CoreState;
 	
 };
 
-#endif /* POWERSUPPLYTASK_H_ */
+#endif /* ACTUATORTASK_H_ */

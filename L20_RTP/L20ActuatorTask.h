@@ -8,23 +8,19 @@
  
 ***************************************************************************/
 
-#ifndef HEIGHTENCODER_H_
-#define HEIGHTENCODER_H_
+#ifndef L20ACTUATORTASK_H_
+#define L20ACTUATORTASK_H_
 
-class HeightEncoder 
+#include "ActuatorTask.h"
+
+class L20ActuatorTask: public ActuatorTask 
 {
 public:
-	HeightEncoder();
-	virtual ~HeightEncoder();
-public:
-	static int SetInitCount(const unsigned int count);
-	static int GetInitCount();
-	static int SetMaxCount(const unsigned int count);
-	static int GetMaxCount();
-	static int GetPositionCount();
-	static int GetDirection();
-	
+	L20ActuatorTask();
+	virtual				~L20ActuatorTask			();
+	virtual void		PDOUploadRequest			() override;
+	virtual void		PDODownloadRequest			() override;
 	
 };
 
-#endif /* HEIGHTENCODER_H_ */
+#endif /* L20ACTUATORTASK_H_ */

@@ -25,6 +25,8 @@
 #include "HeightEncoder.h"
 #include "PowerSupplyTask.h"
 #include "PCStateMachine/PCStateMachine.h"
+#include "ActuatorTask.h"
+#include "ACStateMachine/ACStateMachine.h"
 #include <sysLib.h>
 #include <sdLib.h>
 extern "C"
@@ -35,8 +37,7 @@ extern "C"
 using namespace std;
 
 /* Global structure object for PDO DATA */
-TxPDO_AC *AC_TX;
-RxPDO_AC *AC_RX;
+
 /**************************************************************************//**
 * \brief   - Initialize the task info structure
 *
@@ -82,7 +83,7 @@ MainTask::MainTask()
 													MAINTENANCE_T_PRIORITY};
 	
 	FUNC*	g_TaskFunc[NUM_OF_BL_TASK] 			= {ControlTask::Control_Task, Actuator_Process_Task, PowerSupplyTask::PowerSupply_Task, 
-													Actuator_System_Task, UserInterface::UserInterface_Task, DataTask::Data_Task, 
+													ActuatorTask::Actuator_System_Task, UserInterface::UserInterface_Task, DataTask::Data_Task, 
 													DataInterface::DataInterface_Task, Alarm_Task,
 													BarcodeReader_Task, ScDgtInput_Task, ScDgtOutput_Task, Maintenance_Task};
 	
@@ -219,11 +220,11 @@ bool MainTask::CreateTasks()
 //	else
 //		CP->SetTaskId(CommonProperty::cTaskName[ACTUATOR_PROCESS_T], tID);
 	
-//	tID = taskSpawn((char *)CommonProperty::cTaskName[ACTUATOR_SYSTEM_T], ACT_SYSTEM_T_PRIORITY, VX_FP_TASK,ACT_SYSTEM_T_STACK_SIZE, (FUNCPTR)Actuator_System_Task,0,0,0,0,0,0,0,0,0,0);
-//	if (tID == TASK_ID_ERROR)
-//		bSuccess = false;
-//	else
-//		CP->SetTaskId(CommonProperty::cTaskName[ACTUATOR_SYSTEM_T], tID);
+	tID = taskSpawn((char *)CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T], ACT_SYSTEM_T_PRIORITY, VX_FP_TASK, ACT_SYSTEM_T_STACK_SIZE, (FUNCPTR)ActuatorTask::Actuator_System_Task, 0,0,0,0,0,0,0,0,0,0);
+	if (tID == TASK_ID_ERROR)
+		bSuccess = false;
+	else
+		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T], tID);
 	
 	tID = taskSpawn((char *)CommonProperty::cTaskName[CommonProperty::UI_T], UI_T_PRIORITY, VX_FP_TASK,UI_T_STACK_SIZE, (FUNCPTR)UserInterface::UserInterface_Task, 0,0,0,0,0,0,0,0,0,0);
 	if (tID == TASK_ID_ERROR)
@@ -291,7 +292,7 @@ bool MainTask::CreateSD()
 		bSuccess = false;
 	}
 
-	SD_ID RxSD_AC = sdOpen((char *) RX_DATA_AC, 0, OM_CREATE, SD_SIZE, 0, SD_ATTR_RWX | SD_CACHE_OFF, (void **) &AC_RX);
+	SD_ID RxSD_AC = sdOpen((char *) RX_DATA_AC, 0, OM_CREATE, SD_SIZE, 0, SD_ATTR_RWX | SD_CACHE_OFF, (void **) &ACStateMachine::AC_RX);
 	if(SD_ID_NULL == RxSD_AC)
 	{
 		cout << "MAIN : Error on SD creation - AC : " << RxSD_AC << endl;
@@ -305,7 +306,7 @@ bool MainTask::CreateSD()
 		bSuccess = false;
 	}
 
-	SD_ID TxSD_AC = sdOpen((char *) TX_DATA_AC, 0, OM_CREATE, SD_SIZE, 0, SD_ATTR_RWX | SD_CACHE_OFF, (void **) &AC_TX);
+	SD_ID TxSD_AC = sdOpen((char *) TX_DATA_AC, 0, OM_CREATE, SD_SIZE, 0, SD_ATTR_RWX | SD_CACHE_OFF, (void **) &ACStateMachine::AC_TX);
 	if(SD_ID_NULL == TxSD_AC)
 	{
 		cout << "MAIN : Error on SD creation - AC_TX : " << TxSD_AC << endl;

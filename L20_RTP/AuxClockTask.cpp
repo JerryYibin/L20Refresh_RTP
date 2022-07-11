@@ -105,9 +105,13 @@ void AuxClockTask::AuxClock_Task(void* _obj)
 
 	SCStateMachine::getInstance()->RunStateMachine();
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_RX_EVENT) != OK)
-		LOGERR((char*) "AUX_T: eventSend: Error\n",0,0,0);
+		LOGERR((char*) "AUX_T: Power supply RX eventSend: Error\n", 0, 0, 0);
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_TX_EVENT) != OK)
-		LOGERR((char*) "AUX_T: eventSent: Error\n",0,0,0);
+		LOGERR((char*) "AUX_T: Power supply TX eventSent: Error\n", 0, 0, 0);
+	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_RX_EVENT) != OK)
+		LOGERR((char*) "AUX_T: Actuator RX eventSend: Error\n", 0, 0, 0);
+	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_TX_EVENT) != OK)
+		LOGERR((char*) "AUX_T: Actuator TX eventSend: Error\n", 0, 0, 0);
 //	auxClockObj->debugFlipGPIOLevel();
 }
 

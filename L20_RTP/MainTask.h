@@ -79,8 +79,6 @@ enum TASK_PRIORITY
 #define TX_DATA_AC				"/TxPDO_AC"
 
 /* Global structure object for PDO DATA */
-extern TxPDO_AC *AC_TX;
-extern RxPDO_AC *AC_RX;
 
 /* List of business logic tasks function routine declaration*/
 

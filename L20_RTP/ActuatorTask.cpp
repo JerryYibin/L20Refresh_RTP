@@ -8,13 +8,11 @@
  
 ***************************************************************************/
 
-#include "PowerSupplyTask.h"
-#include "AUPSTask.h"
-#include "DSPTask.h"
-#include "PCStateMachine/PCState.h"
-#include "Utils.h"
+#include "ActuatorTask.h"
+#include "L20ActuatorTask.h"
+#include "P1ActuatorTask.h"
 /* Static member variables are initialized */
-unsigned int PowerSupplyTask::CoreState = 0;
+unsigned int ActuatorTask::CoreState = 0;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -23,7 +21,7 @@ unsigned int PowerSupplyTask::CoreState = 0;
 * \return  - None
 *
 ******************************************************************************/
-PowerSupplyTask::PowerSupplyTask() {
+ActuatorTask::ActuatorTask() {
 	// TODO Auto-generated constructor stub
 
 }
@@ -37,7 +35,7 @@ PowerSupplyTask::PowerSupplyTask() {
 * \return  - None.
 *
 ******************************************************************************/
-PowerSupplyTask::~PowerSupplyTask() {
+ActuatorTask::~ActuatorTask() {
 	// TODO Auto-generated destructor stub
 }
 
@@ -49,85 +47,85 @@ PowerSupplyTask::~PowerSupplyTask() {
  * \return  - None.
  *
  ******************************************************************************/
-void PowerSupplyTask::ProcessTaskMessage(MESSAGE& message)
+void ActuatorTask::ProcessTaskMessage(MESSAGE & message)
 {
 	
 }
 
 /**************************************************************************//**
-* \brief  	- Specific power supply core status
+* \brief  	- Specific actuator core status
 *
 * \param	- None
 *
 * \return 	- uint32_t
 *
 ******************************************************************************/
-unsigned int PowerSupplyTask::GetCoreState()
+unsigned int ActuatorTask::GetCoreState()
 {
-	return (CoreState == PCState::NO_ERROR || CoreState == BIT_MASK(SONICS_ON_OFF_STATUS)) ? PCState::NO_ERROR : CoreState;
+	return 0;
 }
 
 /**************************************************************************//**
-* \brief  	- Set specific power supply core status
+* \brief  	- Set specific actuator core status
 *
 * \param	- uint32_t
 *
 * \return 	- None
 *
 ******************************************************************************/
-void PowerSupplyTask::SetCoreState(unsigned int coreState)
+void ActuatorTask::SetCoreState(unsigned int coreState)
 {
 	CoreState = coreState;
 }
 
 /**************************************************************************//**
-* \brief  - Power task entry point and constructor. Handles the
+* \brief  - Actuator task entry point and constructor. Handles the
 * 			process/system data from/to the SM and incoming messages.
 * 			The code will instantiate the related child power task following system type,
-* 			such as AUPS or DSP.
+* 			such as L20 refresh or P1.
 *
 * \param  - None
 *
 * \return  - None
 *
 ******************************************************************************/
-void PowerSupplyTask::PowerSupply_Task(void)
+void ActuatorTask::Actuator_System_Task(void)
 {
-	MESSAGE		ProcessBuffer;	
+	MESSAGE		ProcessBuffer;
 	UINT32		events;
 
-	PowerSupplyTask *PSTask = new(nothrow) AUPSTask();
-	if(NULL != PSTask)
+	ActuatorTask *ACTask = new(nothrow) L20ActuatorTask();
+	if(NULL != ACTask)
 	{
-		while(PSTask->bIsTaskRunStatus())
+		while(ACTask->bIsTaskRunStatus())
 		{
 			// wait for any one event
-			if(eventReceive(PS_TASK_TX_EVENT | PS_TASK_RX_EVENT | PS_TASK_QEVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
+			if(eventReceive(ACT_TASK_TX_EVENT | ACT_TASK_RX_EVENT | ACT_TASK_QEVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
 			{
-				if(events & PS_TASK_RX_EVENT)
+				if(events & ACT_TASK_RX_EVENT)
 				{
 					// process outgoing power supply data to SM here...
-					PSTask->PDOUploadRequest();
+					ACTask->PDOUploadRequest();
 				}
-				if(events & PS_TASK_TX_EVENT)
+				if(events & ACT_TASK_TX_EVENT)
 				{
 					// process incoming power supply data from SM here...
-					PSTask->PDODownloadRequest();
+					ACTask->PDODownloadRequest();
 				}
-				if(events & PS_TASK_QEVENT)
+				if(events & ACT_TASK_QEVENT)
 				{
 					// process incoming messages
-					PSTask->ProcessTaskMessage(ProcessBuffer);
+					ACTask->ProcessTaskMessage(ProcessBuffer);
 				}
 			}
 		}
 		
-		delete PSTask;
+		delete ACTask;
 	}
 	else
 	{
-		LOGERR((char *)"POWERSUPPLY_T : ----------------Memory allocation failed----------------", 0, 0, 0);
+		LOGERR((char *)"ACTUATOR_T : ----------------Memory allocation failed----------------", 0, 0, 0);
 	}
-	PSTask = NULL;
+	ACTask = NULL;
 	taskSuspend(taskIdSelf());
 }

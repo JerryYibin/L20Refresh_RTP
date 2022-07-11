@@ -1,17 +1,22 @@
-/*
- * SCStateMachine.cpp
- *
- *  Created on: May 5, 2022
- *      Author: JerryW.Wang
- */
+/************************************************************************** 
+
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2021
+ 
+     This program is the property of Branson Ultrasonics Corporation
+     Copying of this software is expressly forbidden, without the prior
+     written consent of Branson Ultrasonics Corporation.
+ ---------------------------- MODULE DESCRIPTION ----------------------------   
+ 
+***************************************************************************/
+
 #include "SCStateMachine.h"
 #include "PreReady.h"
 #include "Ready.h"
 #include "StartSwitch.h"
-#include "Seek.h"
+#include "SeekSonicOn.h"
 #include "WeldSonicOn.h"
 #include "WaitForTrigger.h"
-#include "ReleaseWeld.h"
+#include "WaitForReadyPosition.h"
 #include "../Logger.h"
 extern "C"
 {
@@ -179,7 +184,7 @@ void SCStateMachine::SelectWeldSequence(void)
 	m_objState = new StartSwitch();
 	_objStateList->push_back(m_objState);
 	
-	m_objState = new Seek();
+	m_objState = new SeekSonicOn();
 	_objStateList->push_back(m_objState);
 
 	m_objState = new WaitForTrigger();
@@ -188,7 +193,7 @@ void SCStateMachine::SelectWeldSequence(void)
 	m_objState = new WeldSonicOn();
 	_objStateList->push_back(m_objState);
 
-	m_objState = new ReleaseWeld();
+	m_objState = new WaitForReadyPosition();
 	_objStateList->push_back(m_objState);
 
 }

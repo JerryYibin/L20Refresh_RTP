@@ -67,11 +67,12 @@
 #define DIG_HEARTBEAT_EVENT					VXEV02
 #define	CON_EVENT							0x02
 #define	DATA_TASK_EVENT						0x04
-#define	ACT_TASK_TX_EVENT					0x08
-#define	ACT_TASK_RX_EVENT					0x10
-#define PS_TASK_TX_EVENT					0x20
-#define PS_TASK_RX_EVENT					0x40
-#define PS_TASK_QEVENT						0x80
+#define	ACT_TASK_TX_EVENT					0x10
+#define	ACT_TASK_RX_EVENT					0x20
+#define ACT_TASK_QEVENT						0x40
+#define PS_TASK_TX_EVENT					0x10
+#define PS_TASK_RX_EVENT					0x20
+#define PS_TASK_QEVENT						0x40
 #define SHUTDOWN_EVENT						VXEV08
 
 struct MESSAGE
