@@ -44,8 +44,6 @@ DataTask::DataTask()
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	INTERFACE_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T]);
 	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
-	
-
 }
 
 /**************************************************************************//**
@@ -109,10 +107,18 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
     {
     do
         {
+        /* assume no loop is necessary */
+        unFinished = FALSE;
+
+        /* process Control message firstly */
         processTaskControlMessage();
+
+        /* then, process Data message */
         processTaskDataMessage();
+
+        /* at last, process Request message */
         processTaskRequestMessage();
-        }while(unfinished);
+        }while(unFinished);
     }
 
 /*************************************************************************//**
@@ -126,6 +132,8 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 void DataTask::processTaskControlMessage()
     {
     MESSAGE tmpMsgBuffer;
+
+    /* all Control message must be processed */
     while(msgQReceive(SELF_MSG_Q_ID_CTRL, (char *)&tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
         {
         switch(tmpMsgBuffer.msgID)
@@ -135,7 +143,6 @@ void DataTask::processTaskControlMessage()
                 break;
             }
         }
-    unfinished = FALSE;
     }
 
 /*************************************************************************//**
@@ -151,7 +158,8 @@ void DataTask::processTaskDataMessage()
     MESSAGE tmpMsgBuffer;
     if(msgQReceive(SELF_MSG_Q_ID_DATA, (char *)&tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
         {
-        unfinished = TRUE;
+        /* as long as one Data message, the loop is necessary for checking Control message */
+        unFinished = TRUE;
         switch(tmpMsgBuffer.msgID)
             {
             default:
@@ -172,11 +180,14 @@ void DataTask::processTaskDataMessage()
 void DataTask::processTaskRequestMessage()
     {
     MESSAGE tmpMsgBuffer;
-    if(!unfinished)
+
+    /* if any Data message, a new loop is needed to check Control message firstly */
+    if(!unFinished)
         {
         if(msgQReceive(SELF_MSG_Q_ID_REQUEST, (char *)&tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
             {
-            unfinished = TRUE;
+            /* as long as one Request message, the loop is necessary for checking Control message and Data message */
+            unFinished = TRUE;
             switch(tmpMsgBuffer.msgID)
                 {
                 default:
@@ -199,7 +210,6 @@ void DataTask::processTaskRequestMessage()
 void DataTask::Data_Task(void)
 {
 	MESSAGE		ProcessBuffer;
-	char		MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0x00};	
 	UINT32		events;
 
 	DataTask *DBInit = new(nothrow) DataTask();
@@ -210,7 +220,6 @@ void DataTask::Data_Task(void)
 			// wait for any one event
 			if(eventReceive(DATA_TASK_EVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
 			{
-				DBInit->Decode(MsgQBuffer, ProcessBuffer);
 				DBInit->ProcessTaskMessage(ProcessBuffer);
 			}
 		}
@@ -224,3 +233,4 @@ void DataTask::Data_Task(void)
 	DBInit = NULL;
 	taskSuspend(taskIdSelf());
 }
+
