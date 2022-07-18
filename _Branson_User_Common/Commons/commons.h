@@ -29,13 +29,13 @@
 #define SOCKET_DBG
 #define LOGIN_DBG
 //MMC2/eMMC Storage
-#define MMC_EMMC_DEV_NAME	"/mmc1"
+#define MMC_EMMC_DEV_NAME	"/mmc1a"
 
 #define PATH_SEPARATOR		"/"
 //Database file names
 #define COMMON_DB_FILE_NAME		"sample_common.db"
 #define P1_BASE_DB_FILE_NAME	"sample_p1_base.db"
-#define L20_DB_FILE_NAME		"sample_l20_base.db"
+#define L20_DB_FILE_NAME		"db_l20.db"
 
 #define COMMON_DB_FILE_PATH_EMMC		MMC_EMMC_DEV_NAME PATH_SEPARATOR COMMON_DB_FILE_NAME
 #define P1_BASE_DB_FILE_PATH_EMMC		MMC_EMMC_DEV_NAME PATH_SEPARATOR P1_BASE_DB_FILE_NAME

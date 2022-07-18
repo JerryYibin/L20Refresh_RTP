@@ -9,7 +9,7 @@
 #define DATATASK_H_
 
 #include "SCTask.h"
-#include "Database/DBAccess.h"
+#include "Database/DBAccess_l20_db.h"
 /*
  *
  */
@@ -32,9 +32,7 @@ protected:
 private:
     int 		ConnectDB								();
     int 		CloseDB									(); 
-    void		processTaskControlMessage				();
-    void		processTaskDataMessage					();
-    void		processTaskRequestMessage				();
+    void		processMessage				(MESSAGE_DB tmpMsg);
     
 private:
     MSG_Q_ID 			SELF_MSG_Q_ID_DATA;
@@ -44,8 +42,7 @@ private:
 	MSG_Q_ID			INTERFACE_MSG_Q_ID;
 	MSG_Q_ID			CTRL_MSG_Q_ID;
 	
-	DBAccess			*m_DbConn;
-	bool				m_bMsgEmpty;
+	DBAccessL20DB			*m_DbConn;
 };
 
 #endif /* DATATASK_H_ */

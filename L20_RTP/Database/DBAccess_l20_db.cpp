@@ -26,7 +26,10 @@
 ******************************************************************************/
 DBAccessL20DB::DBAccessL20DB() 
 {
-
+    strncpy(tableName[AlarmLog], "AlarmLog", TABLE_NAME_LEN);
+    strncpy(tableName[WeldRecipeTable], "WeldRecipeTable", TABLE_NAME_LEN);
+    strncpy(tableName[WeldResultTable], "WeldResultTable", TABLE_NAME_LEN);
+    strncpy(tableName[WeldResultSignature], "WeldResultSignature", TABLE_NAME_LEN);
 }
 
 /******************************************************************************
@@ -53,6 +56,50 @@ DBAccessL20DB::~DBAccessL20DB()
 int DBAccessL20DB::ConnectDB()
 {
 	return EstablishDataBaseConnection(L20_DB_FILE_PATH_EMMC);
+}
+int DBAccessL20DB::dataInsert(DB_TABLE t, DB_DATA data)
+{
+    int result = 0;
+    char str[400];
+    switch(t)
+        {
+        case WeldRecipeTable:
+            sprintf(str, INSERT_STRING,
+                tableName[t]);
+            printf("##dataInsert: %s\n", str);
+            break;
+        case WeldResultTable:
+            sprintf(str, INSERT_STRING WeldResultTable_String,
+                tableName[t],
+                data.data13.DateTime,
+                data.data13.RecipeID,
+                data.data13.WeldEnergy,
+                data.data13.TriggerPressure,
+                data.data13.WeldPressure,
+                data.data13.WeldAmplitude,
+                data.data13.WeldTime,
+                data.data13.WeldPeakPower,
+                data.data13.TriggerHeight,
+                data.data13.WeldHeight,
+                data.data13.AlarmFlag,
+                data.data13.SequenceID,
+                data.data13.CycleCounter,
+                data.data13.partID);
+            printf("##dataInsert: %s\n", str);
+            result = ExecuteInsert((string)str);
+            if(result != 0)
+                printf("##dataInsert: result %d\n", result);
+            break;
+        case WeldResultSignature:
+            sprintf(str, INSERT_STRING,
+                tableName[t]);
+            printf("##dataInsert: %s\n", str);
+            break;
+        default:
+            printf("##dataInsert: unknow %d\n", t);
+            break;
+        }
+    return result;
 }
 
 /******************************************************************************

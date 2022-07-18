@@ -18,7 +18,6 @@ DataTask class owned using the class object pointer.
 **********************************************************************************************************/
 
 #include "DataTask.h"
-#include "Database/DBAccess_l20_db.h"
 
 extern "C"
 {
@@ -98,6 +97,36 @@ int DataTask::CloseDB()
 }
 
 /*************************************************************************//**
+ * \brief   - Process the received message.
+ *
+ * \param   - struct Message&.
+ *
+ * \return  - None.
+ *
+ ******************************************************************************/
+void DataTask::processMessage(MESSAGE_DB tmpMsg)
+{
+	switch(tmpMsg.msgData.cmd)
+	{
+	case CMD_INSERT:
+        m_DbConn->dataInsert(tmpMsg.msgData.db, tmpMsg.msgData.data);
+        break;
+	case CMD_UPDATE:
+        printf("DataTask: update data in db %d\n", tmpMsg.msgData.db);
+        break;
+	case CMD_QUERY:
+        {
+        string str = m_DbConn->ExecuteQuery("select * from WeldResultTable order by ID desc limit 1;");
+        printf("DataTask: query data from db %d: %s\n", tmpMsg.msgData.db, str.c_str());
+        break;
+        }
+	default:
+		LOGERR((char *)"DataTask: --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
+		break;
+	}
+}
+
+/*************************************************************************//**
  * \brief   - Process the received message from DATA_MSG_Q.
  *
  * \param   - struct Message&.
@@ -107,106 +136,30 @@ int DataTask::CloseDB()
  ******************************************************************************/
 void DataTask::ProcessTaskMessage(MESSAGE& message)
 {
-	do
-	{
-		/* assume no loop is necessary */
-		m_bMsgEmpty = true;
-
-		/* process Control message firstly */
-		processTaskControlMessage();
-
-		/* then, prcess Data message */
-		processTaskDataMessage();
-
-		/* last, process Request message */
-		processTaskRequestMessage();
-	}while(!m_bMsgEmpty);
-}
-
-/*************************************************************************//**
- * \brief   - Process the received Data Control message from DATA_MSG_Q_ID_CTRL.
- *
- * \param   - struct Message&.
- *
- * \return  - None.
- *
- ******************************************************************************/
-void DataTask::processTaskControlMessage()
-{
-	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
-	MESSAGE	tmpMsg;
-	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
-
-	/* all Control message must be processed */
-	while(msgQReceive(SELF_MSG_Q_ID_CTRL, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-	{
-		Decode(tmpMsgBuffer, tmpMsg);
-		switch(tmpMsg.msgID)
-		{
-		default:
-			LOGERR((char *)"Control_DB_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
-			break;
-		}
-	}
-}
-
-/*************************************************************************//**
- * \brief   - Process the received Data message from DATA_MSG_Q_ID_DATA.
- *
- * \param   - struct Message&.
- *
- * \return  - None.
- *
- ******************************************************************************/
-void DataTask::processTaskDataMessage()
-{
-	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
-	MESSAGE	tmpMsg;
-	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
-
-	if(msgQReceive(SELF_MSG_Q_ID_DATA, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-	{
-		Decode(tmpMsgBuffer, tmpMsg);
-		switch(tmpMsg.msgID)
-		{
-		default:
-			LOGERR((char *)"Data_DB_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
-			break;
-		}
-		/* The loop is necessary for checking Control message as long as a Data message is received */
-        m_bMsgEmpty = false;
-	}
-}
-
-/*************************************************************************//**
- * \brief   - Process the received Data message from DATA_MSG_Q_ID_REQUEST.
- *
- * \param   - struct Message&.
- *
- * \return  - None.
- *
- ******************************************************************************/
-void DataTask::processTaskRequestMessage()
-{
-	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
-	MESSAGE	tmpMsg;
-	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
-	/* if there is any Data message received, a new loop is needed to check Control message firstly */
-	if(m_bMsgEmpty == true)
-	{
-		if(msgQReceive(SELF_MSG_Q_ID_REQUEST, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-		{
-			Decode(tmpMsgBuffer, tmpMsg);
-			switch(tmpMsg.msgID)
-			{
-			default:
-				LOGERR((char *)"Request_DB_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
-				break;
-			}
-			/* The loop is necessary for checking Control message and Data message as long as a Request message. */
-			m_bMsgEmpty = false;
-		}
-	}
+	MESSAGE_DB tmpMsg;
+    while(1)
+    {
+	    if(msgQReceive(SELF_MSG_Q_ID_CTRL, (char *)&tmpMsg, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+        {
+    		/* process Control message firstly */
+    		processMessage(tmpMsg);
+        }
+        else if(msgQReceive(SELF_MSG_Q_ID_DATA, (char *)&tmpMsg, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+        {
+    		/* then, prcess Data message */
+    		processMessage(tmpMsg);
+        }
+        else if(msgQReceive(SELF_MSG_Q_ID_REQUEST, (char *)&tmpMsg, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+        {
+    		/* last, process Request message */
+    		processMessage(tmpMsg);
+        }
+        else
+        {
+    		/* no message at all */
+            break;
+        }
+    }
 }
 
 /**************************************************************************//**
