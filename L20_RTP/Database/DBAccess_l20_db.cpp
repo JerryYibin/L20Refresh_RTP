@@ -60,13 +60,43 @@ int DBAccessL20DB::ConnectDB()
 int DBAccessL20DB::dataInsert(DB_TABLE t, DB_DATA data)
 {
     int result = 0;
-    char str[400];
+    char str[600];
     switch(t)
         {
         case WeldRecipeTable:
-            sprintf(str, INSERT_STRING,
-                tableName[t]);
-            printf("##dataInsert: %s\n", str);
+            sprintf(str, INSERT_STRING WeldRecipeTable_String,
+                tableName[t],
+                data.data9.UserID,
+                data.data9.IsValidate,
+                data.data9.Amplitude,
+                data.data9.Width,
+                data.data9.WeldPressure,
+                data.data9.TriggerPressure,
+                data.data9.TimePlus,
+                data.data9.TimeMinus,
+                data.data9.PeakPowerPlus,
+                data.data9.PeakPowerMinus,
+                data.data9.TriggerHeightPlus,
+                data.data9.TriggerHeightMinus,
+                data.data9.WeldHeightPlus,
+                data.data9.WeldHeightMinus,
+                data.data9.WeldMode,
+                data.data9.ModeValue,
+                data.data9.PreBurst,
+                data.data9.HoldTime,
+                data.data9.SqueezeTime,
+                data.data9.AfterBurstDelay,
+                data.data9.AfterBurstDuration,
+                data.data9.AfterBurstAmplitude,
+                data.data9.WeldHeight,
+                data.data9.MeasuredHeight,
+                data.data9.StepWeldMode,
+                data.data9.EnergyToStep,
+                data.data9.TimeToStep,
+                data.data9.PowerToStep,
+                data.data9.RecipeName,
+                data.data9.DateTime,
+                data.data9.PresetPicPath);
             break;
         case WeldResultTable:
             sprintf(str, INSERT_STRING WeldResultTable_String,
@@ -85,19 +115,23 @@ int DBAccessL20DB::dataInsert(DB_TABLE t, DB_DATA data)
                 data.data13.SequenceID,
                 data.data13.CycleCounter,
                 data.data13.partID);
-            printf("##dataInsert: %s\n", str);
-            result = ExecuteInsert((string)str);
-            if(result != 0)
-                printf("##dataInsert: result %d\n", result);
             break;
         case WeldResultSignature:
-            sprintf(str, INSERT_STRING,
-                tableName[t]);
-            printf("##dataInsert: %s\n", str);
+            sprintf(str, INSERT_STRING WeldResultSignature_String,
+                tableName[t],
+                data.data14.WeldResultID,
+                data.data14.WeldGraph);
             break;
         default:
             printf("##dataInsert: unknow %d\n", t);
+            result = -1;
             break;
+        }
+    if(result == 0)
+        {
+        result = ExecuteInsert((string)str);
+        if(result != 0)
+            printf("##ExecuteInsert: result %d - %s\n\n", result, str);
         }
     return result;
 }

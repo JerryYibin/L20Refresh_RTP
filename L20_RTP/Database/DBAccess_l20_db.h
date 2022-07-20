@@ -69,12 +69,24 @@ typedef struct
 	char DateTime[20];
 	char PresetPicPath[100];
 	}WeldRecipeTable_Data;
+#define WeldRecipeTable_String \
+	"(UserID,IsValidate,Amplitude,Width,WeldPressure,TriggerPressure,TimePlus,"     \
+	"TimeMinus,PeakPowerPlus,PeakPowerMinus,TriggerHeightPlus,TriggerHeightMinus,"  \
+	"WeldHeightPlus,WeldHeightMinus,WeldMode,ModeValue,PreBurst,HoldTime,"          \
+	"SqueezeTime,AfterBurstDelay,AfterBurstDuration,AfterBurstAmplitude,WeldHeight,"\
+	"MeasuredHeight,StepWeldMode,EnergyToStep,TimeToStep,PowerToStep,"              \
+	"RecipeName,DateTime,PresetPicPath) "\
+	"values (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,"\
+	"'%s','%s','%s','%s','%s','%s');"
 typedef struct
 	{
 	int ID;
 	int WeldResultID;
 	char WeldGraph[200];
 	}WeldResultSignature_Data;
+#define WeldResultSignature_String \
+	"(WeldResultID,WeldGraph) "\
+	"values (%d,'%s');"
 typedef enum
     {
     AlarmLog = 0,
@@ -103,6 +115,8 @@ typedef enum
     CMD_INSERT = 0,
     CMD_QUERY,
     CMD_UPDATE,
+    CMD_DELETE,
+    CMD_CLEAR,
     CMD_INVALID
     }DB_ACCESS;
 typedef union

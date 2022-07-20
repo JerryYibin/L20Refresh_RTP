@@ -116,12 +116,25 @@ void DataTask::processMessage(MESSAGE_DB tmpMsg)
         break;
 	case CMD_QUERY:
         {
-        string str = m_DbConn->ExecuteQuery("select * from WeldResultTable order by ID desc limit 1;");
+        char cmd[100];
+        sprintf(cmd, "select * from %s order by ID desc limit 1;", m_DbConn->tableName[tmpMsg.msgData.db]);
+        string str = m_DbConn->ExecuteQuery(cmd);
         printf("DataTask: query data from db %d: %s\n", tmpMsg.msgData.db, str.c_str());
         break;
         }
+    case CMD_CLEAR:
+        {
+        char cmd[100];
+        sprintf(cmd, "delete from %s;",
+                m_DbConn->tableName[tmpMsg.msgData.db]);
+        m_DbConn->ExecuteInsert(cmd);
+        sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';",
+                m_DbConn->tableName[tmpMsg.msgData.db]);
+        m_DbConn->ExecuteInsert(cmd);
+        break;
+        }
 	default:
-		LOGERR((char *)"DataTask: --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
+		LOGERR((char *)"DataTask: --------Unknown Message CMD----------- : ", tmpMsg.msgData.cmd, 0, 0);
 		break;
 	}
 }
