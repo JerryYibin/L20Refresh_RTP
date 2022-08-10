@@ -172,65 +172,6 @@ int SQLiteDB::CloseDataBaseConnection()
 * returned as comma separated values.
 *
 ******************************************************************************/
-int SQLiteDB::ExecuteInsert(string strSqlStatement, int nRetryCounter)
-{
-	int nErrCode;
-
-	if(m_bIsDBOpen == false)
-	{
-		nErrCode = SQLITE_CANTOPEN;
-		LOGERR((char *)"ExecuteQuery - ERROR, Connection not opened", 0, 0, 0);
-	}
-	else
-	{
-		do
-		{
-			nErrCode = sqlite3_exec(m_ptrDB, strSqlStatement.c_str(), nullptr, nullptr, nullptr);
-			switch(nErrCode)
-			{
-				case SQLITE_OK:
-				break;
-				
-				case SQLITE_BUSY:
-				case SQLITE_LOCKED:
-				//LOGERR((char *)"ExecuteQuery - SQLITE_BUSY/SQLITE_LOCKED, nErrCode: %d",nErrCode,0,0);
-				if(nRetryCounter > 0)
-				{
-					taskDelay(SQLITE_BUSY_RETRY_INTERVAL);
-				}
-				break;		
-					
-				default:
-				break;
-			}
-			nRetryCounter--;		
-		}while( ( nRetryCounter > 0 ) && ( nErrCode == SQLITE_BUSY || nErrCode == SQLITE_LOCKED) );
-			
-	}
-
-	if(nErrCode != SQLITE_OK)
-	{
-		LOGERR((char *)"ExecuteInsert - FAILED, nErrCode: %d",nErrCode,0,0);
-	}
-
-	return nErrCode;
-}
-
-/******************************************************************************
-* 
-* \brief - Calls the sqlite3_exec function to execute specific statement.
-* sqlite3_exec() called from ExecuteQuery() has a Callback function involved.
-* ExecuteQuery() is declared public.
-* \param:
-* strSqlStatement - SQLite query/statement to be executed.
-* pnStatus - Query execution status/result.
-* nRetryCounter - Number of retries in case SQLITE_BUSY/SQLITE_LOCKED error.
-
-* \return - Returns the result of execution of query. In case of database
-* read operation (Select queries), the read database values are 
-* returned as comma separated values.
-*
-******************************************************************************/
 string SQLiteDB::ExecuteQuery(string strSqlStatement, int *pnStatus, int nRetryCounter)
 {
 	string strOutBuffer = "";

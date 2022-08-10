@@ -37,7 +37,6 @@ public:
 	//Pure virtual function. Each child class (e.g. DBAccessCommonDB) must provide a ConnectDB() implementation based on the database file name that it will operate on.
 	virtual int ConnectDB() = 0;
 	int CloseDataBaseConnection();
-	int ExecuteInsert(string strSqlStatement, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);	
 	string ExecuteQuery(string strSqlStatement, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);	
 	int SingleTransaction(string strSqlStatement, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);
 	int BulkTransaction(string strSqlStatement, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);

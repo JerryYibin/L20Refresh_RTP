@@ -117,7 +117,8 @@ void DataTask::processMessage(MESSAGE_DB tmpMsg)
 	case CMD_QUERY:
         {
         char cmd[100];
-        sprintf(cmd, "select * from %s order by ID desc limit 1;", m_DbConn->tableName[tmpMsg.msgData.db]);
+        sprintf(cmd, "select * from %s order by ID desc limit 1;",
+                m_DbConn->tableName[tmpMsg.msgData.db]);
         string str = m_DbConn->ExecuteQuery(cmd);
         printf("DataTask: query data from db %d: %s\n", tmpMsg.msgData.db, str.c_str());
         break;
@@ -127,10 +128,10 @@ void DataTask::processMessage(MESSAGE_DB tmpMsg)
         char cmd[100];
         sprintf(cmd, "delete from %s;",
                 m_DbConn->tableName[tmpMsg.msgData.db]);
-        m_DbConn->ExecuteInsert(cmd);
+        m_DbConn->SingleTransaction(cmd);
         sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';",
                 m_DbConn->tableName[tmpMsg.msgData.db]);
-        m_DbConn->ExecuteInsert(cmd);
+        m_DbConn->SingleTransaction(cmd);
         break;
         }
 	default:

@@ -129,9 +129,9 @@ int DBAccessL20DB::dataInsert(DB_TABLE t, DB_DATA data)
         }
     if(result == 0)
         {
-        result = ExecuteInsert((string)str);
+        result = SingleTransaction((string)str);
         if(result != 0)
-            printf("##ExecuteInsert: result %d - %s\n\n", result, str);
+            printf("##SingleTransaction: result %d - %s\n\n", result, str);
         }
     return result;
 }
