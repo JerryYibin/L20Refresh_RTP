@@ -9,7 +9,7 @@
 #define DATATASK_H_
 
 #include "SCTask.h"
-#include "Database/DBAccess_l20_db.h"
+#include "Database/DBAccess.h"
 /*
  *
  */
@@ -22,6 +22,16 @@ public:
 		REQUEST,
 		DATA
 	};
+	enum MESSAGE_IDENTIFY
+	{
+		/* Macro defined to DATA TASK */
+		TO_DATA_TASK_WELD_RESULT_INSERT 				= 0,
+		TO_DATA_TASK_WELD_SIGN_INSERT,
+		TO_DATA_TASK_QUERY,
+		TO_DATA_TASK_UPDATE,
+		TO_DATA_TASK_DELETE,
+		TO_DATA_TASK_CLEAR
+	};
 public:
 	DataTask();
 	~DataTask();
@@ -32,7 +42,6 @@ protected:
 private:
     int 		ConnectDB								();
     int 		CloseDB									(); 
-    void		processMessage				(MESSAGE_DB tmpMsg);
     
 private:
     MSG_Q_ID 			SELF_MSG_Q_ID_DATA;
@@ -42,7 +51,8 @@ private:
 	MSG_Q_ID			INTERFACE_MSG_Q_ID;
 	MSG_Q_ID			CTRL_MSG_Q_ID;
 	
-	DBAccessL20DB			*m_DbConn;
+	static DBAccess		*_ObjDBConn;
+	bool				m_bMsgEmpty;
 };
 
 #endif /* DATATASK_H_ */
