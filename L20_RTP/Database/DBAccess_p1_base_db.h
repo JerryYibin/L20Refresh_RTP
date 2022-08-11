@@ -65,6 +65,7 @@ const string strP1BaseWeldSignatureCSVReportHeader2 =
 #define BLOB_PARAMETERS_NUMBER_P1_BASE 7 
 
 
+
 //Class DBAccessP1BaseDB
 class DBAccessP1BaseDB : public DBAccess
 {
@@ -81,6 +82,10 @@ public:
 	string GetWeldSignatureCSVParameters(int nRowID, int &nBlobParamNumber, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT) override;
 	string GetWeldSignatureCSVReportHeader1() override;
 	string GetWeldSignatureCSVReportHeader2() override;
+	
+	virtual int StoreWeldResult(char* buffer) override;
+	virtual int StoreWeldSignature(char* buffer) override;
+	virtual int StoreWeldRecipe(char* buffer) override;
 	//End of methods to fetch data from database needed for CSV reports generation.	
 };
 

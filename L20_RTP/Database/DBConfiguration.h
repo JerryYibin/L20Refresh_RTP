@@ -18,9 +18,11 @@
 #define DBCONFIGURATION_H_
 
 #define DB_RECORDS_STORAGE_WELD_RESULT_LIMIT	200000
+#define DB_QUERY_SIZE							1024
 
 //TABLE AND COLUMN NAMES IN DB
-#define TABLE_WELD_RESULT		"WeldResult"
+#define TABLE_WELD_RESULT		"WeldResultTable"
+#define TABLE_WELD_RECIPE		"WeldRecipeTable"
 #define TABLE_WELD_SIGNATURE	"WeldSignature"
 #define COLUMN_GRAPHDATA		"GraphData"
 #define COLUMN_GOLDEN			"Golden"

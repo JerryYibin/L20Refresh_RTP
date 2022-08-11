@@ -34,6 +34,10 @@ public:
 	virtual string GetWeldSignatureCSVParameters(int nRowID, int &nBlobParamNumber, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT) = 0;
 	virtual string GetWeldSignatureCSVReportHeader1() = 0;
 	virtual string GetWeldSignatureCSVReportHeader2() = 0;
+	
+	virtual int StoreWeldResult(char* buffer) = 0;
+	virtual int StoreWeldSignature(char* buffer) = 0;
+	virtual int StoreWeldRecipe(char* buffer) = 0;
 
 	string GetWeldSignatureGraphBlob(int nRowID, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);
 	vector <int> GetGoldenWeldSignatureRowNumbers(int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);

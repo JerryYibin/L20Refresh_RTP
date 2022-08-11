@@ -118,10 +118,6 @@ int SQLiteDB::EstablishDataBaseConnection(string strDBPath)
 					LOGERR((char *)"EstablishDataBaseConnection - ERROR in setting up database connection journal_mode to WAL, nErrCode: %d",nErrCode,0,0);	
 					m_bIsDBOpen = false;			
 				}
-                else
-                    {
-                    printf("## open %s ##\n", strDBPath.c_str());
-                    }
 			}
 		}
 	}

@@ -15,6 +15,13 @@
 **********************************************************************************************************/
 #include "DBAccess_l20_db.h"
 #include "commons.h"
+#include "../WeldResults.h"
+#include "../Commons/recipedef.h"
+#include "DBConfiguration.h"
+extern "C"
+{
+	#include "hwif/drv/resource/vxbRtcLib.h"
+}
 
 /******************************************************************************
 * \brief - Constructor.
@@ -26,10 +33,7 @@
 ******************************************************************************/
 DBAccessL20DB::DBAccessL20DB() 
 {
-    strncpy(tableName[AlarmLog], "AlarmLog", TABLE_NAME_LEN);
-    strncpy(tableName[WeldRecipeTable], "WeldRecipeTable", TABLE_NAME_LEN);
-    strncpy(tableName[WeldResultTable], "WeldResultTable", TABLE_NAME_LEN);
-    strncpy(tableName[WeldResultSignature], "WeldResultSignature", TABLE_NAME_LEN);
+
 }
 
 /******************************************************************************
@@ -56,84 +60,6 @@ DBAccessL20DB::~DBAccessL20DB()
 int DBAccessL20DB::ConnectDB()
 {
 	return EstablishDataBaseConnection(L20_DB_FILE_PATH_EMMC);
-}
-int DBAccessL20DB::dataInsert(DB_TABLE t, DB_DATA data)
-{
-    int result = 0;
-    char str[600];
-    switch(t)
-        {
-        case WeldRecipeTable:
-            sprintf(str, INSERT_STRING WeldRecipeTable_String,
-                tableName[t],
-                data.data9.UserID,
-                data.data9.IsValidate,
-                data.data9.Amplitude,
-                data.data9.Width,
-                data.data9.WeldPressure,
-                data.data9.TriggerPressure,
-                data.data9.TimePlus,
-                data.data9.TimeMinus,
-                data.data9.PeakPowerPlus,
-                data.data9.PeakPowerMinus,
-                data.data9.TriggerHeightPlus,
-                data.data9.TriggerHeightMinus,
-                data.data9.WeldHeightPlus,
-                data.data9.WeldHeightMinus,
-                data.data9.WeldMode,
-                data.data9.ModeValue,
-                data.data9.PreBurst,
-                data.data9.HoldTime,
-                data.data9.SqueezeTime,
-                data.data9.AfterBurstDelay,
-                data.data9.AfterBurstDuration,
-                data.data9.AfterBurstAmplitude,
-                data.data9.WeldHeight,
-                data.data9.MeasuredHeight,
-                data.data9.StepWeldMode,
-                data.data9.EnergyToStep,
-                data.data9.TimeToStep,
-                data.data9.PowerToStep,
-                data.data9.RecipeName,
-                data.data9.DateTime,
-                data.data9.PresetPicPath);
-            break;
-        case WeldResultTable:
-            sprintf(str, INSERT_STRING WeldResultTable_String,
-                tableName[t],
-                data.data13.DateTime,
-                data.data13.RecipeID,
-                data.data13.WeldEnergy,
-                data.data13.TriggerPressure,
-                data.data13.WeldPressure,
-                data.data13.WeldAmplitude,
-                data.data13.WeldTime,
-                data.data13.WeldPeakPower,
-                data.data13.TriggerHeight,
-                data.data13.WeldHeight,
-                data.data13.AlarmFlag,
-                data.data13.SequenceID,
-                data.data13.CycleCounter,
-                data.data13.partID);
-            break;
-        case WeldResultSignature:
-            sprintf(str, INSERT_STRING WeldResultSignature_String,
-                tableName[t],
-                data.data14.WeldResultID,
-                data.data14.WeldGraph);
-            break;
-        default:
-            printf("##dataInsert: unknow %d\n", t);
-            result = -1;
-            break;
-        }
-    if(result == 0)
-        {
-        result = SingleTransaction((string)str);
-        if(result != 0)
-            printf("##SingleTransaction: result %d - %s\n\n", result, str);
-        }
-    return result;
 }
 
 /******************************************************************************
@@ -211,10 +137,114 @@ string DBAccessL20DB::GetWeldSignatureCSVReportHeader2()
 	return "";
 }
 
+/**************************************************************************//**
+* \brief   - Writing WeldResult into DB
+*      		
+* \param   - char *buffer
+*
+* \return  - UINT8 -status of query exec
+*
+******************************************************************************/
+int DBAccessL20DB::StoreWeldResult(char* buffer)
+{
+	int nErrCode = SQLITE_ERROR;
+	char insertQuery[DB_QUERY_SIZE] = {0x00};
+	WELD_RESULT result;
+	struct tm timeStamp;
+	vxbRtcSet(&timeStamp);
+	
+	memcpy(&result, buffer, sizeof(WELD_RESULT));
+	sprintf(insertQuery, string(strInsert + strWeldResultTableFormat).c_str(), 
+			TABLE_WELD_RESULT,
+			mktime((struct tm*)&timeStamp),
+			result.RecipeNum,
+			result.TotalEnergy,
+			result.TriggerPressure,
+			result.WeldPressure,
+			result.Amplitude,
+			result.WeldTime,
+			result.PeakPower,
+			result.PreHeight,
+			result.PostHeight,
+			result.ALARMS.ALARMflags,
+			0,//sequence ID
+			result.CycleCounter,
+			result.PartID
+			);
+	nErrCode = SingleTransaction((string)insertQuery);
+	if(nErrCode != 0)
+		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+	return nErrCode;
+}
 
+/**************************************************************************//**
+* \brief   - Writing WeldSignature into DB
+*
+* \param   - char *buffer
+*
+* \return  - UINT8 - status of query exec
+*
+******************************************************************************/
+int DBAccessL20DB::StoreWeldSignature(char* buffer)
+{
+	return OK;
+}
 
-
-
+/**************************************************************************//**
+* \brief   - Writing Weld Recipe into DB
+*
+* \param   - char *buffer
+*
+* \return  - UINT8 - status of query exec
+*
+******************************************************************************/
+int DBAccessL20DB::StoreWeldRecipe(char* buffer)
+{
+	int nErrCode = SQLITE_ERROR;
+	char insertQuery[DB_QUERY_SIZE] = {0x00};
+	WeldRecipeSC recipe;
+	struct tm timeStamp;
+	vxbRtcSet(&timeStamp);
+	
+	memcpy(&recipe, buffer, sizeof(WeldRecipeSC));
+	sprintf(insertQuery, string(strInsert + strWeldRecipeTableFormat).c_str(),
+			TABLE_WELD_RECIPE,
+			0, //userID
+			recipe.m_IsTeachMode,
+			recipe.m_WeldParameter.m_Amplitude,
+			recipe.m_WeldParameter.m_WidthSetting,
+			recipe.m_WeldParameter.m_WPpressure,
+			recipe.m_WeldParameter.m_TPpressure,
+			recipe.m_QualityWindowSetting.m_TimeMax,
+			recipe.m_QualityWindowSetting.m_TimeMin,
+			recipe.m_QualityWindowSetting.m_PeakPowerMax,
+			recipe.m_QualityWindowSetting.m_PeakPowerMin,
+			recipe.m_QualityWindowSetting.m_PreHeightMax,
+			recipe.m_QualityWindowSetting.m_PreHeightMin,
+			recipe.m_QualityWindowSetting.m_HeightMax,
+			recipe.m_QualityWindowSetting.m_HeightMin,
+			recipe.m_AdvancedSetting.m_WeldMode,
+			recipe.m_AdvancedSetting.m_PreBurst,
+			recipe.m_AdvancedSetting.m_HoldTime,
+			recipe.m_AdvancedSetting.m_SqueezeTime,
+			recipe.m_AdvancedSetting.m_AfterBurstDelay,
+			recipe.m_AdvancedSetting.m_AfterBurstTime,
+			recipe.m_AdvancedSetting.m_AfterBurstAmplitude,
+			recipe.m_AdvancedSetting.m_DisplayedHeightOffset,
+			recipe.m_AdvancedSetting.m_MeasuredHeightOffset,
+			recipe.m_AdvancedSetting.m_WeldStepMode,
+			recipe.m_WeldParameter.m_EnergyStep,
+			recipe.m_WeldParameter.m_TimeStep,
+			recipe.m_WeldParameter.m_PowerStep,
+			recipe.m_RecipeName,
+			"2022-08-11 00:00:00",
+			recipe.m_RecipePicPath
+			);
+	nErrCode = SingleTransaction((string)insertQuery);
+	if(nErrCode != 0)
+		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+	return nErrCode;
+}
 
 
 

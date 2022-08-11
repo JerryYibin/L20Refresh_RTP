@@ -136,10 +136,36 @@ string DBAccessP1BaseDB::GetWeldSignatureCSVReportHeader2()
 	return strP1BaseWeldSignatureCSVReportHeader2;
 }
 
+/**************************************************************************//**
+* \brief   - Writing WeldResult into DB
+*      		
+* \param   - char *buffer
+*
+* \return  - UINT8 -status of query exec
+*
+******************************************************************************/
+int DBAccessP1BaseDB::StoreWeldResult(char* buffer)
+{
+	return SQLITE_OK;
+}
 
+/**************************************************************************//**
+* \brief   - Writing WeldSignature into DB
+*
+* \param   - char *buffer
+*
+* \return  - UINT8 - status of query exec
+*
+******************************************************************************/
+int DBAccessP1BaseDB::StoreWeldSignature(char* buffer)
+{
+	return SQLITE_OK;
+}
 
-
-
+int DBAccessP1BaseDB::StoreWeldRecipe(char* buffer)
+{
+	return SQLITE_OK;
+}
 
 
 
