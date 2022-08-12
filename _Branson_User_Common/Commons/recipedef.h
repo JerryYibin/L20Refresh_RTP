@@ -16,6 +16,7 @@
 
 #define STEP_MAX 		5
 #define PIC_PATH_LEN 	60
+#define RECIPE_LEN		20
 enum WELDMODE
 {
     ENERGY_MODE = 0,
@@ -42,7 +43,7 @@ enum TRIGGERMODE
 
 struct Trigger
 {
-    int               m_TriggerType;
+	TRIGGERMODE       m_TriggerType;
     unsigned int      m_PreTriggerDistance;
     unsigned int      m_PreTriggerForce;
     unsigned int      m_PreTriggerTime;
@@ -50,17 +51,17 @@ struct Trigger
 
 struct AdvancedWeldSetting
 {
-    int m_WeldMode;
-    int m_WeldStepMode;
+	WELDMODE m_WeldMode;
+	WELDAMPLITUDESTEPMMODE m_WeldStepMode;
     Trigger m_Trigger;
     int m_PreBurst;
     int m_HoldTime;
     int m_SqueezeTime;
     int m_AfterBurstDelay;
     int m_AfterBurstTime;
-    int m_AfterBurstAmplitude;
-    int m_DisplayedHeightOffSet;
-    int m_MeasuredHeightOffSet;
+    int m_AfterBurstAmplitude; //Reserved
+    int m_DisplayedHeightOffset;
+    int m_MeasuredHeightOffset;
 };
 
 struct WeldStepValueSetting
@@ -72,9 +73,9 @@ struct WeldStepValueSetting
 
 struct WeldParameterSetting
 {
-    unsigned int m_EnergySetting;
-    int          m_TPpressure;
-    int          m_WPpressure;
+    unsigned int m_EnergySetting; //0.0 (Value X 10)
+    int          m_TPpressure; //0.000 (Value X 1000)
+    int          m_WPpressure; //0.000 (Value X 1000)
     unsigned int m_Amplitude;
     WeldStepValueSetting m_EnergyStep[STEP_MAX];
     WeldStepValueSetting m_TimeStep[STEP_MAX];
@@ -106,11 +107,13 @@ struct  WeldRecipeSC
 {
     int                   m_RecipeNumber;
     char                  m_RecipePicPath[PIC_PATH_LEN];
-    int                   m_IsTeachMode;
-    unsigned int          m_UserID;
+    bool                  m_IsTeachMode;
+    char		          m_RecipeName[RECIPE_LEN];
+    unsigned int		  m_BatchSize; // For active recipe only, don't allow to save it with the recipe in the database. It will be saved into the Last Weld
     WeldParameterSetting  m_WeldParameter;
     QualityWindowSetting  m_QualityWindowSetting;
     AdvancedWeldSetting   m_AdvancedSetting;
+    
 };
 
 
