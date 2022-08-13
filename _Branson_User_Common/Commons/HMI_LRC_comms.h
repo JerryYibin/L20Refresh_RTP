@@ -149,7 +149,7 @@ struct HEARTBEAT
 	unsigned int 	PreHeight;
 	unsigned int	PostHeight;
 };
-
+#if 0
 // alarms IDs
 enum ALARM_CODE
 {
@@ -287,5 +287,5 @@ enum ALARM_CODE
 	ALARM_ELC_SONICS_EN 				= 0xEFA
 	
 };
-
+#endif
 #endif

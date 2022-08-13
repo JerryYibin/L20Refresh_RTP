@@ -96,14 +96,19 @@ void AuxClockTask::AuxClock_Task(void* _obj)
 		if(SCStateMachine::getInstance()->GetStateMachineState() == false)
 		{
 			m_Pressure.DAC_Pressure = Utility::Pressure2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure); 
+#ifndef DEBUG_YANG
 			if(auxClockObj->_objDCan->Sending(&m_Pressure) == ERROR)
 			{
 				//TODO need to send a alarm to UIC.
 			}
+#endif
 		}
 	}
 
 	SCStateMachine::getInstance()->RunStateMachine();
+#ifdef DEBUG_YANG
+    return;
+#endif
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_RX_EVENT) != OK)
 		LOGERR((char*) "AUX_T: Power supply RX eventSend: Error\n", 0, 0, 0);
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_TX_EVENT) != OK)

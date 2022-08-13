@@ -9,6 +9,7 @@
 #define DBACCESS_L20_DB_H_
 
 #include "DBAccess.h"
+#include "DBConfiguration.h"
 
 const string strInsert = "insert into %s ";
 const string strWeldResultTableFormat = 

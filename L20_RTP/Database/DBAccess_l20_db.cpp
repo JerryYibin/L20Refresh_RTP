@@ -16,11 +16,11 @@
 #include "DBAccess_l20_db.h"
 #include "commons.h"
 #include "../WeldResults.h"
+#include "../WeldResultsSignature.h"
 #include "../Commons/recipedef.h"
-#include "DBConfiguration.h"
 extern "C"
 {
-	#include "hwif/drv/resource/vxbRtcLib.h"
+extern STATUS vxbRtcGet(struct tm *rtcTime);
 }
 
 /******************************************************************************
@@ -149,29 +149,33 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 {
 	int nErrCode = SQLITE_ERROR;
 	char insertQuery[DB_QUERY_SIZE] = {0x00};
-	WELD_RESULT result;
+	WELD_RESULT *pResult = (WELD_RESULT *)buffer;
 	struct tm timeStamp;
-	vxbRtcSet(&timeStamp);
+    int createTime;
+	vxbRtcGet(&timeStamp);
+    createTime = mktime((struct tm*)&timeStamp);
 	
-	memcpy(&result, buffer, sizeof(WELD_RESULT));
 	sprintf(insertQuery, string(strInsert + strWeldResultTableFormat).c_str(), 
 			TABLE_WELD_RESULT,
-			mktime((struct tm*)&timeStamp),
-			result.RecipeNum,
-			result.TotalEnergy,
-			result.TriggerPressure,
-			result.WeldPressure,
-			result.Amplitude,
-			result.WeldTime,
-			result.PeakPower,
-			result.PreHeight,
-			result.PostHeight,
-			result.ALARMS.ALARMflags,
+			createTime,
+			pResult->RecipeNum,
+			pResult->TotalEnergy,
+			pResult->TriggerPressure,
+			pResult->WeldPressure,
+			pResult->Amplitude,
+			pResult->WeldTime,
+			pResult->PeakPower,
+			pResult->PreHeight,
+			pResult->PostHeight,
+			pResult->ALARMS.ALARMflags,
 			0,//sequence ID
-			result.CycleCounter,
-			result.PartID
+			pResult->CycleCounter,
+			pResult->PartID
 			);
 	nErrCode = SingleTransaction((string)insertQuery);
+#ifdef DEBUG_YANG
+    printf("##StoreWeldResult: result %d - %s\n\n", nErrCode, insertQuery);
+#endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
@@ -187,7 +191,22 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldSignature(char* buffer)
 {
-	return OK;
+	int nErrCode = SQLITE_ERROR;
+	char insertQuery[DB_QUERY_SIZE] = {0x00};
+	WeldResultSignature_Data *pResult = (WeldResultSignature_Data *)buffer;
+
+	sprintf(insertQuery, string(strInsert + strWeldSignatureFormat).c_str(), 
+			TABLE_WELD_SIGNATURE,
+			pResult->WeldResultID,
+			pResult->WeldGraph
+			);
+	nErrCode = SingleTransaction((string)insertQuery);
+#ifdef DEBUG_YANG
+    printf("##StoreWeldSignature: result %d - %s\n\n", nErrCode, insertQuery);
+#endif
+	if(nErrCode != 0)
+		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+	return nErrCode;
 }
 
 /**************************************************************************//**
@@ -204,7 +223,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 	char insertQuery[DB_QUERY_SIZE] = {0x00};
 	WeldRecipeSC recipe;
 	struct tm timeStamp;
-	vxbRtcSet(&timeStamp);
+	vxbRtcGet(&timeStamp);
 	
 	memcpy(&recipe, buffer, sizeof(WeldRecipeSC));
 	sprintf(insertQuery, string(strInsert + strWeldRecipeTableFormat).c_str(),
@@ -241,11 +260,11 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 			recipe.m_RecipePicPath
 			);
 	nErrCode = SingleTransaction((string)insertQuery);
+#ifdef DEBUG_YANG
+    printf("##StoreWeldRecipe: result %d - %s\n\n", nErrCode, insertQuery);
+#endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
 }
-
-
-
 
