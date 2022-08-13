@@ -6,10 +6,16 @@ rebuild the project to "L20_RTP.vxe"
 create new RTP project with file "rtp.c", build it to "test.vxe"
 
 3.
-run "L20_RTP.vxe" to wait for messages
+run "L20_RTP.vxe" to wait for messages,
+with option '&' to run in the background
 
 4.
-run "test.vxe" to send messages in sequence
+run "test.vxe" to send messages in sequence,
+with option 'c' firstly to clear all tables,
+option '2' to insert into and query from table WeldResult,
+option '1' to insert into and query from table WeldRecipe,
+option '3' to insert into and query from table WeldSignature,
+
 
 the commands should be like following
 -> cmd
@@ -35,11 +41,11 @@ TO_DATA_TASK_WELD_SIGN_CLEAR: 0
 TO_DATA_TASK_WELD_RESULT_CLEAR: 0
 TO_DATA_TASK_WELD_RESULT_CLEAR: 0
 [vxWorks *]# 
-[vxWorks *]# t.vxe 2
+[vxWorks *]# test.vxe 2
 ##StoreWeldResult: result 0 - insert into WeldResultTable (CreatedTime, RecipeID, WeldEnergy, TriggerPressure, WeldPressure, WeldAmplitude, WeldTime, WeldPeakPower, TriggerHeight, WeldHeight, AlarmFlag, SequenceID, CycleCounter, partID) values (1505149803,456,0,0,0,0,0,0,0,0,0,0,0,'');
 DataTask: query data from db WeldResultTable: 1,,1505149803,456,,0,0,0,0,0,0,0,0,0,0,0
 [vxWorks *]# 
-[vxWorks *]# t.vxe 1
+[vxWorks *]# test.vxe 1
 ##StoreWeldRecipe: result 0 - insert into WeldRecipeTable (UserID, IsValidate, Amplitude, Width, WeldPressure, TriggerPressure, TimePlus, TimeMinus, PeakPowerPlus, PeakPowerMinus, TriggerHeightPlus, TriggerHeightMinus, WeldHeightPlus, WeldHeightMinus, WeldMode, ModeValue, PreBurst, HoldTime, SqueezeTime, AfterBurstDelay, AfterBurstDuration, AfterBurstAmplitude, WeldHeight, MeasuredHeight, StepWeldMode, EnergyToStep, TimeToStep, PowerToStep, RecipeName, DateTime, PresetPicPath) values (0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-2139299548, '','','','2022-08-11 00:00:00','','DataTask: query data from db WeldResultTable: 1,,1505149803,456,,0,0,0,0,0,0,0,0,0,0,0
 nergy, TriggerPressure, WeldPressure, WeldAmplitude, WeldTime, WeldPeakPower, TriggerHeight, WeldHeight, AlarmFlag, SequenceID, CycleCounter, partID) values (1505149803,456,0,0,0,0,0,0,0,0,0,0,0,'');
 ');
@@ -47,7 +53,7 @@ DataTask: query data from db WeldRecipeTable: 1,2022-08-11 00:00:00,,0,DataTask:
 nergy, TriggerPressure, WeldPressure, WeldAmplitude, WeldTime, WeldPeakPower, TriggerHeight, WeldHeight, AlarmFlag, SequenceID, CycleCounter, partID) values (1505149803,456,0,0,0,0,0,0,0,0,0,0,0,');
 ,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-2139299548,,,
 [vxWorks *]# 
-[vxWorks *]# t.vxe 3
+[vxWorks *]# test.vxe 3
 ##StoreWeldSignature: result 0 - insert into WeldResultSignature (WeldResultID, WeldGraph) values (1,'');
 DataTask: query data from db WeldResultSignature: 1,1,
 [vxWorks *]# 
