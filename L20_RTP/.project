@@ -29,5 +29,10 @@
 			<type>2</type>
 			<location>D:/JerryW/SoftwareRelease/L20_Refresh/_Branson_User_Common/Utils</location>
 		</link>
+		<link>
+			<name>Kernel_Interface</name>
+			<type>2</type>
+			<location>D:/JerryW/SoftwareRelease/L20_Refresh/_Branson_User_Common/Kernel_Interface</location>
+		</link>
 	</linkedResources>
 </projectDescription>

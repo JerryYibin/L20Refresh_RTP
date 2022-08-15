@@ -9,10 +9,12 @@
 ***************************************************************************/
 
 #include "ActuatorTask.h"
+#include "ACStateMachine.h"
 #include "L20ActuatorTask.h"
 #include "P1ActuatorTask.h"
 /* Static member variables are initialized */
 unsigned int ActuatorTask::CoreState = 0;
+ActuatorTask* ActuatorTask::_ACObj = nullptr;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -21,8 +23,11 @@ unsigned int ActuatorTask::CoreState = 0;
 * \return  - None
 *
 ******************************************************************************/
-ActuatorTask::ActuatorTask() {
-	// TODO Auto-generated constructor stub
+ActuatorTask::ActuatorTask() 
+{
+	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]);
+	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
+	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 
 }
 
@@ -49,7 +54,23 @@ ActuatorTask::~ActuatorTask() {
  ******************************************************************************/
 void ActuatorTask::ProcessTaskMessage(MESSAGE & message)
 {
+	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
+	MESSAGE tmpMsg;
+	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
 	
+	while(msgQReceive(SELF_MSG_Q_ID, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+	{
+		Decode(tmpMsgBuffer, tmpMsg);
+		switch(tmpMsg.msgID)
+		{
+		case TO_ACT_TASK_PRESSURE_SET:
+			ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
+			break;
+		default:
+			LOGERR((char*)"Actuator_T: --------Unknown Message ID----------- : %d", tmpMsg.msgID, 0, 0);
+			break;
+		}
+	}
 }
 
 /**************************************************************************//**
@@ -62,7 +83,7 @@ void ActuatorTask::ProcessTaskMessage(MESSAGE & message)
 ******************************************************************************/
 unsigned int ActuatorTask::GetCoreState()
 {
-	return 0;
+	return CoreState;
 }
 
 /**************************************************************************//**
@@ -76,6 +97,25 @@ unsigned int ActuatorTask::GetCoreState()
 void ActuatorTask::SetCoreState(unsigned int coreState)
 {
 	CoreState = coreState;
+}
+
+bool ActuatorTask::IsMoving()
+{
+	if(_ACObj == nullptr)
+		return true;
+	else
+	{
+		//TODO it is the software bug still need to take account into 
+		return false; //_ACObj->IsMoving();
+	}
+}
+
+unsigned int ActuatorTask::GetMaxSpeed()
+{
+	if(_ACObj == nullptr)
+		return 0;
+	else
+		return _ACObj->GetMaxSpeed();
 }
 
 /**************************************************************************//**
@@ -97,10 +137,12 @@ void ActuatorTask::Actuator_System_Task(void)
 	ActuatorTask *ACTask = new(nothrow) L20ActuatorTask();
 	if(NULL != ACTask)
 	{
+		_ACObj = ACTask;
 		while(ACTask->bIsTaskRunStatus())
 		{
 			// wait for any one event
-			if(eventReceive(ACT_TASK_TX_EVENT | ACT_TASK_RX_EVENT | ACT_TASK_QEVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
+			
+			if(eventReceive(ACT_TASK_TX_EVENT | ACT_TASK_RX_EVENT | ACT_TASK_1MS_EVENT | ACT_TASK_QEVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
 			{
 				if(events & ACT_TASK_RX_EVENT)
 				{
@@ -111,6 +153,10 @@ void ActuatorTask::Actuator_System_Task(void)
 				{
 					// process incoming power supply data from SM here...
 					ACTask->PDODownloadRequest();
+				}
+				if(events & ACT_TASK_1MS_EVENT)
+				{
+					ACStateMachine::RunStateMachine();
 				}
 				if(events & ACT_TASK_QEVENT)
 				{

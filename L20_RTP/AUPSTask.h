@@ -12,9 +12,11 @@
 #define AUPSTASK_H_
 
 #include "PowerSupplyTask.h"
-
+#include "PCStateMachine.h"
 class AUPSTask: public PowerSupplyTask 
 {
+private:
+	static PCStateMachine::RxPDO_PC					RXBackup;
 public:
 	AUPSTask();
 	virtual				~AUPSTask					();

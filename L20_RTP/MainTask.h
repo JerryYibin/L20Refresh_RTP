@@ -94,7 +94,6 @@ void Actuator_Process_Task	(void);
 
 void ScDgtOutput_Task 		(void);
 void ScDgtInput_Task		(void);
-void Actuator_System_Task	(void);
 
 //void Socket_Gateway_Task	(void);
 

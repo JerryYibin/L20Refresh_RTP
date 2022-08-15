@@ -14,10 +14,7 @@
 #include "../CommonProperty.h"
 #include "../GPIO.h"
 #include "../Logger.h"
-#include "../CommunicationInterfaceCAN.h"
-#include "../ADC_SPI.h"
 #include "../Utility.h"
-#include "../DAC_SPI.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"	
@@ -38,7 +35,12 @@ public:
 		WELD_SONIC_ON,
 		SEEK_SONIC_ON,
 		HOLD,
-		WAIT_FOR_READY_POSITION
+		WAIT_FOR_READY_POSITION,
+		CALIBRATE_CHECK,
+		HEIGHTCORRECT,
+		READY_FOR_REQUEST,
+		DOWN_STROKE,
+		RETURN_STROKE
 	};
 	enum ACTIONS
 	{
@@ -60,18 +62,20 @@ public:
 	SCState();
 	virtual ~SCState();
 public:
-	virtual void Init() = 0;	/* Function to call on entry          */
+	virtual void Enter() = 0;	/* Function to call on entry          */
 	virtual void Loop() = 0;	/* Function to call every pass        */
+	virtual void Exit() = 0;	/* Function to call on exit           */
 	virtual void Fail() = 0;	/* Function to call on alarm handling */
 	
 	//virtual bool SendToMsgQ(MESSAGE& msgBuffer, const int& msgQID);
-	bool DefeatWeldAbortHandler(void);
-	bool ProcessAlarmHandler(void);
-protected:
-	CommunicationInterface_CAN* _objDCan;
-	CommunicationInterface_CAN::TX_MESSAGE m_Pressure;
+	bool 					DefeatWeldAbortHandler	(void);
+	bool 					ProcessAlarmHandler		(void);
+	virtual STATUS			SendToMsgQ 				(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks_t waitType = NO_WAIT);
 private:
 	void abortWeld(void);
+	CommonProperty*							CP;
+protected:
+	MSG_Q_ID	UI_MSG_Q_ID;
 };
 
 #endif /* SCSTATE_H_ */

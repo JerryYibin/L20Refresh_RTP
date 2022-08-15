@@ -10,7 +10,9 @@
 
 #ifndef HEIGHTENCODER_H_
 #define HEIGHTENCODER_H_
-
+#define RESOLUTION 5 //5um
+#define INIT_COUNT 30000
+#define HEIGHT_UNIT 1000 //convert mm to um
 class HeightEncoder 
 {
 public:
@@ -23,8 +25,7 @@ public:
 	static int GetMaxCount();
 	static int GetPositionCount();
 	static int GetDirection();
-	
-	
+	static int GetActualHeight();
 };
 
 #endif /* HEIGHTENCODER_H_ */

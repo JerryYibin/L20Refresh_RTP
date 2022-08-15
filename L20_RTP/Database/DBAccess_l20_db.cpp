@@ -16,7 +16,7 @@
 #include "DBAccess_l20_db.h"
 #include "commons.h"
 #include "../WeldResults.h"
-#include "../WeldResultsSignature.h"
+#include "../WeldResultSignature.h"
 #include "../Commons/recipedef.h"
 extern "C"
 {
@@ -173,7 +173,7 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 			pResult->PartID
 			);
 	nErrCode = SingleTransaction((string)insertQuery);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
     printf("##StoreWeldResult: result %d - %s\n\n", nErrCode, insertQuery);
 #endif
 	if(nErrCode != 0)
@@ -193,15 +193,15 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 {
 	int nErrCode = SQLITE_ERROR;
 	char insertQuery[DB_QUERY_SIZE] = {0x00};
-	WeldResultSignature_Data *pResult = (WeldResultSignature_Data *)buffer;
-
-	sprintf(insertQuery, string(strInsert + strWeldSignatureFormat).c_str(), 
-			TABLE_WELD_SIGNATURE,
-			pResult->WeldResultID,
-			pResult->WeldGraph
-			);
+//	WeldResultSignature_Data *pResult = (WeldResultSignature_Data *)buffer;
+//
+//	sprintf(insertQuery, string(strInsert + strWeldSignatureFormat).c_str(), 
+//			TABLE_WELD_SIGNATURE,
+//			pResult->WeldResultID,
+//			pResult->WeldGraph
+//			);
 	nErrCode = SingleTransaction((string)insertQuery);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
     printf("##StoreWeldSignature: result %d - %s\n\n", nErrCode, insertQuery);
 #endif
 	if(nErrCode != 0)
@@ -260,7 +260,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 			recipe.m_RecipePicPath
 			);
 	nErrCode = SingleTransaction((string)insertQuery);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
     printf("##StoreWeldRecipe: result %d - %s\n\n", nErrCode, insertQuery);
 #endif
 	if(nErrCode != 0)

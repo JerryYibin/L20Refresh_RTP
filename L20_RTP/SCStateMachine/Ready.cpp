@@ -6,33 +6,92 @@
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
  ---------------------------- MODULE DESCRIPTION ----------------------------   
- 
+ SC Ready state
 ***************************************************************************/
 
 #include "Ready.h"
-
+#include "../ACStateMachine.h"
+#include "../PCStateMachine.h"
+/**************************************************************************//**
+* \brief   - Constructor - 
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
 Ready::Ready() {
 	m_Actions = SCState::INIT;
 	m_State = SCState::READY;
-	m_Timeout = 0;
 }
-
+/**************************************************************************//**
+* 
+* \brief   - Destructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 Ready::~Ready() {
 	m_Actions = SCState::INIT;
 	m_State = NO_STATE;
 }
 
-void Ready::Init()
+/**************************************************************************//**
+* 
+* \brief   - Ready Enter.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void Ready::Enter()
 {
-	vxbGpioSetValue(GPIO::O_READY, GPIO_VALUE_HIGH);
-	m_Actions = SCState::LOOP;
+
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Ready Loop.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void Ready::Loop()
 {
-	m_Actions = SCState::JUMP;
+	if((ACStateMachine::AC_TX->ACState == ACState::AC_ALARM) || (PCStateMachine::PC_TX->PCState == PCState::PC_ALARM))
+		m_Actions = SCState::FAIL;
+	else
+		m_Actions = SCState::JUMP;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Ready Exit.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void Ready::Exit()
+{
+	
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Ready Fail.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void Ready::Fail()
 {
 	m_Actions = SCState::ABORT;

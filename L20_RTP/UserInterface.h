@@ -27,7 +27,10 @@ public:
 		TO_UI_TASK_SETUP_WELD_PARAM			= SCBL_SETUP_WELD_PARAM_WRITE_REQ,
 		TO_UI_TASK_SETUP_QUALITY_PARAM		= SCBL_SETUP_QUALITY_PARAM_WRITE_REQ,
 		TO_UI_TASK_SETUP_ADVANCED_PARAM 	= SCBL_SETUP_ADVANCED_PARAM_WRITE_REQ,
+		TO_UI_TASK_SYSINFO_READ				= SCBL_SYSINFO_READ_REQ,
 		TO_UI_TASK_LAST_WELD_RESULT,
+		
+		
 	};
 	UserInterface();
 	~UserInterface();
@@ -37,18 +40,23 @@ protected:
 	virtual void ProcessTaskMessage			(MESSAGE& message);	
 private:
 	//Just list out all the external Message ID, don't include itself.
-	MSG_Q_ID CTRL_MSG_Q_ID;
-	MSG_Q_ID DATA_MSG_Q_ID_CTRL;
-	MSG_Q_ID DATA_MSG_Q_ID_DATA;
-	MSG_Q_ID DATA_MSG_Q_ID_REQ;
-	MSG_Q_ID INTERFACE_MSG_Q_ID;
+	MSG_Q_ID 	CTRL_MSG_Q_ID;
+	MSG_Q_ID 	DATA_MSG_Q_ID_CTRL;
+	MSG_Q_ID 	DATA_MSG_Q_ID_DATA;
+	MSG_Q_ID 	DATA_MSG_Q_ID_REQ;
+	MSG_Q_ID 	INTERFACE_MSG_Q_ID;
+	MSG_Q_ID	ACT_MSG_Q_ID;
+	HEARTBEAT 	m_stHeartbeat;
 private:
 	void			responseHeartbeat					();
 	void			getActiveRecipe						();
+	void 			responseSystemInfo					();
+	void 			getDateAndTime						(char* timebuf);
 	void			updateOperationMode					(char* messagebuf);
 	void 			updateActiveRecipeGeneralParam		(char* recipebuf);
 	void			updateActiveRecipeQualityParam		(char* recipebuf);
 	void			updateActiveRecipeAdvancedParam		(char* recipebuf);
+	void			updateLastWeldResult				();
 };
 
 #endif /* USERINTERFACE_H_ */

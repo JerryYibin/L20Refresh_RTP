@@ -1,0 +1,35 @@
+/************************************************************************** 
+
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2021
+ 
+     This program is the property of Branson Ultrasonics Corporation
+     Copying of this software is expressly forbidden, without the prior
+     written consent of Branson Ultrasonics Corporation.
+ ---------------------------- MODULE DESCRIPTION ---------------------------- 
+ It is the common state for all the feature that need to trigger from the request of HMI  
+ 
+***************************************************************************/
+
+#ifndef READYFORREQUEST_H_
+#define READYFORREQUEST_H_
+
+#include "SCState.h"
+#include "SCAction.h"
+
+class ReadyForRequest: public SCState, public SCAction
+{
+public:
+	ReadyForRequest();
+	virtual ~ReadyForRequest();
+public:
+	virtual void 	Enter() 	override;
+	virtual void 	Loop() 		override;
+	virtual void 	Exit() 		override;
+	virtual void 	Fail() 		override;
+	virtual int 	Execute()	override;
+
+};
+
+
+
+#endif /* READYFORREQUEST_H_ */

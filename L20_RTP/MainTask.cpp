@@ -24,9 +24,9 @@
 #include "Utility.h"
 #include "HeightEncoder.h"
 #include "PowerSupplyTask.h"
-#include "PCStateMachine/PCStateMachine.h"
+#include "PCStateMachine.h"
 #include "ActuatorTask.h"
-#include "ACStateMachine/ACStateMachine.h"
+#include "ACStateMachine.h"
 #include <sysLib.h>
 #include <sdLib.h>
 extern "C"
@@ -55,7 +55,7 @@ MainTask::MainTask()
 										(char *) "PS_Task", 
 										(char *) "Actuator_System_Task", 
 										(char *) "UI_Task", 
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
 										(char *) "/Data_Task", 
 #else
 										(char *) "Data_Task", 
@@ -124,7 +124,7 @@ bool MainTask::CreateMsgQ()
 		if(t_index == CommonProperty::DATA_T)
 		{
 			// multiple queues for this task
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
             dbqID[0] = msgQOpen("/msgQControl", MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
             dbqID[1] = msgQOpen("/msgQData", MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
             dbqID[2] = msgQOpen("/msgQRequest", MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
@@ -242,11 +242,11 @@ bool MainTask::CreateTasks()
 	else
 		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::UI_T], tID);
 	
-	tID = taskSpawn((char*)CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T], INTERFACE_T_PRIORITY, VX_FP_TASK, INTERFACE_T_STACK_SIZE, (FUNCPTR)DataInterface::DataInterface_Task, 0,0,0,0,0,0,0,0,0,0);
-	if (tID == TASK_ID_ERROR)
-		bSuccess = false;
-	else
-		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T], tID);
+//	tID = taskSpawn((char*)CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T], INTERFACE_T_PRIORITY, VX_FP_TASK, INTERFACE_T_STACK_SIZE, (FUNCPTR)DataInterface::DataInterface_Task, 0,0,0,0,0,0,0,0,0,0);
+//	if (tID == TASK_ID_ERROR)
+//		bSuccess = false;
+//	else
+//		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T], tID);
 	
 	tID = taskSpawn((char*)CommonProperty::cTaskName[CommonProperty::DATA_T], DATA_T_PRIORITY, VX_FP_TASK, DATA_T_STACK_SIZE, (FUNCPTR)DataTask::Data_Task, 0,0,0,0,0,0,0,0,0,0);
 	if (tID == TASK_ID_ERROR)
@@ -454,6 +454,10 @@ int main()
 	ADC_AD7689::InitADConverter();
 	HeightEncoder::SetInitCount(30000);
 	HeightEncoder::SetMaxCount(0xffff);
+	
+	DAC_TLV5604::SetFrequencyOffset(0x1ff);
+	DAC_TLV5604::SetTunePoint(0x1ff);
+	
 	MainTask *MT 		= new(nothrow) MainTask();
 	if(NULL != MT)
 	{
@@ -592,11 +596,6 @@ void Socket_Gateway_Task(void)
 }
 
 void Actuator_Process_Task(void)
-{
-	
-}
-
-void Actuator_System_Task(void)
 {
 	
 }

@@ -17,8 +17,12 @@
 #include <vector>
 #include "Common.h"
 #include "WeldResults.h"
+#include "WeldResultSignature.h"
 #include "recipedef.h"
+#include "system_configuration_common.h"
+#include "system_information_common.h"
 #define TOTAL_NUM_OF_TASK			CommonProperty::END_OF_TASKS
+#define PRESSURE_NUM 81
 using namespace std;
 class CommonProperty {
 public:
@@ -47,12 +51,12 @@ public:
 		
 		END_OF_TASKS
 	};
-	struct WELD_SIGNATURE
+
+	struct HEIGHT_ENCODER
 	{
-		unsigned int Frquency;
-		unsigned int Power;
-		unsigned int Height;
-		unsigned int Amplitude;
+		unsigned int ZeroCount;
+		unsigned int TopCount;
+		bool Calibrated;
 	};
 public:
 
@@ -73,10 +77,14 @@ public:						/* Public member data */
 	bool					m_bTaskRun;
 	// static member for global access
 	static WELD_RESULT				WeldResult;
+	static WELD_RESULT				WeldResultForUI[50];
 	static WeldRecipeSC				ActiveRecipeSC;
 	static SYSTEM_INFO				SystemInfo;
 	static SYSTEM_CONFIG			SystemConfig;
 	static vector<WELD_SIGNATURE> 	WeldSignatureVector;
+	
+	static WELD_SIGNATURE_GROUP		WeldSignatureForUI[50];
+	static HEIGHT_ENCODER			RawHeight[PRESSURE_NUM];
 	
 private:					/* Private member functions */
 	

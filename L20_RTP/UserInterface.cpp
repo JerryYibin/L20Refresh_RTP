@@ -17,13 +17,16 @@ UserInterface owned using the class object pointer.
 **********************************************************************************************************/
 
 #include "UserInterface.h"
+#include "ActuatorTask.h"
 #include "Recipe.h"
 #include "CommunicationInterfaceHMI.h"
 #include "ControlTask.h"
 #include "SCStateMachine/SCStateMachine.h"
+#include "versions.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
+	#include "hwif/drv/resource/vxbRtcLib.h"
 }
 
 /**************************************************************************//**
@@ -45,6 +48,7 @@ UserInterface::UserInterface()
 	DATA_MSG_Q_ID_REQ  = CP->getMsgQId (Data_Task + "/Request");
 
 	INTERFACE_MSG_Q_ID	= CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T]);
+	ACT_MSG_Q_ID 		= CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]);
 }
 
 /**************************************************************************//**
@@ -94,6 +98,12 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 	case TO_UI_TASK_SETUP_ADVANCED_PARAM:
 		updateActiveRecipeAdvancedParam(message.Buffer);
 		break;
+	case TO_UI_TASK_SYSINFO_READ:
+		responseSystemInfo();
+		break;
+	case TO_UI_TASK_LAST_WELD_RESULT:
+		updateLastWeldResult();
+		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
 		break;
@@ -119,20 +129,7 @@ void UserInterface::responseHeartbeat()
 	sendMsg.msgLen  = 0;
 	sendMsg.rspCode = 0;
 	
-	HEARTBEAT stHeartbeat;
-	stHeartbeat.AlarmCode = 0;
-	stHeartbeat.Amplitude = CommonProperty::WeldResult.Amplitude;
-	stHeartbeat.CycleCounter = CommonProperty::WeldResult.CycleCounter;
-	stHeartbeat.PeakPower = CommonProperty::WeldResult.PeakPower;
-	stHeartbeat.PostHeight = CommonProperty::WeldResult.PostHeight;
-	stHeartbeat.PreHeight = CommonProperty::WeldResult.PreHeight;
-	stHeartbeat.RecipeNumber = CommonProperty::WeldResult.RecipeNum;
-	stHeartbeat.TotalEnergy = CommonProperty::WeldResult.TotalEnergy;
-	stHeartbeat.TriggerPress = CommonProperty::WeldResult.TriggerPressure;
-	stHeartbeat.WeldPress = CommonProperty::WeldResult.WeldPressure;
-	stHeartbeat.WeldTime = CommonProperty::WeldResult.WeldTime;
-	
-	memcpy(sendMsg.Buffer, &stHeartbeat, sizeof(HEARTBEAT));
+	memcpy(sendMsg.Buffer, &m_stHeartbeat, sizeof(HEARTBEAT));
 	sendMsg.msgLen = sizeof(HEARTBEAT);
 	
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
@@ -170,6 +167,9 @@ void UserInterface::getActiveRecipe()
 void UserInterface::updateActiveRecipeGeneralParam(char* recipebuf)
 {
 	Recipe::SetActiveRecipeGeneralParam((WeldParameterSetting*)recipebuf);
+	MESSAGE message;
+	message.msgID = ActuatorTask::TO_ACT_TASK_PRESSURE_SET;
+	SendToMsgQ(message, ACT_MSG_Q_ID);
 	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
 	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
 	sendMsg.msgID	= REQ_SETUP_WELD_PARAM_IDX;
@@ -230,9 +230,11 @@ void UserInterface::updateOperationMode(char* messagebuf)
 	message.msgID = ControlTask::TO_CTRL_OPERATE_MODE_IDX;
 	unsigned int* screenIndex = (unsigned int*)messagebuf;
 	unsigned int operationMode = SCStateMachine::NO_OPERATION;
+//	LOG(" screen index = %d \n", *screenIndex);
 	switch(*screenIndex)
 	{
 	case DASHBORD_SCREEN:
+	case SETUP_SCREEN:
 		operationMode = SCStateMachine::WELD;
 		break;
 	default:
@@ -241,6 +243,100 @@ void UserInterface::updateOperationMode(char* messagebuf)
 	}
 	memcpy(message.Buffer, &operationMode, sizeof(unsigned int));
 	SendToMsgQ(message, CTRL_MSG_Q_ID);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Sends response to UIC for system information request. 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseSystemInfo()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+
+	sendMsg.msgID	= REQ_SYSTEM_INFO_IDX;
+	sendMsg.msgLen  = 0;
+	sendMsg.rspCode = 0;
+	string timeStamp;
+	char macaddr[6] = {0,0,0,0,0,0};
+	char macAddr[20]={0x00};
+
+	
+	sprintf(CommonProperty::SystemInfo.version_SC,"%d.%d.%d",FWVersion::Get(FW_VERSION_SC, VERSION_MAJOR), 
+											FWVersion::Get(FW_VERSION_SC, VERSION_MINOR),
+											FWVersion::Get(FW_VERSION_SC, VERSION_BUILD));
+
+	sprintf(CommonProperty::SystemInfo.version_DB,"%d.%d.%d",FWVersion::Get(FW_VERSION_PC, VERSION_MAJOR),
+											FWVersion::Get(FW_VERSION_PC, VERSION_MINOR),
+											FWVersion::Get(FW_VERSION_PC, VERSION_BUILD));
+
+	sprintf(CommonProperty::SystemInfo.version_HMI,"%d.%d.%d",FWVersion::Get(FW_VERSION_AC, VERSION_MAJOR),
+											FWVersion::Get(FW_VERSION_AC, VERSION_MINOR),
+											FWVersion::Get(FW_VERSION_AC, VERSION_BUILD));
+	
+	snprintf(macAddr, sizeof(macAddr), "%02X:%02X:%02X:%02X:%02X:%02X",
+			macaddr[0],
+			macaddr[1],
+			macaddr[2],
+			macaddr[3],
+			macaddr[4],
+			macaddr[5]);
+
+	sprintf(CommonProperty::SystemInfo.psMacID, "%s", macAddr);
+	sprintf(CommonProperty::SystemInfo.psIP, "%s", "127.0.0.1");
+	sprintf(CommonProperty::SystemInfo.modelName, "%s", "L20_Refresh");
+	
+	memset(CommonProperty::SystemInfo.dateTime, 0, SYSINFO_SIZE * 2);
+	getDateAndTime(CommonProperty::SystemInfo.dateTime);
+	
+	memcpy(sendMsg.Buffer, &CommonProperty::SystemInfo, sizeof(SYSTEM_INFO));
+	sendMsg.msgLen = sizeof(SYSTEM_INFO);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Get current date and time 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::getDateAndTime(char* timebuf)
+{
+	struct tm time;
+	vxbRtcGet(&time);
+	sprintf(timebuf,"%d/%02d/%02d",time.tm_year+1900,time.tm_mon+1,time.tm_mday);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Update current weld result data
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::updateLastWeldResult()
+{
+	m_stHeartbeat.AlarmCode = 0;
+	m_stHeartbeat.Amplitude = CommonProperty::WeldResult.Amplitude;
+	m_stHeartbeat.CycleCounter = CommonProperty::WeldResult.CycleCounter;
+	m_stHeartbeat.PeakPower = CommonProperty::WeldResult.PeakPower;
+	m_stHeartbeat.PostHeight = CommonProperty::WeldResult.PostHeight;
+	m_stHeartbeat.PreHeight = CommonProperty::WeldResult.PreHeight;
+	m_stHeartbeat.RecipeNumber = CommonProperty::WeldResult.RecipeNum;
+	m_stHeartbeat.TotalEnergy = CommonProperty::WeldResult.TotalEnergy;
+	m_stHeartbeat.TriggerPress = CommonProperty::WeldResult.TriggerPressure;
+	m_stHeartbeat.WeldPress = CommonProperty::WeldResult.WeldPressure;
+	m_stHeartbeat.WeldTime = CommonProperty::WeldResult.WeldTime;
 }
 
 /**************************************************************************//**
@@ -286,3 +382,4 @@ void UserInterface::UserInterface_Task(void)
 	UI = NULL;	
 	taskSuspend(taskIdSelf());
 }
+

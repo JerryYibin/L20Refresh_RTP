@@ -127,3 +127,17 @@ int HeightEncoder::GetDirection()
 {
 	return vxbEqepGetDirection(1);
 }
+
+/**************************************************************************//**
+* 
+* \brief   - Get actual height value with calibration deflection.
+*
+* \param   - None.
+*
+* \return  - Actual height value
+*
+******************************************************************************/
+int HeightEncoder::GetActualHeight()
+{
+	return (GetPositionCount() - INIT_COUNT) * RESOLUTION;
+}

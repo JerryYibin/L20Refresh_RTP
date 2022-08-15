@@ -16,6 +16,8 @@ ControlTask owned using the class object pointer.
 
 #include "ControlTask.h"
 #include "SCStateMachine/SCStateMachine.h"
+#include "Utils.h"
+#include "SCStateMachine/SCState.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -87,6 +89,9 @@ void ControlTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_CTRL_OPERATE_MODE_IDX:
 		updateOperationMode(message.Buffer);
 		break;
+	case TO_CTRL_CALIBRATE_START_IDX:
+		SCStateMachine::getInstance()->ExecuteStateAction(SCState::READY_FOR_REQUEST);
+		break;	
 	default:
 		LOGERR((char *)"CTRL_T : ----------Unknown Message ID------------- : %d",message.msgID, 0, 0);
 		break;

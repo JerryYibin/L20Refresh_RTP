@@ -22,7 +22,8 @@ WELD_RESULT								CommonProperty::WeldResult;
 WeldRecipeSC							CommonProperty::ActiveRecipeSC;
 SYSTEM_INFO								CommonProperty::SystemInfo;
 SYSTEM_CONFIG							CommonProperty::SystemConfig;
-vector<CommonProperty::WELD_SIGNATURE>	CommonProperty::WeldSignatureVector;
+vector<WELD_SIGNATURE>	CommonProperty::WeldSignatureVector;
+CommonProperty::HEIGHT_ENCODER			CommonProperty::RawHeight[PRESSURE_NUM];
 /**************************************************************************//**
 * \brief   - Constructor - Read default recipe and load into MAP.
 *
@@ -50,6 +51,12 @@ CommonProperty::CommonProperty()
 	ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin = 0;
 	ActiveRecipeSC.m_QualityWindowSetting.m_TimeMax = 5000;
 	ActiveRecipeSC.m_AdvancedSetting.m_WeldMode = ENERGY_MODE;
+	char tmpName[] = "NewRecipe";
+	memcpy(ActiveRecipeSC.m_RecipeName, tmpName, sizeof(tmpName));
+	
+	SystemInfo.psLifeCounter = 0;
+	SystemInfo.psFrequency = 20;
+	SystemInfo.psWatt = 4000;
 }
 
 /**************************************************************************//**
@@ -116,7 +123,6 @@ void CommonProperty::setTaskId(string TaskName, TASK_ID tid)
 {
 	m_TaskIdMap.insert(pair<string, TASK_ID>(TaskName, tid));
 }
-
 
 
 /**************************************************************************//**

@@ -22,40 +22,6 @@
 #include "Utils.h"
 
 
-Utilities* Utilities::m_utilities = nullptr;
-
-/**************************************************************************//**
-*
-* \brief Utilities::getInstance: get the object
-*
-* \param none
-*
-* \return the signle object
-*
-******************************************************************************/
-Utilities* Utilities::getInstance()
-{
-    if (m_utilities == nullptr)
-    {
-        m_utilities = new Utilities();
-    }
-    return m_utilities;
-}
-
-/**************************************************************************//**
-*
-* \brief Utilities::Utilities: constructor
-*
-* \param none
-*
-* \return none
-*
-******************************************************************************/
-Utilities::Utilities()
-{
-
-}
-
  /**************************************************************************//**
  *
  * \brief Utilities::convertSecToMsec: Convert seconds to millseconds
@@ -215,10 +181,3 @@ double Utilities::convertlbstoN(double dbLecibals)
     dbNeutons = dbLecibals * (double)4.44822;
     return dbNeutons;
 }
-
-
-
-
-
-
-

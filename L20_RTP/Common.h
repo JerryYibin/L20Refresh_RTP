@@ -33,6 +33,9 @@
 #include "Logger.h"
 #include "HMI_LRC_comms.h"
 
+#define PERFORMANCE_MEASURE 1
+#define UNITTEST_DATABASE	1
+
 /* Macro defined for VxWorks message queue length */
 #define MAX_SIZE_OF_MSG_LENGTH				768
 #define MSG_SIZE							512
@@ -63,16 +66,17 @@
 
 /* Event registers */
 #define CTRL_1MS							VXEV01
-#define CTRL_1S								0x20
 #define DIG_HEARTBEAT_EVENT					VXEV02
 #define	CON_EVENT							0x02
 #define	DATA_TASK_EVENT						0x04
 #define	ACT_TASK_TX_EVENT					0x10
 #define	ACT_TASK_RX_EVENT					0x20
-#define ACT_TASK_QEVENT						0x40
+#define ACT_TASK_1MS_EVENT					0x40
+#define ACT_TASK_QEVENT						0x80
 #define PS_TASK_TX_EVENT					0x10
 #define PS_TASK_RX_EVENT					0x20
-#define PS_TASK_QEVENT						0x40
+#define PS_TASK_1MS_EVENT					0x40
+#define PS_TASK_QEVENT						0x80
 #define SHUTDOWN_EVENT						VXEV08
 
 struct MESSAGE
@@ -90,6 +94,8 @@ enum UIC_IDENTITIES
 	REQ_SETUP_WELD_PARAM_IDX		= SCBL_SETUP_WELD_PARAM_WRITE_REQ,
 	REQ_SETUP_QUALITY_PARAM_IDX		= SCBL_SETUP_QUALITY_PARAM_WRITE_REQ,
 	REQ_SETUP_ADVANCED_PARAM_IDX 	= SCBL_SETUP_ADVANCED_PARAM_WRITE_REQ,
+	
+	REQ_SYSTEM_INFO_IDX				= SCBL_SYSINFO_READ_REQ,
 };
 
 #endif /* COMMON_H_ */
