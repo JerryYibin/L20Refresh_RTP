@@ -10,6 +10,7 @@ extern STATUS vxbGpioIntConnectInternal(UINT32 id);
 extern STATUS vxbGpioIntDisconnect(UINT32, VOIDFUNCPTR, void *);
 
 #define TASK_NAME "/gpioIsr"
+#define NAME_SIZE 12
 
 static void isrTask(FUNCPTR routine, _Vx_usr_arg_t arg)
     {
@@ -20,7 +21,7 @@ static void isrTask(FUNCPTR routine, _Vx_usr_arg_t arg)
     }
 STATUS vxbGpioIntConnect(UINT32 id, VOIDFUNCPTR pIsr, void *pArg)
     {
-    char taskName[12];
+    char taskName[NAME_SIZE];
     TASK_ID taskId;
 
     vxbGpioIntDisconnect(id, pIsr, pArg);

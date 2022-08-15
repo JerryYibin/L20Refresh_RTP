@@ -43,48 +43,36 @@
 
 #define BIT_MASK(x)		(1<<x)
 
-
-
-
+#define BIT(x)			(1<<x)
+// helper macros for abs
+#define _ABS(a) \
+	({ __typeof__ (a) _a = (a); \
+		_a < 0 ? (0 - _a) : _a;})
 
 
 class Utilities
 {
-
-public:
-
-    static Utilities* getInstance();
-
 public:
     //um->mm
-    double convertMicrometreToMillimetre(double length);
+    static double convertMicrometreToMillimetre(double length);
     //mm->um
-    double convertMillimetreToMicrometre(double length);
+    static double convertMillimetreToMicrometre(double length);
     //s->ms
-    double convertSecToMsec(double time);
+    static double convertSecToMsec(double time);
     //ms->s
-    double convertMsecToSec(double time);
+    static double convertMsecToSec(double time);
     //inch->um
-    double convertInchesToMicrometre(double dbInches);
+    static double convertInchesToMicrometre(double dbInches);
     //inch->mm
-    double convertInchesToMillimetre(double dbInches);
+    static double convertInchesToMillimetre(double dbInches);
     //um->inch
-    double convertMicrometreToInches(double dbmicrometres);
+    static double convertMicrometreToInches(double dbmicrometres);
     //mm->inch
-    double convertMillimetreToInches(double dbmillimetres);
+    static double convertMillimetreToInches(double dbmillimetres);
     //N->lbs
-    double convertNtolbs(double dbNewtons);
+    static double convertNtolbs(double dbNewtons);
     //lbs->N
-    double convertlbstoN(double dbLecibals);
-
-
-private:
-
-    explicit Utilities();
-
-private:
-
-    static Utilities* m_utilities;
+    static double convertlbstoN(double dbLecibals);
 };
 
 

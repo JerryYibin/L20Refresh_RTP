@@ -9,6 +9,7 @@ extern int sprintf(char *, const char *, ...);
 extern STATUS vxbEhrPwmRegISRInternal(UINT8, UINT32, UINT32);
 
 #define TASK_NAME "/pwmIsr"
+#define NAME_SIZE 12
 
 static void isrTask(FUNCPTR routine, _Vx_usr_arg_t arg)
     {
@@ -27,7 +28,7 @@ STATUS vxbEhrPwmRegisterISR
     UINT32 mode
     )
     {
-    char taskName[12];
+    char taskName[NAME_SIZE];
     TASK_ID taskId;
 
     sprintf(taskName, "%s%x", TASK_NAME, ehrpwm&0xff);
