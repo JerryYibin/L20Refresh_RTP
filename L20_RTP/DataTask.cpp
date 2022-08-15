@@ -36,7 +36,7 @@ DBAccess* DataTask::_ObjDBConn = nullptr;
 ******************************************************************************/
 DataTask::DataTask()
 {
-//	ConnectDB();
+	ConnectDB();
 	// Load the data message Q name
 	string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
 	SELF_MSG_Q_ID_CTRL = CP->getMsgQId(Data_Task + "/Control");
@@ -60,7 +60,7 @@ DataTask::DataTask()
 ******************************************************************************/
 DataTask::~DataTask() 
 {
-//	CloseDB();
+	CloseDB();
 }
 
 /*************************************************************************//**
@@ -108,9 +108,13 @@ int DataTask::CloseDB()
  ******************************************************************************/
 void DataTask::ProcessTaskMessage(MESSAGE& message)
 {
+    int sta;
     char cmd[100];
 	switch(message.msgID)
 	{
+	case TO_DATA_TASK_WELD_RECIPE_INSERT:
+		_ObjDBConn->StoreWeldRecipe(message.Buffer);
+		break;
 	case TO_DATA_TASK_WELD_RESULT_INSERT:
 #ifdef PERFORMANCE_MEASURE
 //		m_startTime = TimeStamp();
@@ -124,23 +128,64 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_WELD_SIGN_INSERT:
 		_ObjDBConn->StoreWeldSignature(message.Buffer);
 		break;
-	case TO_DATA_TASK_UPDATE:
-		printf("DataTask: update data in db %d\n", message.msgID);
+
+	case TO_DATA_TASK_WELD_RESULT_QUERY:
+        {
+        sprintf(cmd, "select * from %s order by ID desc limit 1;", TABLE_WELD_RESULT);
+        string str = _ObjDBConn->ExecuteQuery(cmd);
+        printf("DataTask: query data from db %s: %s\n", TABLE_WELD_RESULT, str.c_str());
 		break;
-	case TO_DATA_TASK_QUERY:
-//        sprintf(cmd, "select * from %s order by ID desc limit 1;", m_DbConn->tableName[tmpMsg.msgData.db]);
-//        string str = m_DbConn->ExecuteQuery(cmd);
-//        printf("DataTask: query data from db %d: %s\n", tmpMsg.msgData.db, str.c_str());
+        }
+	case TO_DATA_TASK_WELD_RECIPE_QUERY:
+        {
+        sprintf(cmd, "select * from %s order by ID desc limit 1;", TABLE_WELD_RECIPE);
+        string str = _ObjDBConn->ExecuteQuery(cmd);
+        printf("DataTask: query data from db %s: %s\n", TABLE_WELD_RECIPE, str.c_str());
 		break;
-	case TO_DATA_TASK_DELETE:
-//        sprintf(cmd, "delete from %s;",
-//                m_DbConn->tableName[tmpMsg.msgData.db]);
-//        m_DbConn->ExecuteInsert(cmd);
-//        sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';",
-//                m_DbConn->tableName[tmpMsg.msgData.db]);
-//        m_DbConn->ExecuteInsert(cmd);
+        }
+	case TO_DATA_TASK_WELD_SIGN_QUERY:
+        {
+        sprintf(cmd, "select * from %s order by ID desc limit 1;", TABLE_WELD_SIGNATURE);
+        string str = _ObjDBConn->ExecuteQuery(cmd);
+        printf("DataTask: query data from db %s: %s\n", TABLE_WELD_SIGNATURE, str.c_str());
 		break;
-	case TO_DATA_TASK_CLEAR:
+        }
+	case TO_DATA_TASK_WELD_RECIPE_CLEAR:
+        sprintf(cmd, "delete from %s;", TABLE_WELD_RECIPE);
+	    sta = _ObjDBConn->SingleTransaction((string)cmd);
+#ifdef DEBUG_YANG
+        printf("TO_DATA_TASK_WELD_RECIPE_CLEAR: %d\n", sta);
+#endif
+        sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';",
+                TABLE_WELD_RECIPE);
+	    sta = _ObjDBConn->SingleTransaction((string)cmd);
+#ifdef DEBUG_YANG
+        printf("TO_DATA_TASK_WELD_RECIPE_CLEAR: %d\n", sta);
+#endif
+		break;
+	case TO_DATA_TASK_WELD_RESULT_CLEAR:
+        sprintf(cmd, "delete from %s;", TABLE_WELD_RESULT);
+	    sta = _ObjDBConn->SingleTransaction((string)cmd);
+#ifdef DEBUG_YANG
+        printf("TO_DATA_TASK_WELD_RESULT_CLEAR: %d\n", sta);
+#endif
+        sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';", TABLE_WELD_RESULT);
+	    sta = _ObjDBConn->SingleTransaction((string)cmd);
+#ifdef DEBUG_YANG
+        printf("TO_DATA_TASK_WELD_RESULT_CLEAR: %d\n", sta);
+#endif
+		break;
+	case TO_DATA_TASK_WELD_SIGN_CLEAR:
+        sprintf(cmd, "delete from %s;", TABLE_WELD_SIGNATURE);
+	    sta = _ObjDBConn->SingleTransaction((string)cmd);
+#ifdef DEBUG_YANG
+        printf("TO_DATA_TASK_WELD_SIGN_CLEAR: %d\n", sta);
+#endif
+        sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';", TABLE_WELD_SIGNATURE);
+	    sta = _ObjDBConn->SingleTransaction((string)cmd);
+#ifdef DEBUG_YANG
+        printf("TO_DATA_TASK_WELD_SIGN_CLEAR: %d\n", sta);
+#endif
 		break;
 	default:
 		LOGERR((char *)"DataTask: --------Unknown Message ID----------- : ", message.msgID, 0, 0);

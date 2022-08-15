@@ -55,7 +55,11 @@ MainTask::MainTask()
 										(char *) "PS_Task", 
 										(char *) "Actuator_System_Task", 
 										(char *) "UI_Task", 
+#ifdef DEBUG_YANG
+										(char *) "/Data_Task", 
+#else
 										(char *) "Data_Task", 
+#endif
 										(char *) "Data_Interface_Task",
 										(char *) "Alarm_Task", 
 										(char *) "BarcodeReader_Task", 
@@ -120,10 +124,16 @@ bool MainTask::CreateMsgQ()
 		if(t_index == CommonProperty::DATA_T)
 		{
 			// multiple queues for this task
+#ifdef DEBUG_YANG
+            dbqID[0] = msgQOpen("/msgQControl", MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
+            dbqID[1] = msgQOpen("/msgQData", MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
+            dbqID[2] = msgQOpen("/msgQRequest", MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
+            printf("dbqID[0] = %#x", dbqID[0]);
+#else
 			dbqID[0] = msgQCreate(MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO);
 			dbqID[1] = msgQCreate(MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO);
 			dbqID[2] = msgQCreate(MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO);
-			
+#endif			
 			if(MSG_Q_ID_NULL != dbqID[0] && MSG_Q_ID_NULL != dbqID[1] && MSG_Q_ID_NULL != dbqID[2])
 			{
 				CP->setMsgQId(taskinfo[t_index].TaskName + "/Control", 	dbqID[0]);

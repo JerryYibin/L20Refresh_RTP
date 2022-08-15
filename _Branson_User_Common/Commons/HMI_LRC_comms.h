@@ -97,5 +97,4 @@ struct HEARTBEAT
 	unsigned int 	PreHeight;
 	unsigned int	PostHeight;
 };
-
 #endif
