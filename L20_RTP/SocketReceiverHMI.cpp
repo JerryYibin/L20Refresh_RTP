@@ -74,6 +74,10 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 		message.msgID = UserInterface::TO_UI_TASK_HEART_BEAT;
 		SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
+	case REQ_SYSTEM_INFO_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_SYSINFO_READ;
+		SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
 	case REQ_ACTIVE_RECIPE_INFO_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_ACTIVE_RECIPE_INFO;
 		SendToMsgQ(message, UI_MSG_Q_ID);
@@ -91,7 +95,7 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 		SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	default:
-		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : ", message.msgID, 0, 0);
+		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);
 		break;
 	}
 }

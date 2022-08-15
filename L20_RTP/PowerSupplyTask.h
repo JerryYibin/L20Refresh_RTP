@@ -39,6 +39,7 @@ public:
 	static void			PowerSupply_Task					(void);
 private:
 	MSG_Q_ID			CTRL_MSG_Q_ID;
+	MSG_Q_ID			UI_MSG_Q_ID;
 	MSG_Q_ID 			MAINTENANCE_MSG_Q_ID;
 	
 	static unsigned int CoreState;

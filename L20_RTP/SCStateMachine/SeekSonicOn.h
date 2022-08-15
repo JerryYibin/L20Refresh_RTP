@@ -20,8 +20,9 @@ public:
 	SeekSonicOn();
 	~SeekSonicOn();
 public:
-	virtual void Init() override;
+	virtual void Enter() override;
 	virtual void Loop() override;
+	virtual void Exit() override;
 	virtual void Fail() override;
 };
 

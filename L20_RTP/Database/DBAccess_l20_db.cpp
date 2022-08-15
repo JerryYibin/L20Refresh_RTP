@@ -173,7 +173,7 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 			pResult->PartID
 			);
 	nErrCode = SingleTransaction((string)insertQuery);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
     printf("##StoreWeldResult: result %d - %s\n\n", nErrCode, insertQuery);
 #endif
 	if(nErrCode != 0)
@@ -201,7 +201,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 //			pResult->WeldGraph
 //			);
 	nErrCode = SingleTransaction((string)insertQuery);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
     printf("##StoreWeldSignature: result %d - %s\n\n", nErrCode, insertQuery);
 #endif
 	if(nErrCode != 0)
@@ -260,7 +260,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 			recipe.m_RecipePicPath
 			);
 	nErrCode = SingleTransaction((string)insertQuery);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
     printf("##StoreWeldRecipe: result %d - %s\n\n", nErrCode, insertQuery);
 #endif
 	if(nErrCode != 0)

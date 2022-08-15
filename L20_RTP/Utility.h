@@ -8,7 +8,7 @@
 #ifndef UTILITY_H_
 #define UTILITY_H_
 #define POWER_FACTOR 	(3.0 * 0xFFFF / 4.0)
-#define POWER_MAX		4000
+#define POWER_MAX		40000
 #define DAC_FACTOR 		0x03FF
 #define PRESSURE_MAX	120000
 #define AMPLITUDE_MAX	72

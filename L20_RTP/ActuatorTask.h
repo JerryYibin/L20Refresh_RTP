@@ -16,6 +16,11 @@
 class ActuatorTask: public SCTask 
 {
 public:
+	enum MESSAGE_IDENTIFY
+	{
+		/* Macro defined to UIC */
+		TO_ACT_TASK_PRESSURE_SET,
+	};
 	ActuatorTask();
 	virtual				~ActuatorTask();
 	
@@ -26,13 +31,17 @@ public:
 	
 	static unsigned int	GetCoreState						();
 	static void			SetCoreState						(unsigned int coreState);
+	static bool			IsMoving							();
+	static unsigned int GetMaxSpeed							();	
 	
 	static void			Actuator_System_Task				(void);
 private:
 	MSG_Q_ID		CTRL_MSG_Q_ID;
+	MSG_Q_ID		UI_MSG_Q_ID;
 	MSG_Q_ID 		MAINTENANCE_MSG_Q_ID;
 	
 	static unsigned int CoreState;
+	static ActuatorTask* _ACObj;
 	
 };
 

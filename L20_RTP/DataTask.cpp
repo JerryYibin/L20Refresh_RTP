@@ -153,37 +153,37 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_WELD_RECIPE_CLEAR:
         sprintf(cmd, "delete from %s;", TABLE_WELD_RECIPE);
 	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
         printf("TO_DATA_TASK_WELD_RECIPE_CLEAR: %d\n", sta);
 #endif
         sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';",
                 TABLE_WELD_RECIPE);
 	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
         printf("TO_DATA_TASK_WELD_RECIPE_CLEAR: %d\n", sta);
 #endif
 		break;
 	case TO_DATA_TASK_WELD_RESULT_CLEAR:
         sprintf(cmd, "delete from %s;", TABLE_WELD_RESULT);
 	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
         printf("TO_DATA_TASK_WELD_RESULT_CLEAR: %d\n", sta);
 #endif
         sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';", TABLE_WELD_RESULT);
 	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
         printf("TO_DATA_TASK_WELD_RESULT_CLEAR: %d\n", sta);
 #endif
 		break;
 	case TO_DATA_TASK_WELD_SIGN_CLEAR:
         sprintf(cmd, "delete from %s;", TABLE_WELD_SIGNATURE);
 	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
         printf("TO_DATA_TASK_WELD_SIGN_CLEAR: %d\n", sta);
 #endif
         sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';", TABLE_WELD_SIGNATURE);
 	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
         printf("TO_DATA_TASK_WELD_SIGN_CLEAR: %d\n", sta);
 #endif
 		break;

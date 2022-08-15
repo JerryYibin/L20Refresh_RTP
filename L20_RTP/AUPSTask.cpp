@@ -11,14 +11,16 @@
 #include "AUPSTask.h"
 #include "ADC_SPI.h"
 #include "DAC_SPI.h"
-#include "PCStateMachine/PCStateMachine.h"
+#include "PCStateMachine.h"
 #include "GPIO.h"
-#include "PCStateMachine/PCState.h"
+#include "PCState.h"
 #include "Utils.h"
+#include "Utility.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"	
 }
+PCStateMachine::RxPDO_PC AUPSTask::RXBackup;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -29,6 +31,8 @@ extern "C"
 ******************************************************************************/
 AUPSTask::AUPSTask() {
 	// TODO Auto-generated constructor stub
+	RXBackup.TargetAmplitude = 0;
+	PCStateMachine::PC_RX->TargetAmplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
 
 }
 
@@ -55,10 +59,14 @@ AUPSTask::~AUPSTask() {
 ******************************************************************************/
 void AUPSTask::PDOUploadRequest()
 {
-	// run state machine here...
-	PCStateMachine::RunStateMachine();
+	unsigned short tmpAmplitude;
 	ADC_AD7689::RunADCSample();
-	DAC_TLV5604::SetAmplitude(PCStateMachine::PC_RX->TargetAmplitude);
+	if(RXBackup.TargetAmplitude != PCStateMachine::PC_RX->TargetAmplitude)
+	{
+		tmpAmplitude = Utility::Amplitude2HEX(PCStateMachine::PC_RX->TargetAmplitude);
+		DAC_TLV5604::SetAmplitude(tmpAmplitude);
+		RXBackup.TargetAmplitude = PCStateMachine::PC_RX->TargetAmplitude;
+	}
 	
 }
 

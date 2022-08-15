@@ -6,20 +6,48 @@
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
  ---------------------------- MODULE DESCRIPTION ----------------------------   
- 
+ SC State
 ***************************************************************************/
 
 #include "SCState.h"
+
+/**************************************************************************//**
+* \brief   - Constructor - 
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
 SCState::SCState() {
 	// TODO Auto-generated constructor stub
-	_objDCan = CommunicationInterface_CAN::GetInstance();
+	CP = CommonProperty::getInstance();
+	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 
 }
-
+/**************************************************************************//**
+* 
+* \brief   - Destructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 SCState::~SCState() {
 	// TODO Auto-generated destructor stub
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Abort Weld.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+//TODO Consider to not directly call hardware function here
 void SCState::abortWeld(void)
 {
 	///* Clear outputs and panel data */
@@ -43,6 +71,15 @@ void SCState::abortWeld(void)
 	//SetPressure(ActivePreset.m_WeldParam.TPressure);
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Abort Weld.
+*
+* \param   - None.
+*
+* \return  - bool.
+*
+******************************************************************************/
 bool SCState::DefeatWeldAbortHandler()
 {
 	bool isAbort = false;
@@ -58,7 +95,15 @@ bool SCState::DefeatWeldAbortHandler()
 //	}
 	return isAbort;
 }
-
+/**************************************************************************//**
+* 
+* \brief   - Abort Weld.
+*
+* \param   - Process Alarm
+*
+* \return  - bool.
+*
+******************************************************************************/
 bool SCState::ProcessAlarmHandler(void)
 {
 	bool isReset = false;
@@ -82,7 +127,38 @@ bool SCState::ProcessAlarmHandler(void)
 	return isReset;
 }
 
-/*bool SCState::SendToMsgQ(MESSAGE & msgBuffer, const int & msgQID)
+/**************************************************************************//**
+* \brief   - Post message into message queue based on Q-ID.
+*
+* \param   - MSG_Q_ID msgQID, Message& msg.
+*
+* \return  - None.
+*
+******************************************************************************/
+STATUS SCState::SendToMsgQ(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks_t waitType)
 {
-	return false;
-}*/
+	string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
+	STATUS status = ERROR;
+	
+	if(msgQSend(msgQID, reinterpret_cast<char*>(&msgBuffer), sizeof(msgBuffer), waitType, MSG_PRI_NORMAL) == OK)
+	{
+//		printf("\nSCTask::SendToMsg: %d OK\n",msgQID);
+//		printf("\nCP->GetMsgQId(Data_Task Control): %d OK\n",CP->GetMsgQId(Data_Task + "/Control"));
+//		printf("\nCP->GetMsgQId(Data_Task Data): %d OK\n",CP->GetMsgQId(Data_Task + "/Data"));
+//		printf("\nCP->GetMsgQId(Data_Task Request): %d OK\n",CP->GetMsgQId(Data_Task + "/Request"));
+		
+		if (msgQID == CP->getMsgQId(Data_Task + "/Control") || msgQID == CP->getMsgQId(Data_Task + "/Data") || msgQID == CP->getMsgQId(Data_Task + "/Request"))
+		{		
+			if(eventSend (CP->getTaskId(CommonProperty::cTaskName[CommonProperty::DATA_T]), DATA_TASK_EVENT) == OK)
+				status = OK;
+			else
+				LOGERR((char *) "SCTask : SendToMsgQ: eventSend Error\n",0,0,0);
+		}
+		else
+			status = OK;
+	}
+	else
+		LOGERR((char *) "SCTask : SendToMsgQ: msgQSend Error\n",0,0,0);
+
+	return status;
+}

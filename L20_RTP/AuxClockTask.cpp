@@ -24,7 +24,6 @@ extern "C"
 }
 
 AuxClockTask* AuxClockTask::m_AuxTaskObj = nullptr;
-CommunicationInterface_CAN::TX_MESSAGE AuxClockTask::m_Pressure;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -35,7 +34,6 @@ CommunicationInterface_CAN::TX_MESSAGE AuxClockTask::m_Pressure;
 ******************************************************************************/
 AuxClockTask::AuxClockTask() {
 	// TODO Auto-generated constructor stub
-	_objDCan = CommunicationInterface_CAN::GetInstance();
 }
 
 /**************************************************************************//**
@@ -91,32 +89,14 @@ void AuxClockTask::AuxClock_Task(void* _obj)
 	static unsigned int tick1 = 0;
 	AuxClockTask* auxClockObj = (AuxClockTask*)_obj;
 	tick1++;
-	if((tick1 % 1000) == 0)
-	{
-		if(SCStateMachine::getInstance()->GetStateMachineState() == false)
-		{
-			m_Pressure.DAC_Pressure = Utility::Pressure2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure); 
-#ifndef DEBUG_YANG
-			if(auxClockObj->_objDCan->Sending(&m_Pressure) == ERROR)
-			{
-				//TODO need to send a alarm to UIC.
-			}
-#endif
-		}
-	}
-
 	SCStateMachine::getInstance()->RunStateMachine();
-#ifdef DEBUG_YANG
+#ifdef UNITTEST_DATABASE
     return;
 #endif
-	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_RX_EVENT) != OK)
-		LOGERR((char*) "AUX_T: Power supply RX eventSend: Error\n", 0, 0, 0);
-	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_TX_EVENT) != OK)
-		LOGERR((char*) "AUX_T: Power supply TX eventSent: Error\n", 0, 0, 0);
-	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_RX_EVENT) != OK)
-		LOGERR((char*) "AUX_T: Actuator RX eventSend: Error\n", 0, 0, 0);
-	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_TX_EVENT) != OK)
-		LOGERR((char*) "AUX_T: Actuator TX eventSend: Error\n", 0, 0, 0);
+	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_RX_EVENT | PS_TASK_TX_EVENT | PS_TASK_1MS_EVENT) != OK)
+		LOGERR((char*) "AUX_T: Power supply eventSend: Error\n", 0, 0, 0);
+	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_RX_EVENT | ACT_TASK_TX_EVENT | ACT_TASK_1MS_EVENT) != OK)
+		LOGERR((char*) "AUX_T: Actuator eventSend: Error\n", 0, 0, 0);
 //	auxClockObj->debugFlipGPIOLevel();
 }
 

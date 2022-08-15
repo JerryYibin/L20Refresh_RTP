@@ -9,9 +9,10 @@
 ***************************************************************************/
 
 #include "PowerSupplyTask.h"
+#include "PCStateMachine.h"
 #include "AUPSTask.h"
 #include "DSPTask.h"
-#include "PCStateMachine/PCState.h"
+#include "PCState.h"
 #include "Utils.h"
 /* Static member variables are initialized */
 unsigned int PowerSupplyTask::CoreState = 0;
@@ -24,7 +25,9 @@ unsigned int PowerSupplyTask::CoreState = 0;
 *
 ******************************************************************************/
 PowerSupplyTask::PowerSupplyTask() {
-	// TODO Auto-generated constructor stub
+	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]);
+	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
+	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 
 }
 
@@ -51,7 +54,20 @@ PowerSupplyTask::~PowerSupplyTask() {
  ******************************************************************************/
 void PowerSupplyTask::ProcessTaskMessage(MESSAGE& message)
 {
+	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
+	MESSAGE	tmpMsg;
+	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
 	
+	while(msgQReceive(SELF_MSG_Q_ID, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+	{
+		Decode(tmpMsgBuffer, tmpMsg);
+		switch(tmpMsg.msgID)
+		{
+		default:
+			LOGERR((char *)"Power Supply_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
+			break;
+		}
+	}
 }
 
 /**************************************************************************//**
@@ -64,7 +80,7 @@ void PowerSupplyTask::ProcessTaskMessage(MESSAGE& message)
 ******************************************************************************/
 unsigned int PowerSupplyTask::GetCoreState()
 {
-	return (CoreState == PCState::NO_ERROR || CoreState == BIT_MASK(SONICS_ON_OFF_STATUS)) ? PCState::NO_ERROR : CoreState;
+	return (CoreState == NO_ERROR || CoreState == BIT_MASK(SONICS_ON_OFF_STATUS)) ? NO_ERROR : CoreState;
 }
 
 /**************************************************************************//**
@@ -97,12 +113,12 @@ void PowerSupplyTask::PowerSupply_Task(void)
 	UINT32		events;
 
 	PowerSupplyTask *PSTask = new(nothrow) AUPSTask();
-	if(NULL != PSTask)
+	if(nullptr != PSTask)
 	{
 		while(PSTask->bIsTaskRunStatus())
 		{
 			// wait for any one event
-			if(eventReceive(PS_TASK_TX_EVENT | PS_TASK_RX_EVENT | PS_TASK_QEVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
+			if(eventReceive(PS_TASK_TX_EVENT | PS_TASK_RX_EVENT | PS_TASK_1MS_EVENT | PS_TASK_QEVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
 			{
 				if(events & PS_TASK_RX_EVENT)
 				{
@@ -113,6 +129,10 @@ void PowerSupplyTask::PowerSupply_Task(void)
 				{
 					// process incoming power supply data from SM here...
 					PSTask->PDODownloadRequest();
+				}
+				if(events & PS_TASK_1MS_EVENT)
+				{
+					PCStateMachine::RunStateMachine();
 				}
 				if(events & PS_TASK_QEVENT)
 				{

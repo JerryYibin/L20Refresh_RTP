@@ -23,6 +23,7 @@ public:
 	{
 		/* Macro defined to UIC */
 		TO_CTRL_OPERATE_MODE_IDX = 0,
+		TO_CTRL_CALIBRATE_START_IDX,
 	};
 	
 public:

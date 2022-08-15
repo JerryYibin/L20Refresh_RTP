@@ -6,77 +6,100 @@
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
  ---------------------------- MODULE DESCRIPTION ----------------------------   
- 
+ SC Start Switch State
 ***************************************************************************/
 
 #include "StartSwitch.h"
-
+#include "../ACStateMachine.h"
+/**************************************************************************//**
+*
+* \brief   - Constructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 StartSwitch::StartSwitch() {
 	m_Actions = SCState::INIT;
 	m_State = SCState::START_SWITCH;
 	m_Timeout = 0;
 }
 
+/**************************************************************************//**
+*
+* \brief   - Destructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 StartSwitch::~StartSwitch() {
 	m_Actions = SCState::INIT;
 	m_State = SCState::NO_STATE;
 }
 
-void StartSwitch::Init()
+/**************************************************************************//**
+*
+* \brief   - StartSwitch Enter.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void StartSwitch::Enter()
 {
-	//TODO  still need to add input signals checking
-	if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_HIGH && vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_HIGH) // food pedal should be release status.
-	{
-		m_PBState = StartSwitch::WAIT_PRESSED;
-		m_Actions = SCState::LOOP;
-	}
+	ACStateMachine::AC_RX->MasterState = SCState::START_SWITCH;
+	ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_AC_MOVE_DISABLE);
 }
 
+/**************************************************************************//**
+*
+* \brief   - StartSwitch Loop.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void StartSwitch::Loop()
 {
-	switch (m_PBState)
+	if(ACStateMachine::AC_TX->ACState == ACState::AC_ALARM)
 	{
-	case StartSwitch::WAIT_PRESSED:
-		//TODO still need to add input signals checking
-		if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_LOW && vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_LOW) // food pedal should be pressed status.
-		{
-			m_PBState = StartSwitch::HOLD_PRESSED_DEBOUNCE;
-			m_Timeout = 0;
-		}
-		break;
-	case StartSwitch::HOLD_PRESSED_DEBOUNCE:
-		if (m_Timeout < DELAY50MSEC)
-			m_Timeout++;
-		else
-		{
-			m_Timeout = 0;
-			m_PBState = StartSwitch::STILL_PRESSED;
-		}
-		break;
-	case StartSwitch::STILL_PRESSED:
-		//TODO still need to add input signals checking
-		if (m_Timeout < DELAY250MSEC)
-		{
-			if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_LOW && vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_LOW)
-			{
-				m_Actions = SCState::JUMP;
-			}
-			else if (vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_HIGH || vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_HIGH)
-			{
-				m_Actions = SCState::FAIL;
-			}
-			else
-				m_Timeout++;
-		}
-		else
-			m_Actions = SCState::FAIL;
-		break;
-	default:
+		//TODO Record Database alarm table
 		m_Actions = SCState::FAIL;
-		break;
+		return;
 	}
+	
+	if((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_START_SWITCH_PRESSED)) == BIT_MASK(ACState::STATUS_START_SWITCH_PRESSED))
+		m_Actions = SCState::JUMP;
 }
 
+/**************************************************************************//**
+*
+* \brief   - StartSwitch Exit.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void StartSwitch::Exit()
+{
+	
+}
+
+/**************************************************************************//**
+*
+* \brief   - StartSwitch Fail.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void StartSwitch::Fail()
 {
 	m_Actions = SCState::PUSH;

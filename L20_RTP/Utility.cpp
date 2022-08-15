@@ -53,10 +53,6 @@ UINT32 Utility::HEX2Reference(UINT16 hexadcimal)
 	return 0;
 }
 
-UINT32 Utility::HEX2Height(UINT16 hexadcimal)
-{
-	return 0;
-}
 
 UINT32 Utility::HEX2Width(UINT16 hexadcimal)
 {

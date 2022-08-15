@@ -6,13 +6,16 @@
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
  ---------------------------- MODULE DESCRIPTION ----------------------------
-    
+ SC Welding State
  
 ***************************************************************************/
 
 #include "WeldSonicOn.h"
 #include "SCStateMachine.h"
-#include "../SocketReceiverCAN.h"
+#include "../PCStateMachine.h"
+#include "../ACStateMachine.h"
+#include "../UserInterface.h"
+#include "../WeldResultSignature.h"
 
 unsigned int WeldSonicOn::PwrBuffer[PWR_SIZE] = {0};
 unsigned int WeldSonicOn::PwrIndex = 0;
@@ -46,13 +49,30 @@ WeldSonicOn::~WeldSonicOn() {
 	m_State = SCState::NO_STATE;
 }
 
-void WeldSonicOn::Init()
+/**************************************************************************//**
+*
+* \brief   - Weld Sonic On Enter.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void WeldSonicOn::Enter()
 {
+	PCStateMachine::PC_RX->MasterEvents &= ~ BIT_MASK(PCState::CTRL_PC_SONIC_DISABLE);
+	InitPowerBuffer();
+	m_WeldTime = 0;
+	m_PeakPower = 0;
+	m_EnergyAccumulator = 0;
+	m_Timeout = 0;
+	m_EnergyTarget = Utility::Energy2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergySetting);
+	CommonProperty::WeldSignatureVector.clear();
 	ClearWeldData();
 	//TODO still need to add hardware signals output handler 
-	vxbGpioSetValue(GPIO::O_READY, GPIO_VALUE_LOW);
-	unsigned int tmpHeight = SocketReceiver_CAN::GetHeight();
-	CommonProperty::WeldResult.PreHeight = Utility::HEX2Height(tmpHeight);
+	
+	CommonProperty::WeldResult.PreHeight = ACStateMachine::AC_TX->ActualHeight;
+	 
 	CoolAirControl(0, 0);
 //	if (SysConfig.m_SystemInfo.HeightEncoder == true)
 //	{
@@ -72,39 +92,34 @@ void WeldSonicOn::Init()
 //			m_Actions = SCState::LOOP;
 //	}
 //	else
-		m_Actions = SCState::LOOP;
+//		m_Actions = SCState::LOOP;
 
-	if (m_Actions == SCState::LOOP)
+	if (CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure != CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure)
 	{
-		m_Pressure.DAC_Pressure = Utility::Pressure2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure); 
-		_objDCan->Sending(&m_Pressure);
-		if (CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure > CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure)
-		{
-			m_Timeout = 0;
-			m_WeldStep = WeldSonicOn::SET_WPRESSURE;
-		}
-		else
-		{
-			InitPowerBuffer();
-			m_WeldTime = 0;
-			m_PeakPower = 0;
-			m_EnergyAccumulator = 0;
-			m_EnergyTarget = Utility::Energy2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergySetting);
-			CommonProperty::WeldSignatureVector.clear();
-
-			//TODO still need to add some output handler.
-			vxbGpioSetValue(GPIO::O_RUN_PSI, GPIO_VALUE_HIGH);
-			vxbGpioSetValue(GPIO::O_SONICS_ON, GPIO_VALUE_HIGH);
-			m_WeldStep = WeldSonicOn::RUN_SONICS;
-		}
+		ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
+		m_WeldStep = WeldSonicOn::SET_WPRESSURE;
+	}
+	else
+	{
+		PCStateMachine::PC_RX->MasterState = SCState::WELD_SONIC_ON;
+		m_WeldStep = WeldSonicOn::RUN_SONICS;
 	}
 }
 
+/**************************************************************************//**
+*
+* \brief   - Weld Sonic On Loop.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void WeldSonicOn::Loop()
 {
 	bool ErrorOn = false;
 	unsigned int tmpHeight = 0;
-	CommonProperty::WELD_SIGNATURE tmpWeldSignature;
+	WELD_SIGNATURE tmpWeldSignature;
 	switch (m_WeldStep)
 	{
 	case WeldSonicOn::SET_WPRESSURE:
@@ -121,15 +136,8 @@ void WeldSonicOn::Loop()
 		}
 		else
 		{
-			InitPowerBuffer();
-			m_WeldTime = 0;
-			m_PeakPower = 0;
-			m_EnergyAccumulator = 0;
-			CommonProperty::WeldSignatureVector.clear();
 
-			//TODO still need to add some output handler.
-			vxbGpioSetValue(GPIO::O_RUN_PSI, GPIO_VALUE_HIGH);
-			vxbGpioSetValue(GPIO::O_SONICS_ON, GPIO_VALUE_HIGH);
+			PCStateMachine::PC_RX->MasterState = SCState::WELD_SONIC_ON;
 			m_WeldStep = WeldSonicOn::RUN_SONICS;
 			cout << m_StepIndex << ": " << "Weld Sonics Loop - Set Weld Pressure" << endl;
 		}
@@ -143,14 +151,21 @@ void WeldSonicOn::Loop()
 		//still need to add output handler.
 		/* Inline check for overload but process after weld release */
 		
-		if(vxbGpioGetValue(GPIO::I_OL_PSOUI) == GPIO_VALUE_HIGH)
+		if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
 		{
+			CommonProperty::WeldResult.TotalEnergy = Utility::HEX2Energy(m_EnergyAccumulator);
+			CommonProperty::WeldResult.WeldTime = m_WeldTime;
+			CommonProperty::WeldResult.PostHeight = ACStateMachine::AC_TX->ActualHeight;
+			CommonProperty::WeldResult.TriggerPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
+			CommonProperty::WeldResult.WeldPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
+			CommonProperty::WeldResult.Amplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
+			CommonProperty::WeldResult.PeakPower = Utility::HEX2Power(m_PeakPower);
 			CommonProperty::WeldResult.ALARMS.AlarmFlags.Overload = 1;
 			m_Actions = SCState::FAIL;
 		}
 
-		tmpWeldSignature.Height = SocketReceiver_CAN::GetHeight();
-		tmpWeldSignature.Frquency = ADC_AD7689::GetFrequency();
+		tmpWeldSignature.Height = ACStateMachine::AC_TX->ActualHeight;
+		tmpWeldSignature.Frquency = PCStateMachine::PC_TX->Frequency;
 		if (CommonProperty::WeldSignatureVector.size() < (GRAPHDATASIZE - 5))
 		{
 			CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
@@ -187,19 +202,15 @@ void WeldSonicOn::Loop()
 		}
 		break;
 	case WeldSonicOn::RESULT_UPDATE:
-		//TODO still need to add output signal handle.
-		vxbGpioSetValue(GPIO::O_RUN_PSI, GPIO_VALUE_LOW);
-		vxbGpioSetValue(GPIO::O_SONICS_ON, GPIO_VALUE_LOW);
+		PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
 		CommonProperty::WeldResult.TotalEnergy = Utility::HEX2Energy(m_EnergyAccumulator);
 		CommonProperty::WeldResult.WeldTime = m_WeldTime;
-		tmpHeight = SocketReceiver_CAN::GetHeight();
-		CommonProperty::WeldResult.PostHeight = Utility::HEX2Height(tmpHeight);
-		m_Pressure.DAC_Pressure = Utility::Pressure2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure); 
-		_objDCan->Sending(&m_Pressure);
+		CommonProperty::WeldResult.PostHeight = ACStateMachine::AC_TX->ActualHeight;
 		CommonProperty::WeldResult.TriggerPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
 		CommonProperty::WeldResult.WeldPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
 		CommonProperty::WeldResult.Amplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
-
+		CommonProperty::WeldResult.PeakPower = Utility::HEX2Power(m_PeakPower);
+		
 //		if (SysConfig.m_SystemInfo.CoolingType == WelderSystem::SECOND_PER_100JOULE)
 //		{
 //			if (WeldData.m_WeldResult.Energy < JOULE500)
@@ -219,7 +230,7 @@ void WeldSonicOn::Loop()
 //		{
 			CoolAirControl(0, 0);
 //		}
-		LOG("m_StepIndex: Weld Sonics Loop - Result Updata! Timeout = %d\n", m_Timeout);
+		LOG("m_StepIndex: Weld Sonics Loop - Result Update! Weld Time = %d Timeout = %d\n", m_WeldTime, m_Timeout);
 		m_Timeout = 0;
 		m_WeldStep = WeldSonicOn::EXTEND_SAMPLE;
 		break;
@@ -229,8 +240,8 @@ void WeldSonicOn::Loop()
 			tmpWeldSignature.Power = GetFilteredPower();
 			if (tmpWeldSignature.Power > m_PeakPower)
 				m_PeakPower = tmpWeldSignature.Power;
-			tmpWeldSignature.Height = SocketReceiver_CAN::GetHeight();
-			tmpWeldSignature.Frquency = ADC_AD7689::GetFrequency();
+			tmpWeldSignature.Height = ACStateMachine::AC_TX->ActualHeight;
+			tmpWeldSignature.Frquency = PCStateMachine::PC_TX->Frequency;
 			if (CommonProperty::WeldSignatureVector.size() < (GRAPHDATASIZE - 5))
 			{
 				CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
@@ -245,6 +256,7 @@ void WeldSonicOn::Loop()
 	case WeldSonicOn::RESULT_ANALYSIS:
 		//TODO need to move following code to the control task.
 		CommonProperty::WeldResult.CycleCounter += 1;
+		CommonProperty::SystemInfo.psLifeCounter += 1;
 //		if (SysConfig.m_SystemInfo.HeightEncoder == true)
 //		{
 //			if((CommonProperty::m_WeldResults.Get(WeldResults::POST_HEIGHT) < CommonProperty::m_RecpeSC.m_ActiveRecipe.m_QualityWindowSetting.m_HeightMin) && 
@@ -304,6 +316,7 @@ void WeldSonicOn::Loop()
 		}
 		else
 			m_Actions = SCState::FAIL;
+		SendMsgToUIMsgQ();
 		break;
 	default:
 		m_Actions = SCState::JUMP;
@@ -312,6 +325,29 @@ void WeldSonicOn::Loop()
 	m_Timeout++;
 }
 
+/**************************************************************************//**
+*
+* \brief   - Weld Sonic On Exit.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void WeldSonicOn::Exit()
+{
+	
+}
+
+/**************************************************************************//**
+*
+* \brief   - Weld Sonic On Fail.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void WeldSonicOn::Fail()
 {
 	//TODO still need to add output signal handler.
@@ -320,6 +356,15 @@ void WeldSonicOn::Fail()
 	m_Actions = SCState::ALJUMPNORM;
 }
 
+/**************************************************************************//**
+*
+* \brief   - Clear Weld Data.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void WeldSonicOn::ClearWeldData()
 {
 	if(CommonProperty::WeldResult.RecipeNum != CommonProperty::ActiveRecipeSC.m_RecipeNumber)
@@ -376,7 +421,7 @@ unsigned int WeldSonicOn::GetFilteredPower()
 	unsigned int result;
 
 	/* Keep a running average */
-	PwrBuffer[PwrIndex] = ADC_AD7689::GetPower();
+	PwrBuffer[PwrIndex] = PCStateMachine::PC_TX->Power;
 	PwrIndex++;
 	if (PwrIndex >= PWR_SIZE)
 		PwrIndex = 0;
@@ -389,6 +434,16 @@ unsigned int WeldSonicOn::GetFilteredPower()
 	return result;
 }
 
+/**************************************************************************//**
+*
+* \brief   - Cooling Control.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+//Todo Consider to use ACCoolAir State
 void WeldSonicOn::CoolAirControl(unsigned int delay, unsigned duration)
 {
 	/* Delay and Duration in 1/100 second units*/
@@ -410,4 +465,19 @@ void WeldSonicOn::CoolAirControl(unsigned int delay, unsigned duration)
 	{
 		vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_LOW);
 	}
+}
+/**************************************************************************//**
+*
+* \brief   - Send Message to UI Task MessageQueue
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void WeldSonicOn::SendMsgToUIMsgQ()
+{
+	MESSAGE message;
+	message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
+	SendToMsgQ(message, UI_MSG_Q_ID);
 }

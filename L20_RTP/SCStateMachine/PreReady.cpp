@@ -6,72 +6,105 @@
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
  ---------------------------- MODULE DESCRIPTION ----------------------------   
- 
+ SC PreReady state
 ***************************************************************************/
 
 #include "PreReady.h"
 #include "../HeightEncoder.h"
+#include "../ACStateMachine.h"
+#include "../PCStateMachine.h"
+
+/**************************************************************************//**
+* \brief   - Constructor - 
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
 PreReady::PreReady() {
 	m_Actions = SCState::INIT;
 	m_State = SCState::PRE_READY;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Destructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 PreReady::~PreReady() {
 	m_Actions = SCState::INIT;
-	m_State = SCState::NO_STATE;
+	m_State = SCState::PRE_READY;
 }
 
-void PreReady::Init()
+/**************************************************************************//**
+* 
+* \brief   - PreReady Enter.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void PreReady::Enter()
 {
-	m_Timeout = 0;
 	m_Actions = SCState::LOOP;
-	m_Pressure.DAC_Pressure = Utility::Pressure2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure); 
-	DAC_TLV5604::SetAmplitude(Utility::Amplitude2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude));
-	if(_objDCan->Sending(&m_Pressure) == ERROR)
-		m_Actions = SCState::FAIL;
+	ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
+	PCStateMachine::PC_RX->TargetAmplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
 //	LOG("GetInitCount = %d\n", HeightEncoder::GetInitCount());
 //	LOG("GetMaxCount = %d\n", HeightEncoder::GetMaxCount());
 	LOG("GetPositionCount = %d\n", HeightEncoder::GetPositionCount());
 //	LOG("GetDirection = %d\n", HeightEncoder::GetDirection());
 }
 
+/**************************************************************************//**
+* 
+* \brief   - PreReady Loop.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void PreReady::Loop()
 {
-	if (m_Timeout < TOP_CHECK_TIMEOUT)
+	if(ACStateMachine::AC_TX->ACState == ACState::AC_READY)
+		m_Actions = SCState::JUMP;
+	else if(ACStateMachine::AC_TX->ACState == ACState::AC_ALARM)
 	{
-		if ((m_Timeout % 10) == 0)
-		{
-			if (/*SysConfig.m_SystemInfo.HomePosition*/ MAX_HEIGHT > HeightEncoder::GetPositionCount())
-			{
-				if ((/*SysConfig.m_SystemInfo.HomePosition*/MAX_HEIGHT - HeightEncoder::GetPositionCount()) < (TWICE * RDCHECK))
-				{
-					LOG("#########################################Waiting horn m_Timeout = %d\n", m_Timeout);
-					m_Actions = SCState::JUMP;
-				}
-			}
-			else
-			{
-				if ((HeightEncoder::GetPositionCount() - MAX_HEIGHT/*SysConfig.m_SystemInfo.HomePosition*/) < (TWICE * RDCHECK))
-				{
-					LOG("###################################Waiting horn m_Timeout = %d\n", m_Timeout);
-					m_Actions = SCState::JUMP;
-				}
-
-			}
-		}
-		m_Timeout++;
-	}
-	else
-	{
-		CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
-		vxbGpioSetValue(GPIO::O_READY, GPIO_VALUE_LOW);
-		vxbGpioSetValue(GPIO::O_ALARM, GPIO_VALUE_HIGH);
 		//TODO Record Database alarm table
-		m_Timeout = 0;
+		CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
 		m_Actions = SCState::FAIL;
 	}
 }
 
+/**************************************************************************//**
+* 
+* \brief   - PreReady Exit.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void PreReady::Exit()
+{
+	
+}
+
+/**************************************************************************//**
+* 
+* \brief   - PreReady Fail.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void PreReady::Fail()
 {
 	if (ProcessAlarmHandler() == true)
