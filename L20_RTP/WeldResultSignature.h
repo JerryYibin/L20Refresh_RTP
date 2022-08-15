@@ -7,11 +7,23 @@
      written consent of Branson Ultrasonics Corporation.
  
 ***************************************************************************/
-#ifndef WELDRESULTSSIGNATURE_H_
-#define WELDRESULTSSIGNATURE_H_
-typedef struct
-	{
-	int WeldResultID;
-	char WeldGraph[200];
-	}WeldResultSignature_Data;
-#endif /* WELDRESULTSSIGNATURE_H_ */
+#ifndef WELDRESULTSIGNATURE_H_
+#define WELDRESULTSIGNATURE_H_
+
+struct WELD_SIGNATURE
+{
+	unsigned int Frquency;
+	unsigned int Power;
+	unsigned int Height;
+	unsigned int Amplitude;
+};
+
+struct WELD_SIGNATURE_GROUP
+{
+	unsigned int Frquency[200];
+	unsigned int Power[200];
+	unsigned int Height[200];
+	unsigned int length; //<=200
+};
+
+#endif /* WELDRESULTSIGNATURE_H_ */
