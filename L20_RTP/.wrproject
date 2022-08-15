@@ -107,6 +107,7 @@
                 <stringAttribute value="-I$(VSB_DIR)/usr/h/public"/>
                 <stringAttribute value="-I%Proj-_Branson_User_Common%/Utils"/>
                 <stringAttribute value="-I%Proj-_Branson_User_Common%/Commons"/>
+                <stringAttribute value="-I%Proj-_Branson_User_Common%/Kernel_Interface"/>
                 <stringAttribute value="-I$(VSB_DIR)/usr/3pp/develop/usr/include"/>
             </listAttribute>
             <listAttribute key="BLD::Info|Libs|L20_VSB_ARMARCH7llvm_ld">
