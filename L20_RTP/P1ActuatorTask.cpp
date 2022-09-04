@@ -27,3 +27,17 @@ void P1ActuatorTask::PDODownloadRequest()
 {
 }
 
+bool P1ActuatorTask::IsMoving()
+{
+	return false;
+}
+
+unsigned int P1ActuatorTask::GetMaxSpeed()
+{
+	return 0;
+}
+
+void P1ActuatorTask::InitHeightSystem()
+{
+	
+}

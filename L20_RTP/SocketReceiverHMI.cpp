@@ -72,32 +72,49 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	{
 	case REQ_HEART_BEAT_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_HEART_BEAT;
-		SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case REQ_SYSTEM_INFO_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_SYSINFO_READ;
-		SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case REQ_ACTIVE_RECIPE_INFO_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_ACTIVE_RECIPE_INFO;
-		SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case REQ_SETUP_WELD_PARAM_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_SETUP_WELD_PARAM;
-		SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case REQ_SETUP_QUALITY_PARAM_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_SETUP_QUALITY_PARAM;
-		SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case REQ_SETUP_ADVANCED_PARAM_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_SETUP_ADVANCED_PARAM;
-		SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
+	case REQ_SYSTEM_CONGIF_READ_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_SYSCONFIG_READ;
+		break;
+	case REQ_SYSTEM_CONGIF_WRITE_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_SYSCONFIG_WRITE;
+		break;
+	case REQ_INITIALIZATION_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_INITIALIZATION;
+		break;
+	case REQ_HEIGHT_CALIBRATE_START_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CALIBRATE_START;
+		break;
+	case REQ_HEIGHT_CALIBRATE_CHECK_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CHECK;
+		break;
+	case REQ_HEIGHT_CALIBRATE_CORRECT_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CORRECT;
+		break;
+	case REQ_HEIGHT_CALIBRATE_ACCEPT_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CALIBRATE_ACCEPT;
 		break;
 	default:
+		message.msgID = UserInterface::TO_UI_TASK_HEART_BEAT;
 		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);
 		break;
 	}
+	SendToMsgQ(message, UI_MSG_Q_ID);
 }
 
 /**************************************************************************//**

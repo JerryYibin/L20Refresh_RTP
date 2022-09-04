@@ -14,12 +14,12 @@
 
 
 #include "SCState.h"
-
-#define DELAY6SEC 6000
-#define MAXPSI 80
-#define	PSI_FACTOR 1000
-
+//#define RESOLUTION 5 //5um
 class HeightCalibrate: public SCState {
+private:
+	unsigned int m_HornDownTimeout;
+	unsigned int m_HornHoldTimeout;
+	unsigned int m_HornUpTimeout;
 public:
 	HeightCalibrate();
 	virtual ~HeightCalibrate();
@@ -28,14 +28,6 @@ public:
 	virtual void Loop() override;
 	virtual void Exit() override;
 	virtual void Fail() override;
-private:
-	vector<unsigned int> m_TaughtIdx;
-	unsigned int m_Index;
-	bool m_IsCalibration;
-	int m_CurrentPressureSetting;
-
-	void InitProcess();
-	int getAverageHeight();
 };
 
 

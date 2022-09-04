@@ -20,9 +20,11 @@ Height Check Process: 		Manually put a height-known shim on, do Horn down/Hold/H
 #include "HeightCalibrate.h"
 #include "../ACStateMachine.h"
 #include "../PCStateMachine.h"
+#include "../ControlTask.h"
+#include "../HeightEncoder.h"
 #include "SCStateMachine.h"
 
-
+#define TIMEDELAY 1000
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -33,13 +35,7 @@ Height Check Process: 		Manually put a height-known shim on, do Horn down/Hold/H
 ******************************************************************************/
 HeightCalibrate::HeightCalibrate() {
 	m_Actions = SCState::INIT;
-	m_State = SCState::CALIBRATE_CHECK;
-	m_Index = 0;
-	
-	m_TaughtIdx.push_back(80); // Push in descending order
-	m_TaughtIdx.push_back(50);
-	m_TaughtIdx.push_back(20);
-	m_IsCalibration = true;
+	m_State = SCState::CALIBRATE;
 }
 
 /**************************************************************************//**
@@ -56,7 +52,6 @@ HeightCalibrate::~HeightCalibrate() {
 	m_State = SCState::NO_STATE;
 }
 
-
 /**************************************************************************//**
 * 
 * \brief   - HeightCalibrateCheck Enter.
@@ -68,11 +63,11 @@ HeightCalibrate::~HeightCalibrate() {
 ******************************************************************************/
 void HeightCalibrate::Enter()
 {
-//	InitVariables(); 
 	ACStateMachine::AC_RX->MasterEvents &= ~BIT_MASK(ACState::CTRL_AC_MOVE_DISABLE); // Allow AC Move
-	
-	m_Index = 0;
-
+	m_HornDownTimeout = 0;
+	m_HornHoldTimeout = 0;
+	m_HornUpTimeout = 0;
+	HeightEncoder::HeightProperty.TotalTime = 0;
 }
 /**************************************************************************//**
 * 
@@ -95,55 +90,54 @@ void HeightCalibrate::Loop()
 	switch(ACStateMachine::AC_TX->ACState)
 	{
 	case ACState::AC_READY:
-		ACStateMachine::AC_RX->TargetPressure = m_TaughtIdx[m_Index] * PSI_FACTOR;
-		if(m_Index < m_TaughtIdx.size())
+		if((m_HornUpTimeout == 0) && (m_HornHoldTimeout == 0) && (m_HornDownTimeout == 0))
 		{
+			// At the first time running when AC in the Ready state.
+			HeightEncoder::RawHeight.TopCount = ACStateMachine::AC_TX->RawHeightCount;
 			ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_PART_CONTACT_ENABLE);//Contact Check Enable
 			ACStateMachine::AC_RX->MasterState = SCState::DOWN_STROKE; 
+	
 		}
 		else
 		{
-			m_Actions = SCState::JUMP;
+			if(m_HornUpTimeout != 0)
+			{
+				HeightEncoder::RawHeight.TopCount = ACStateMachine::AC_TX->RawHeightCount;
+				HeightEncoder::HeightProperty.HornUpTime = m_HornUpTimeout;
+				HeightEncoder::HeightProperty.TotalTime += m_HornUpTimeout;
+				m_Actions = SCState::JUMP;
+			}
 		}
+
 		break;
 	case ACState::AC_DOWN_STROKE:
-		if ((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_PART_CONTACT_FOUND)) == BIT_MASK(ACState::STATUS_PART_CONTACT_FOUND))
+		m_HornDownTimeout++;
+		break;
+	case ACState::AC_HOLD:
+		if(m_HornDownTimeout != 0)
 		{
-			tmpHeight = getAverageHeight();
-			if (tmpHeight >= 0)
-			{
-				CommonProperty::RawHeight[m_TaughtIdx[m_Index]].ZeroCount = (unsigned int)tmpHeight;
-				ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_HOME_POSITION_ENABLE);
-				ACStateMachine::AC_RX->MasterState = SCState::RETURN_STROKE;
-			}
+			HeightEncoder::HeightProperty.HornDownTime = m_HornDownTimeout;
+			HeightEncoder::HeightProperty.TotalTime += m_HornDownTimeout;
+			m_HornDownTimeout = 0;
 		}
+		if (m_HornHoldTimeout >= TIMEDELAY)
+		{
+			HeightEncoder::HeightProperty.TotalTime += m_HornHoldTimeout;
+			HeightEncoder::RawHeight.ZeroCount = ACStateMachine::AC_TX->RawHeightCount;
+			HeightEncoder::HeightProperty.ActualHeight = ACStateMachine::AC_TX->ActualHeight;
+			HeightEncoder::HeightProperty.Stroke = (HeightEncoder::RawHeight.TopCount - HeightEncoder::RawHeight.ZeroCount) * RESOLUTION;
+			ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_HOME_POSITION_ENABLE);
+			ACStateMachine::AC_RX->MasterState = SCState::RETURN_STROKE;
+		}
+		else
+			m_HornHoldTimeout++;
 		break;
 	case ACState::AC_RETURN_STROKE:
-		if((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_HOME_POSITION_FOUND)) == BIT_MASK(ACState::STATUS_HOME_POSITION_FOUND))//Contact Check Enable)		
-		{
-			tmpHeight = getAverageHeight();
-			if (tmpHeight >= 0)
-			{
-				CommonProperty::RawHeight[m_TaughtIdx[m_Index]].TopCount = (unsigned int)tmpHeight;
-				CommonProperty::RawHeight[m_TaughtIdx[m_Index]].Calibrated = true;
-				m_Index++;
-			}
-		}
+		m_HornUpTimeout++;
+		break;
+	default:
 		break;
 	}
-	
-		
-//			if (SCStateMachine::SC_RX.MasterEvents == SCStateMachine::CTRL_ACTUATOR_CHECK_ENABLE)
-//			{
-//				ACStateMachine::AC_TX->CheckHeight = (unsigned int)temp_height;
-//			}
-
-
-
-
-//				ACStateMachine::AC_RX->TargetPressure = m_CurrentPressureSetting;
-
-
 }
 
 /**************************************************************************//**
@@ -157,7 +151,11 @@ void HeightCalibrate::Loop()
 ******************************************************************************/
 void HeightCalibrate::Exit()
 {
+	MESSAGE message;
 	m_Actions = SCState::INIT; 
+	HeightEncoder::RawHeight.Calibrated = true;
+	message.msgID = ControlTask::TO_CTRL_SC_RESPONSE;
+	SendToMsgQ(message, CTL_MSG_Q_ID);
 }
 
 /**************************************************************************//**
@@ -175,73 +173,3 @@ void HeightCalibrate::Fail()
 		m_Actions = SCState::ABORT;
 	LOG("Height Calibrate Check Alarm process!\n");
 }
-
-
-
-/**************************************************************************//**
-* 
-* \brief   - Init Variables used in Height Calibration or Check Process 
-*
-* \param   - None.
-*
-* \return  - None.
-*
-******************************************************************************/
-void HeightCalibrate::InitProcess()
-{
-	if (m_Index == 0)
-	{
-		for (int i = 0; i<= MAXPSI; i++)
-		{
-			CommonProperty::RawHeight[i].ZeroCount = 0;
-			CommonProperty::RawHeight[i].TopCount = 0;
-			CommonProperty::RawHeight[i].Calibrated = false;
-		}
-		m_CurrentPressureSetting = ACStateMachine::AC_RX->TargetPressure; // Store current SPI Setting before enter calibration
-	}
-	ACStateMachine::AC_RX->TargetPressure = m_TaughtIdx[m_Index] * PSI_FACTOR;
-	
-//	else if (SCStateMachine::SC_RX.MasterEvents == SCStateMachine::CTRL_ACTUATOR_CHECK_ENABLE)
-//	{	
-//		ACStateMachine::AC_RX->TargetPressure = SCStateMachine::SC_RX.Params[P_PRESSURE]; 
-//	}
-	
-}
-
-
-/**************************************************************************//**
-* 
-* \brief   - Get Average Height base on the height Sample taken in 500 ms. 
-*
-* \param   - None.
-*
-* \return  - height.
-*
-******************************************************************************/
-int HeightCalibrate::getAverageHeight() 
-{
-	static unsigned int tmpHeightSum = 0, sample = 0, timeout = 0;
-	int height = -1;
-
-	if (timeout % 50 == 0)
-	{
-		tmpHeightSum += ACStateMachine::AC_TX->RawHeightCount;
-		sample++;
-		if (sample == 10)
-		{
-			height = (int)(tmpHeightSum / sample);
-			tmpHeightSum = 0;
-			sample = 0;
-		}
-		timeout = 0;
-	}
-	else
-	{
-		timeout++;
-	}
-
-	return height;
-}
-
-
-

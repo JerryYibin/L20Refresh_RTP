@@ -39,10 +39,10 @@ private:
 	};
 	enum ANALOG_CHANNEL
 	{
-		FREQ_OFFSET		 = CH_0,
-		AMPLITUDE_IN	 = CH_1,
-		DIGPOT_WIPER	 = CH_2,
-		GROUND			 = CH_3
+		FREQ_OFFSET		= CH_0,
+		AMPLITUDE_IN	= CH_1,
+		DIGPOT_WIPER	= CH_2,
+		PRESSURE_SET    = CH_3
 	};
 	union DAC
 	{
@@ -69,6 +69,7 @@ public:
 	static int SetAmplitude			(const unsigned short data);
 	static int SetTunePoint			(const unsigned short data);
 	static int SetFrequencyOffset	(const unsigned short data);
+	static int SetPressure			(const unsigned short data);
 	
 };
 

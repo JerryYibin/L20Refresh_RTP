@@ -52,12 +52,11 @@ PreReady::~PreReady() {
 ******************************************************************************/
 void PreReady::Enter()
 {
-	m_Actions = SCState::LOOP;
 	ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
 	PCStateMachine::PC_RX->TargetAmplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
 //	LOG("GetInitCount = %d\n", HeightEncoder::GetInitCount());
 //	LOG("GetMaxCount = %d\n", HeightEncoder::GetMaxCount());
-	LOG("GetPositionCount = %d\n", HeightEncoder::GetPositionCount());
+	LOG("GetPositionCount = %d\n", HeightEncoder::GetInstance()->GetPositionCount());
 //	LOG("GetDirection = %d\n", HeightEncoder::GetDirection());
 }
 

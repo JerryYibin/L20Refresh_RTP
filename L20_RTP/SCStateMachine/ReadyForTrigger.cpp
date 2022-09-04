@@ -9,10 +9,10 @@
  
 ***************************************************************************/
 
-#include "ReadyForRequest.h"
+#include "ReadyForTrigger.h"
 #include "../ACStateMachine.h"
 #include "SCStateMachine.h"
-
+#define TIMEDELAY	1000
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -21,11 +21,11 @@
 * \return  - None
 *
 ******************************************************************************/
-ReadyForRequest::ReadyForRequest() 
+ReadyForTrigger::ReadyForTrigger() 
 {
 	m_Actions = SCState::INIT;
-	m_State = SCState::READY_FOR_REQUEST;
-	m_Timeout = 0;
+	m_State = SCState::READY_FOR_TRIGGER;
+	m_IsTrigger = false;
 }
 
 /**************************************************************************//**
@@ -37,82 +37,92 @@ ReadyForRequest::ReadyForRequest()
 * \return  - None.
 *
 ******************************************************************************/
-ReadyForRequest::~ReadyForRequest() 
+ReadyForTrigger::~ReadyForTrigger() 
 {
 	m_Actions = SCState::INIT;
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForRequest Enter.
+* \brief   - ReadyForTrigger Enter.
 *
 * \param   - None.
 *
 * \return  - None.
 *
 ******************************************************************************/
-void ReadyForRequest::Enter()
+void ReadyForTrigger::Enter()
 {
+	ACStateMachine::AC_RX->MasterState = ACState::AC_READY;
 	ACStateMachine::AC_RX->MasterEvents |=  BIT_MASK(ACState::CTRL_AC_MOVE_DISABLE);
 	m_Timeout = 0;
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForRequest Loop.
+* \brief   - ReadyForTrigger Loop.
 *
 * \param   - None.
 *
 * \return  - None.
 *
 ******************************************************************************/
-void ReadyForRequest::Loop()
+void ReadyForTrigger::Loop()
 {
 	if(ACStateMachine::AC_TX->ACState == ACState::AC_ALARM)
 	{
 		m_Actions = SCState::FAIL;
 	}
+	if(m_IsTrigger == true)
+	{
+		if(m_Timeout > TIMEDELAY)
+			m_Actions = SCState::JUMP;
+		else
+			m_Timeout++;
+	}
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForRequest Exit.
+* \brief   - ReadyForTrigger Exit.
 *
 * \param   - None.
 *
 * \return  - None.
 *
 ******************************************************************************/
-void ReadyForRequest::Exit()
+void ReadyForTrigger::Exit()
 {
-	
+	m_IsTrigger = false;
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForRequest Fail.
+* \brief   - ReadyForTrigger Fail.
 *
 * \param   - None.
 *
 * \return  - None.
 *
 ******************************************************************************/
-void ReadyForRequest::Fail()
+void ReadyForTrigger::Fail()
 {
 	m_Actions = SCState::ABORT;
-	LOGERR((char *)"ReadyForRequest State Alarm happened!\n", 0, 0, 0);
+	LOGERR((char *)"ReadyForTrigger State Alarm happened!\n", 0, 0, 0);
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForRequest Execute.
+* \brief   - ReadyForTrigger Execute.
 *
 * \param   - None.
 *
 * \return  - None.
 *
 ******************************************************************************/
-int ReadyForRequest::Execute()
+int ReadyForTrigger::Execute(void* _obj)
 {
+	ReadyForTrigger* _ReadyForTrigger = (ReadyForTrigger*)_obj;
+	_ReadyForTrigger->m_IsTrigger = true;
 	return OK;
 }

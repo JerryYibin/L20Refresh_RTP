@@ -14,7 +14,7 @@
 #include "ActuatorTask.h"
 #include "CommunicationInterfaceCAN.h"
 #include "ACStateMachine.h"
-#define MIN_DOWN_SPEED	600 //3mm/s
+#define MIN_DOWN_SPEED	100 //0.5mm/s
 class L20ActuatorTask: public ActuatorTask 
 {
 private:
@@ -23,8 +23,8 @@ private:
 	static UINT32									Tick_1ms;
 	UINT32											MaxSpeed;
 	UINT32 											MinMoveCount;
-	UINT32											OldPosition;
-	UINT32 											DeltaPosition[4];
+	INT32											OldPosition;
+	INT32 											DeltaPosition[4];
 	CommunicationInterface_CAN::TX_MESSAGE 			m_Pressure;
 	UINT32											m_ActualUpTime;
 	UINT32											m_ActualDownTime;
@@ -35,8 +35,9 @@ public:
 	virtual				~L20ActuatorTask			();
 	virtual void		PDOUploadRequest			() override;
 	virtual void		PDODownloadRequest			() override;
-	bool				IsMoving					();
-	unsigned int		GetMaxSpeed					();
+	bool				IsMoving					() override;
+	unsigned int		GetMaxSpeed					() override;
+	void				InitHeightSystem			() override;
 private:
 	bool		 		MovingCheckProcess			();
 	unsigned int		WeightedAverageSpeed		(unsigned int EncoderPosition);

@@ -82,7 +82,12 @@ void WaitForTrigger::Loop()
 		CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
 		m_Actions = SCState::FAIL;
 	}
-	else if((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_PART_CONTACT_FOUND)) == BIT_MASK(ACState::STATUS_PART_CONTACT_FOUND))
+	if((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(ACState::CTRL_PART_CONTACT_ENABLE)) == BIT_MASK(ACState::CTRL_PART_CONTACT_ENABLE))
+	{
+		 if((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_PART_CONTACT_FOUND)) == BIT_MASK(ACState::STATUS_PART_CONTACT_FOUND))
+			m_Actions = SCState::JUMP;
+	}
+	else
 		m_Actions = SCState::JUMP;
 
 }

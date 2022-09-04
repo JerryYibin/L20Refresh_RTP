@@ -59,6 +59,11 @@ void ACStartSwitch::Enter()
 void ACStartSwitch::Loop()
 {
 	unsigned int coreStatus = NO_ERROR;
+	if(ACStateMachine::AC_RX->MasterState == ACState::AC_READY)
+	{
+		ChangeState(ACState::AC_READY);
+		return;
+	}
 	switch(m_PBState)
 	{
 	case WAIT_PRESSED:

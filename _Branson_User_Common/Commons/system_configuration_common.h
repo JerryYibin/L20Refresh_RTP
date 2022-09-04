@@ -16,18 +16,18 @@ configuration.
 #ifndef SYSTEM_CONFIGURATION_COMMON_H_
 #define SYSTEM_CONFIGURATION_COMMON_H_
 
+#include <memory>
 
 enum COOLING
 {
-	DISABLE = -1,
-	SECOND_PER_100JOULE,
-	STANDARD
+	DISABLE = 0,
+	SECOND_PER_100JOULE
 };
 
-enum Language{
-	Chinese_Simplified = 0,
+enum LANGUAGE{
+	English = 0,
+	Chinese_Simplified,
 	Chinese_Traditional,
-	English,
 	Francis,
 	Deutsch,
 	Italiano,
@@ -36,65 +36,46 @@ enum Language{
 	Espanol
 };
 
-enum TMtype{
-	Standard = 0,
-	Auto,
-	Sigma
+enum TEACHMODE_TYPE{
+	STANDARD = 0,
+	AUTO,
+	SIGMA
 };
 
-enum AUNIT{
-	um = 0,
-	percentage,
+enum AMPLITUDE_UNIT{
+	MICRON = 0,
+	PERCENTAGE
 };
 
-enum PUNIT{
-	pSI = 0,
-	Bar,
-	kPa,
+enum PRESSURE_UNIT{
+	PSI = 0,
+	BAR,
+	KPA
 };
 
-enum HUNIT{
-	mm = 0,
-	inch,
+enum HEIGHT_UNIT{
+	MILLIMETER = 0,
+	INCH
 };
 
-enum POWERS{
-	POWERS_3300W = 0,
-	POWERS_4000W,
-	POWERS_5500W,
+enum POWER{
+	POWER_3300W = 0,
+	POWER_4000W,
+	POWER_5500W,
+	POWER_8000W
 };
 enum FREQUENCY{
 	FREQ_20KHZ = 0,
 	FREQ_30KHZ,
-	FREQ_40KHZ,
+	FREQ_40KHZ
 };
 
-#define SYSINFO_SIZE						16
-#define MAC_ADDR_SIZE      					18
-class SYSTEM_CONFIG
+#define TIME_SIZE							32
+
+typedef struct TEACHMODE
 {
-public:
-	Language	LanguageIs;
-	POWERS 		PowerSupply;
-	FREQUENCY 	Frequency;
-};
-
-class L20SystemConfig : public SYSTEM_CONFIG
-{
-public:
-	bool bIsHeightEncoder;
-	bool bIsFootPedalAbort;
-	bool bIsLockOnAlarm;
-	COOLING Cooling;
-	unsigned int CoolingDuration;
-	unsigned int CoolingDelay;
-
-	AUNIT Amplitude_Unit;
-	PUNIT Pressure_Unit;
-	HUNIT Height_Unit;
-
 	unsigned int Quantity;
-	TMtype Teach_mode;
+	TEACHMODE_TYPE Teach_mode;
 	unsigned int Time_Upper;
 	unsigned int Time_Lower;
 	unsigned int Power_Upper;
@@ -103,14 +84,56 @@ public:
 	unsigned int PreHeight_Lower;
 	unsigned int PostHeight_Upper;
 	unsigned int PostHeight_Lower;
+}TEACHMODE;
 
-	char SetTime[2 * SYSINFO_SIZE];	
-};
-
-class P1SystemConfig : public SYSTEM_CONFIG
+typedef struct SYSTEMCONFIG
 {
 public:
+	SYSTEMCONFIG();
+	virtual ~SYSTEMCONFIG();
 	
-};
+	LANGUAGE	Language;
+	POWER 		PowerSupply;
+	FREQUENCY 	Frequency;
+	
+	virtual int		Size() 			= 0;
+	virtual void	InitialValue()	= 0;
+	static  void	CurrentTime(char*);
+	static std::shared_ptr<SYSTEMCONFIG> GetSystemConfig();
+}SYSTEMCONFIG;
+
+typedef struct L20_SYSTEMCONFIG : public SYSTEMCONFIG
+{
+public:
+	L20_SYSTEMCONFIG();
+	~L20_SYSTEMCONFIG();
+	bool bHeightEncoder;
+	bool bFootPedalAbort;
+	bool bLockOnAlarm;
+	COOLING Cooling;
+	unsigned int CoolingDuration;
+	unsigned int CoolingDelay;
+
+	AMPLITUDE_UNIT Amplitude_Unit;
+	PRESSURE_UNIT Pressure_Unit;
+	HEIGHT_UNIT Height_Unit;
+
+	TEACHMODE TeachMode;
+
+	char DateTime[TIME_SIZE];
+	
+	int  Size() 			override;
+	void InitialValue()		override;
+}L20_SYSTEMCONFIG;
+
+typedef struct P1_SYSTEMCONFIG : public SYSTEMCONFIG
+{
+public:
+	P1_SYSTEMCONFIG();
+	~P1_SYSTEMCONFIG();
+	
+	int  Size() 			override;
+	void InitialValue()		override;
+}P1_SYSTEMCONFIG;
 
 #endif

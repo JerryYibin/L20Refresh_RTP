@@ -13,6 +13,24 @@ extern "C"
 {
 	#include <vxbEqepLib.h>
 }
+HeightEncoder*							HeightEncoder::_HeightEncoder = nullptr;
+map<int, HEIGHT_ENCODER> 				HeightEncoder::HeightCalibratedMap;
+HEIGHT_PROPERTY							HeightEncoder::HeightProperty;
+HEIGHT_ENCODER							HeightEncoder::RawHeight;
+
+/**************************************************************************//**
+* \brief   - Return the single instance of class.
+*
+* \param   - None.
+*
+* \return  - HeightEncoder* Object 
+*
+******************************************************************************/
+HeightEncoder* HeightEncoder::GetInstance()
+{
+	return (_HeightEncoder != nullptr) ? _HeightEncoder : (_HeightEncoder = new HeightEncoder());
+}
+
 /**************************************************************************//**
 * 
 * \brief   - Constructor
@@ -21,9 +39,18 @@ extern "C"
 *
 * \return  - None.
 ******************************************************************************/
-HeightEncoder::HeightEncoder() {
-	// TODO Auto-generated constructor stub
-
+HeightEncoder::HeightEncoder() 
+{
+	HEIGHT_ENCODER tmpHeight;
+	tmpHeight.Calibrated = false;
+	tmpHeight.TopCount = HEIGHT_HOME_COUNT;
+	tmpHeight.ZeroCount = HEIGHT_BASIC_COUNT;
+//	SetInitCount(HEIGHT_BASIC_COUNT);
+	SetMaxCount(HEIGHT_MAXIMUM_COUNT);
+	for(int i = 0; i < PRESSURE_NUM; i++)
+	{
+		HeightCalibratedMap[i] = tmpHeight;
+	}
 }
 
 /**************************************************************************//**
@@ -132,12 +159,18 @@ int HeightEncoder::GetDirection()
 * 
 * \brief   - Get actual height value with calibration deflection.
 *
-* \param   - None.
+* \param   - pressure.
 *
 * \return  - Actual height value
 *
 ******************************************************************************/
-int HeightEncoder::GetActualHeight()
+int HeightEncoder::GetActualHeight(unsigned int pressure)
 {
-	return (GetPositionCount() - INIT_COUNT) * RESOLUTION;
+	unsigned int basecount;
+	auto iter = HeightCalibratedMap.find((int)(pressure/ PRESSURE_FACTOR));
+	if(iter != HeightCalibratedMap.end())
+		basecount = iter->second.ZeroCount;
+	else
+		basecount = HEIGHT_BASIC_COUNT;
+	return (GetPositionCount() - basecount) * RESOLUTION;
 }

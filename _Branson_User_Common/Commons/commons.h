@@ -5,18 +5,13 @@
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
+     
+---------------------------- MODULE DESCRIPTION ----------------------------
+
+There are some common definitions for the whole project, such as feature debug flag,
+database directory and alarm index. 
  
 ***************************************************************************/
-/*
-  * Commons.h
- *
- *  Created on: Feb 9, 2018
- *      Author: DShilonie
- *      
- *  Prototypes for various common code and macros that are used for all components, should be here.
- *  
- *  
- */
 
 
 #ifndef COMMONS_H_
@@ -26,8 +21,11 @@
 #include "vxWorks.h"
 #endif
 
-#define SOCKET_DBG
-#define LOGIN_DBG
+#define SOCKET_DBG 0
+#define LOGIN_DBG 0
+#define HEIGHT_CALIBRATE_DBG 1
+#define INCLUDE_TI_AM5708_BRANSON 1
+#define INCLUDE_TI_AM5708_JN 0
 //MMC2/eMMC Storage
 #define MMC_EMMC_DEV_NAME	"/mmc1"
 

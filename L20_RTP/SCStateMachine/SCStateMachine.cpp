@@ -18,8 +18,7 @@
 #include "WaitForTrigger.h"
 #include "WaitForReadyPosition.h"
 #include "HeightCalibrate.h"
-#include "HeightCorrect.h"
-#include "ReadyForRequest.h"
+#include "ReadyForTrigger.h"
 #include "../PCStateMachine.h"
 #include "../ACStateMachine.h"
 #include "../Logger.h"
@@ -31,7 +30,7 @@ extern "C"
 
 SCStateMachine* SCStateMachine::m_StateMachineObj = nullptr;
 SCState* SCStateMachine::m_objState = nullptr;
-
+SEM_ID SCStateMachine::m_semaphoreMutex = SEM_ID_NULL;
 /**************************************************************************//**
 * \brief   - Constructor -
 *
@@ -45,8 +44,10 @@ SCStateMachine::SCStateMachine() {
 	m_StateIndex = 0;
 	m_IsRunning = false;
 	m_IsLoading = false;
+	/*create semaphore*/
+	m_semaphoreMutex = semBCreate(SEM_Q_FIFO, SEM_FULL);
 	initStateMap();
-	_objActionMap = new map<SCState::STATE, SCAction*>();
+	_objActionMap = new map<SCState::STATE, SCState*>();
 }
 
 /**************************************************************************//**
@@ -77,6 +78,11 @@ SCStateMachine::~SCStateMachine() {
 	delete _objStateMap;
 	_objActionMap->clear();
 	delete _objActionMap;
+	if(m_semaphoreMutex != SEM_ID_NULL)
+	{
+		semDelete(m_semaphoreMutex);
+		m_semaphoreMutex = SEM_ID_NULL;
+	}
 }
 
 /**************************************************************************//**
@@ -120,6 +126,8 @@ void SCStateMachine::initStateMap()
 	_objStateMap->insert(pair<SCState::STATE, int>(SCState::WAIT_FOR_TRIGGER, 			FALSE));
 	_objStateMap->insert(pair<SCState::STATE, int>(SCState::WELD_SONIC_ON, 				FALSE));
 	_objStateMap->insert(pair<SCState::STATE, int>(SCState::WAIT_FOR_READY_POSITION, 	TRUE));
+	_objStateMap->insert(pair<SCState::STATE, int>(SCState::CALIBRATE,					FALSE));	
+	_objStateMap->insert(pair<SCState::STATE, int>(SCState::READY_FOR_TRIGGER,			TRUE));
 	
 	
 }
@@ -133,11 +141,11 @@ void SCStateMachine::initStateMap()
 * \return  - None.
 *
 ******************************************************************************/
-void SCStateMachine::addActionToMap(SCState::STATE stateIdx, SCAction* _action)
+void SCStateMachine::addActionToMap(SCState::STATE stateIdx, SCState* _action)
 {
 	if(_objActionMap != nullptr)
 	{
-		_objActionMap->insert(pair<SCState::STATE, SCAction*>(stateIdx, _action));
+		_objActionMap->insert(pair<SCState::STATE, SCState*>(stateIdx, _action));
 	}
 }
 
@@ -272,7 +280,7 @@ int SCStateMachine::LoadStatesHandler(int operation)
 		case WELD:
 			SelectWeldSequence();
 			break;
-		case HEIGHT_CALIBRATION:
+		case HEIGHT_CALIBRATE_READY:
 			SelectHeightCalibrateSequence();
 			break;
 		default:
@@ -331,17 +339,13 @@ void SCStateMachine::SelectWeldSequence(void)
 ******************************************************************************/
 void SCStateMachine::SelectHeightCalibrateSequence(void)
 {
-	m_objState = NULL;
-	
-	m_objState = new ReadyForRequest();
+	m_objState = nullptr;
+	m_objState = new ReadyForTrigger();
 	_objStateList->push_back(m_objState);
+	addActionToMap(m_objState->m_State, m_objState);
 	
 	m_objState = new HeightCalibrate();
 	_objStateList->push_back(m_objState);
-	
-	m_objState = new HeightCorrect();
-	_objStateList->push_back(m_objState);
-	
 }
 
 /**************************************************************************//**
@@ -355,14 +359,23 @@ void SCStateMachine::SelectHeightCalibrateSequence(void)
 ******************************************************************************/
 int	SCStateMachine::ExecuteStateAction(SCState::STATE stateIdx)
 {
-	auto iter = _objActionMap->find(stateIdx);
 	int iResult = ERROR;
-	SCAction* _action = nullptr;
+	SCState* _action = nullptr;
+	semTake(m_semaphoreMutex, WAIT_FOREVER); //lock
+	auto iter = _objActionMap->find(stateIdx);
 	if (iter != _objActionMap->end())
 	{
 		_action = iter->second;
-		iResult = _action->Execute();
+		switch(stateIdx)
+		{
+		case SCState::READY_FOR_TRIGGER:
+			iResult = ReadyForTrigger::Execute(_action);
+			break;
+		default:
+			break;
+		}
 	}
+	semGive(m_semaphoreMutex); //release semaphoreMutex lock
 	return iResult;
 }
 

@@ -99,23 +99,17 @@ void ActuatorTask::SetCoreState(unsigned int coreState)
 	CoreState = coreState;
 }
 
-bool ActuatorTask::IsMoving()
+/**************************************************************************//**
+* \brief  	- Get specific actuator object following system type
+*
+* \param	- None
+*
+* \return 	- ActuatorTask object
+*
+******************************************************************************/
+ActuatorTask* ActuatorTask::GetInstance()
 {
-	if(_ACObj == nullptr)
-		return true;
-	else
-	{
-		//TODO it is the software bug still need to take account into 
-		return false; //_ACObj->IsMoving();
-	}
-}
-
-unsigned int ActuatorTask::GetMaxSpeed()
-{
-	if(_ACObj == nullptr)
-		return 0;
-	else
-		return _ACObj->GetMaxSpeed();
+	return (_ACObj != nullptr) ? _ACObj : (_ACObj = new(nothrow) L20ActuatorTask());
 }
 
 /**************************************************************************//**
@@ -134,10 +128,9 @@ void ActuatorTask::Actuator_System_Task(void)
 	MESSAGE		ProcessBuffer;
 	UINT32		events;
 
-	ActuatorTask *ACTask = new(nothrow) L20ActuatorTask();
+	ActuatorTask *ACTask = ActuatorTask::GetInstance();
 	if(NULL != ACTask)
 	{
-		_ACObj = ACTask;
 		while(ACTask->bIsTaskRunStatus())
 		{
 			// wait for any one event

@@ -88,11 +88,7 @@ void WeldSonicOn::Enter()
 //			WeldData.m_WeldResult.ALARMS.AlarmFlags.PreHeightMax = 1;
 //			m_Actions = SCState::FAIL;
 //		}
-//		else
-//			m_Actions = SCState::LOOP;
 //	}
-//	else
-//		m_Actions = SCState::LOOP;
 
 	if (CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure != CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure)
 	{

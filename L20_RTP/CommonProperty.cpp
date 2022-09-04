@@ -21,9 +21,8 @@ const char*								CommonProperty::cTaskName[TOTAL_NUM_OF_TASK]	= {0};
 WELD_RESULT								CommonProperty::WeldResult;
 WeldRecipeSC							CommonProperty::ActiveRecipeSC;
 SYSTEM_INFO								CommonProperty::SystemInfo;
-SYSTEM_CONFIG							CommonProperty::SystemConfig;
-vector<WELD_SIGNATURE>	CommonProperty::WeldSignatureVector;
-CommonProperty::HEIGHT_ENCODER			CommonProperty::RawHeight[PRESSURE_NUM];
+vector<WELD_SIGNATURE>					CommonProperty::WeldSignatureVector;
+
 /**************************************************************************//**
 * \brief   - Constructor - Read default recipe and load into MAP.
 *
@@ -69,7 +68,7 @@ CommonProperty::CommonProperty()
 ******************************************************************************/
 CommonProperty* CommonProperty::getInstance()
 {
-	return m_CPObj ? m_CPObj : (m_CPObj = new CommonProperty());
+	return (m_CPObj != nullptr) ? m_CPObj : (m_CPObj = new CommonProperty());
 }
 
 /**************************************************************************//**
@@ -125,6 +124,7 @@ void CommonProperty::setTaskId(string TaskName, TASK_ID tid)
 }
 
 
+
 /**************************************************************************//**
 * \brief   - Release the memory related with object.
 *
@@ -151,3 +151,4 @@ CommonProperty::~CommonProperty()
 {
 	m_CPObj = NULL;
 }
+

@@ -10,24 +10,26 @@
  
 ***************************************************************************/
 
-#ifndef READYFORREQUEST_H_
-#define READYFORREQUEST_H_
+#ifndef READYFORTRIGGER_H_
+#define READYFORTRIGGER_H_
 
 #include "SCState.h"
-#include "SCAction.h"
+//#include "SCAction.h"
 
-class ReadyForRequest: public SCState, public SCAction
+class ReadyForTrigger: public SCState/*, public SCAction*/
 {
 public:
-	ReadyForRequest();
-	virtual ~ReadyForRequest();
+	ReadyForTrigger();
+	virtual ~ReadyForTrigger();
 public:
 	virtual void 	Enter() 	override;
 	virtual void 	Loop() 		override;
 	virtual void 	Exit() 		override;
 	virtual void 	Fail() 		override;
-	virtual int 	Execute()	override;
-
+//	virtual int 	Execute()	override;
+	static int		Execute(void* _obj);
+private:
+	bool	m_IsTrigger;
 };
 
 

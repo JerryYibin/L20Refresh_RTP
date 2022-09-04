@@ -27,6 +27,7 @@
 #include "PCStateMachine.h"
 #include "ActuatorTask.h"
 #include "ACStateMachine.h"
+#include "SystemType.h"
 #include <sysLib.h>
 #include <sdLib.h>
 extern "C"
@@ -35,6 +36,7 @@ extern "C"
 	#include "customSystemCall.h"
 }
 using namespace std;
+
 
 /* Global structure object for PDO DATA */
 
@@ -452,8 +454,7 @@ int main()
 	GPIO::InitGPIO();
 	DAC_TLV5604::InitDAConverter();
 	ADC_AD7689::InitADConverter();
-	HeightEncoder::SetInitCount(30000);
-	HeightEncoder::SetMaxCount(0xffff);
+	HeightEncoder::GetInstance();
 	
 	DAC_TLV5604::SetFrequencyOffset(0x1ff);
 	DAC_TLV5604::SetTunePoint(0x1ff);

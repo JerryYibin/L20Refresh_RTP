@@ -58,7 +58,7 @@ void ACStrokeDown::Enter()
 	if((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(CTRL_AC_MOVE_DISABLE)) == 0)
 	{
 		//TODO the hardware code will be replaced with the override function for the different system type.
-		m_TriggerHeight = HeightEncoder::GetPositionCount() - MOVE_NOISE;
+		m_TriggerHeight = HeightEncoder::GetInstance()->GetPositionCount() - MOVE_NOISE;
 		vxbGpioSetValue(GPIO::O_HORN, GPIO_VALUE_HIGH);
 		m_Timeout = 0;
 		ACStateMachine::AC_TX->AC_StatusEvent &= ~BIT_MASK(STATUS_AC_MOVE_DISABLE);
@@ -88,11 +88,11 @@ void ACStrokeDown::Loop()
 		return;
 	}
 	
-	if(HeightEncoder::GetPositionCount() < m_TriggerHeight)
+	if(HeightEncoder::GetInstance()->GetPositionCount() < m_TriggerHeight)
 	{
 		if((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(CTRL_PART_CONTACT_ENABLE)) == BIT_MASK(CTRL_PART_CONTACT_ENABLE))
 		{
-			if(ActuatorTask::IsMoving() == false)
+			if(ActuatorTask::GetInstance()->IsMoving() == false)
 			{
 				ChangeState(AC_HOLD);
 				ACStateMachine::AC_TX->AC_StatusEvent |= BIT_MASK(STATUS_PART_CONTACT_FOUND);
@@ -101,6 +101,7 @@ void ACStrokeDown::Loop()
 		else
 		{
 			ChangeState(AC_HOLD);
+			LOG("CTRL_PART_CONTACT_DISABLE\n");
 		}
 	}
 	m_Timeout++;

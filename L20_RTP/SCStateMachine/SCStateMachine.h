@@ -30,22 +30,13 @@ public:
 		HORN_RETRACT,
 		RESET_ALARM,
 		SCAN,
-		HEIGHT_CALIBRATION,
+		HEIGHT_CALIBRATE_READY,
 		TEST,
 		TEACH_MODE,
 		BATCH_WELD,
 		RESET_ALL_ALARM,
+		END_OPERATION
 	};
-	
-	
-//	enum SC_CONTROL_EVENTS
-//	{
-//		CTRL_ACTUATOR_CALIBRATE_ENABLE,
-//		CTRL_ACTUATOR_CHECK_ENABLE,
-//		CTRL_ACTUATOR_CORRECT_ENABLE,
-//		CTRL_ACTUATOR_ACCEPT_ENABLE,
-//		CTRL_ACTUATOR_EXIT_ENABLE,
-//	};	
 	
 public:
 	static SCStateMachine* 	getInstance();
@@ -66,11 +57,11 @@ private:
 	SCStateMachine();
 	void deleteAll();
 	void initStateMap();
-	void addActionToMap(SCState::STATE stateIdx, SCAction* _action);
+	void addActionToMap(SCState::STATE stateIdx, SCState* _action);
 private:
 	vector<SCState*>* 				_objStateList;
 	map<SCState::STATE, int>*		_objStateMap;
-	map<SCState::STATE, SCAction*>* _objActionMap;
+	map<SCState::STATE, SCState*>* _objActionMap;
 	unsigned int					m_StateIndex;
 	unsigned int					m_CoolDelayTimer;
 	unsigned int					m_CoolDurationTimer;
@@ -78,6 +69,7 @@ private:
 	bool							m_IsLoading;
 	static SCState* 				m_objState;
 	static SCStateMachine* 			m_StateMachineObj;
+	static SEM_ID m_semaphoreMutex; /* ID of mutex semaphore*/
 };
 
 #endif /* SCSTATEMACHINE_H_ */

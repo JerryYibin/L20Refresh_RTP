@@ -20,7 +20,7 @@
 #include "../Commons/recipedef.h"
 extern "C"
 {
-extern STATUS vxbRtcGet(struct tm *rtcTime);
+	#include "hwif/drv/resource/vxbRtcLib.h"
 }
 
 /******************************************************************************

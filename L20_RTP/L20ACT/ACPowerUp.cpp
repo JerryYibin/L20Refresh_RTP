@@ -76,11 +76,12 @@ void ACPowerUp::Loop()
 		return;
 	}
 
-	if(ActuatorTask::IsMoving() == false)
+	if(ActuatorTask::GetInstance()->IsMoving() == false)
 	{
 		//TODO The signal will be available later
 //		if (vxbGpioGetValue(GPIO::I_OPSIG) != GPIO_VALUE_HIGH) 
 			ChangeState(AC_READY);
+			ActuatorTask::GetInstance()->InitHeightSystem();
 	}
 	m_Timeout++;
 }

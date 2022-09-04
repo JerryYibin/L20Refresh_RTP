@@ -92,3 +92,16 @@ int DAC_TLV5604::SetFrequencyOffset(const unsigned short data)
 {
 	return setDACValue(FREQ_OFFSET, 0x3ff & data);
 }
+
+/**************************************************************************//**
+* 
+* \brief   - The function works on the pressure of air regulator setting.
+*
+* \param   - Data - DAC hexadecimal value (expected value 0x00 to 0x3ff)
+*
+* \return  - OK/ERROR.
+******************************************************************************/
+int DAC_TLV5604::SetPressure(const unsigned short data)
+{
+	return setDACValue(PRESSURE_SET, 0x3ff & data);
+}

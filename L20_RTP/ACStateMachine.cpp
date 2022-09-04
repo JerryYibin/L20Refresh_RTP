@@ -35,13 +35,14 @@ ACStateMachine * ACStateMachine::GetInstance()
 ******************************************************************************/
 ACStateMachine::ACStateMachine() 
 {
-	m_AlarmObj 		= new ACAlarm();
-	m_EstopObj		= new ACEstop();
-	m_PowerUpObj	= new ACPowerUp();
-	m_ReadyObj		= new ACReady();
-	m_StrokeDownObj = new ACStrokeDown();
-	m_StrokeUpObj	= new ACStrokeUp();
-	m_ToHoldObj		= new ACWeldHold();
+	m_AlarmObj 			= new ACAlarm();
+	m_EstopObj			= new ACEstop();
+	m_PowerUpObj		= new ACPowerUp();
+	m_ReadyObj			= new ACReady();
+	m_StrokeDownObj 	= new ACStrokeDown();
+	m_StrokeUpObj		= new ACStrokeUp();
+	m_ToHoldObj			= new ACWeldHold();
+	m_StartSwitchObj	= new ACStartSwitch();
 	CurrentStateObj = m_PowerUpObj;
 	CurrentStateObj->Enter();
 	LOG("\n%s ACT_T: _AC_POWERUP%s\n", KGRN, KNRM);
@@ -71,6 +72,8 @@ ACStateMachine::~ACStateMachine() {
 		delete m_StrokeUpObj;
 	if(m_ToHoldObj != nullptr)
 		delete m_ToHoldObj;
+	if(m_StartSwitchObj != nullptr)
+		delete m_StartSwitchObj;
 }
 
 /**************************************************************************//**
@@ -156,6 +159,12 @@ void ACStateMachine::ChangeState(ACState::ACSTATES nextState)
 
 		CurrentStateObj = _obj->m_ToHoldObj;
 		CurrentStateObj->stateType = ACState::AC_HOLD;
+		break;
+	case ACState::AC_STARTSWICH:
+		LOG("\n%sACT_T: _AC_Start_Switch%s\n", KGRN, KNRM);
+		
+		CurrentStateObj = _obj->m_StartSwitchObj;
+		CurrentStateObj->stateType = ACState::AC_STARTSWICH;
 		break;
 	case ACState::AC_ESTOP:
 		LOG("\n%sACT_T: _AC_ESTOP%s\n", KGRN, KNRM);

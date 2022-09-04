@@ -36,9 +36,9 @@ public:
 		SEEK_SONIC_ON,
 		HOLD,
 		WAIT_FOR_READY_POSITION,
-		CALIBRATE_CHECK,
+		CALIBRATE,
 		HEIGHTCORRECT,
-		READY_FOR_REQUEST,
+		READY_FOR_TRIGGER,
 		DOWN_STROKE,
 		RETURN_STROKE
 	};
@@ -76,6 +76,7 @@ private:
 	CommonProperty*							CP;
 protected:
 	MSG_Q_ID	UI_MSG_Q_ID;
+	MSG_Q_ID	CTL_MSG_Q_ID;
 };
 
 #endif /* SCSTATE_H_ */

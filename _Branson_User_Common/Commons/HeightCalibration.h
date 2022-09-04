@@ -5,18 +5,25 @@
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
- ---------------------------- MODULE DESCRIPTION ----------------------------   
  
 ***************************************************************************/
+#ifndef HEIGHT_CALIBRATION_H_
+#define HEIGHT_CALIBRATION_H_
 
-#include "SCAction.h"
+struct HEIGHT_ENCODER
+{
+	unsigned int ZeroCount;
+	unsigned int TopCount;
+	bool Calibrated;
+};
 
-SCAction::SCAction() {
-	// TODO Auto-generated constructor stub
-
-}
-
-SCAction::~SCAction() {
-	// TODO Auto-generated destructor stub
-}
-
+struct HEIGHT_PROPERTY
+{
+	int 			ActualHeight;
+	unsigned int 	Pressure;
+	unsigned int 	Stroke;
+	unsigned int 	HornUpTime;
+	unsigned int 	HornDownTime;
+	unsigned int 	TotalTime;
+};
+#endif

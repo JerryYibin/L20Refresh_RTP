@@ -10,22 +10,40 @@
 
 #ifndef HEIGHTENCODER_H_
 #define HEIGHTENCODER_H_
+#include <map>
+#include "HeightCalibration.h"
 #define RESOLUTION 5 //5um
-#define INIT_COUNT 30000
+#define HEIGHT_BASIC_COUNT		30000
+#define HEIGHT_HOME_COUNT		38000
+#define HEIGHT_MAXIMUM_COUNT	0xffff
 #define HEIGHT_UNIT 1000 //convert mm to um
+#define PRESSURE_NUM 				81
+#define PRESSURE_FACTOR 			1000
+using namespace std;
 class HeightEncoder 
 {
-public:
+private:
+	static HeightEncoder	*_HeightEncoder;
+private:
 	HeightEncoder();
+	HeightEncoder(const HeightEncoder & srcObj) = delete;
+	HeightEncoder & operator=	(const HeightEncoder& srcObj) = delete;
+public:
+	static map<int, HEIGHT_ENCODER>		HeightCalibratedMap;
+	static HEIGHT_PROPERTY				HeightProperty;
+	static HEIGHT_ENCODER				RawHeight;
+public:
+	
 	virtual ~HeightEncoder();
 public:
-	static int SetInitCount(const unsigned int count);
-	static int GetInitCount();
-	static int SetMaxCount(const unsigned int count);
-	static int GetMaxCount();
-	static int GetPositionCount();
-	static int GetDirection();
-	static int GetActualHeight();
+	static HeightEncoder* 	GetInstance			();
+	int 					SetInitCount		(const unsigned int count);
+	int 					GetInitCount		();
+	int 					SetMaxCount			(const unsigned int count);
+	int 					GetMaxCount			();
+	int 					GetPositionCount	();
+	int 					GetDirection		();
+	int 					GetActualHeight		(unsigned int pressure);
 };
 
 #endif /* HEIGHTENCODER_H_ */

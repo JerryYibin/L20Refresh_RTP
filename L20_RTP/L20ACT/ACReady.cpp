@@ -80,7 +80,7 @@ void ACReady::Loop()
 	else if(ACStateMachine::AC_RX->MasterState == SCState::START_SWITCH)
 	{
 		//TODO  still need to add input signals checking
-		if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_HIGH && vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_HIGH)
+		if((vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_HIGH) && (vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_HIGH))
 			ChangeState(AC_STARTSWICH);
 	}
 	else

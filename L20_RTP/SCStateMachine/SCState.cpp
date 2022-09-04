@@ -23,7 +23,7 @@ SCState::SCState() {
 	// TODO Auto-generated constructor stub
 	CP = CommonProperty::getInstance();
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
-
+	CTL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 }
 /**************************************************************************//**
 * 

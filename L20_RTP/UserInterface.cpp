@@ -17,17 +17,20 @@ UserInterface owned using the class object pointer.
 **********************************************************************************************************/
 
 #include "UserInterface.h"
-#include "ActuatorTask.h"
 #include "Recipe.h"
 #include "CommunicationInterfaceHMI.h"
 #include "ControlTask.h"
 #include "SCStateMachine/SCStateMachine.h"
 #include "versions.h"
+#include "HeightEncoder.h"
+#include "HeightCalibration.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
 	#include "hwif/drv/resource/vxbRtcLib.h"
 }
+
+auto _SystemConfig = SYSTEMCONFIG::GetSystemConfig();;
 
 /**************************************************************************//**
 * 
@@ -48,7 +51,6 @@ UserInterface::UserInterface()
 	DATA_MSG_Q_ID_REQ  = CP->getMsgQId (Data_Task + "/Request");
 
 	INTERFACE_MSG_Q_ID	= CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T]);
-	ACT_MSG_Q_ID 		= CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]);
 }
 
 /**************************************************************************//**
@@ -103,6 +105,36 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_LAST_WELD_RESULT:
 		updateLastWeldResult();
+		break;
+	case TO_UI_TASK_SYSCONFIG_READ:
+		responseSystemConfig();
+		break;
+	case TO_UI_TASK_SYSCONFIG_WRITE:
+		updateSystemConfigData(message.Buffer);
+		break;
+	case TO_UI_TASK_INITIALIZATION:
+		responseInitializationData();
+		break;
+	case TO_UI_TASK_HEIGHT_CALIBRATE_START:
+		message.msgID = ControlTask::TO_CTRL_TRIGGER_HEIGHT_CALIBRATE;
+		SendToMsgQ(message, CTRL_MSG_Q_ID);
+		break;
+	case TO_UI_TASK_HEIGHT_CHECK:
+		message.msgID = ControlTask::TO_CTRL_TRIGGER_HEIGHT_CHECK;
+		SendToMsgQ(message, CTRL_MSG_Q_ID);
+		break;
+	case TO_UI_TASK_HEIGHT_CORRECT:
+		message.msgID = ControlTask::TO_CTRL_HEIGHT_CORRECT;
+		SendToMsgQ(message, CTRL_MSG_Q_ID);
+		break;
+	case TO_UI_TASK_HEIGHT_CALIBRATE_ACCEPT:
+		//TODO send message to Database
+		break;
+	case TO_UI_TASK_HEIGHT_CALIBRATE_RESPONSE:
+		responseHeightCalibration();
+		break;
+	case TO_UI_TASK_HEIGHT_CHECK_RESPONSE:
+		responseHeightCheck();
 		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
@@ -167,9 +199,6 @@ void UserInterface::getActiveRecipe()
 void UserInterface::updateActiveRecipeGeneralParam(char* recipebuf)
 {
 	Recipe::SetActiveRecipeGeneralParam((WeldParameterSetting*)recipebuf);
-	MESSAGE message;
-	message.msgID = ActuatorTask::TO_ACT_TASK_PRESSURE_SET;
-	SendToMsgQ(message, ACT_MSG_Q_ID);
 	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
 	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
 	sendMsg.msgID	= REQ_SETUP_WELD_PARAM_IDX;
@@ -227,22 +256,14 @@ void UserInterface::updateActiveRecipeAdvancedParam(char* recipebuf)
 void UserInterface::updateOperationMode(char* messagebuf)
 {
 	MESSAGE message;
-	message.msgID = ControlTask::TO_CTRL_OPERATE_MODE_IDX;
-	unsigned int* screenIndex = (unsigned int*)messagebuf;
-	unsigned int operationMode = SCStateMachine::NO_OPERATION;
-//	LOG(" screen index = %d \n", *screenIndex);
-	switch(*screenIndex)
+	message.msgID = ControlTask::TO_CTRL_OPERATE_MODE_SET;
+	unsigned int screenIndex;
+	memcpy(&screenIndex, messagebuf, sizeof(unsigned int));
+	if(screenIndex < SCREEN_END)
 	{
-	case DASHBORD_SCREEN:
-	case SETUP_SCREEN:
-		operationMode = SCStateMachine::WELD;
-		break;
-	default:
-		operationMode = SCStateMachine::NO_OPERATION;
-		break;
+		memcpy(message.Buffer, &screenIndex, sizeof(unsigned int));
+		SendToMsgQ(message, CTRL_MSG_Q_ID);
 	}
-	memcpy(message.Buffer, &operationMode, sizeof(unsigned int));
-	SendToMsgQ(message, CTRL_MSG_Q_ID);
 }
 
 /**************************************************************************//**
@@ -317,26 +338,56 @@ void UserInterface::getDateAndTime(char* timebuf)
 
 /**************************************************************************//**
 * 
-* \brief   - Update current weld result data
+* \brief   - response Height Calibration Result repCode: 0 successful; 1 failure
 *
 * \param   - None
 *
 * \return  - None
 *
 ******************************************************************************/
-void UserInterface::updateLastWeldResult()
+void UserInterface::responseHeightCalibration()
 {
-	m_stHeartbeat.AlarmCode = 0;
-	m_stHeartbeat.Amplitude = CommonProperty::WeldResult.Amplitude;
-	m_stHeartbeat.CycleCounter = CommonProperty::WeldResult.CycleCounter;
-	m_stHeartbeat.PeakPower = CommonProperty::WeldResult.PeakPower;
-	m_stHeartbeat.PostHeight = CommonProperty::WeldResult.PostHeight;
-	m_stHeartbeat.PreHeight = CommonProperty::WeldResult.PreHeight;
-	m_stHeartbeat.RecipeNumber = CommonProperty::WeldResult.RecipeNum;
-	m_stHeartbeat.TotalEnergy = CommonProperty::WeldResult.TotalEnergy;
-	m_stHeartbeat.TriggerPress = CommonProperty::WeldResult.TriggerPressure;
-	m_stHeartbeat.WeldPress = CommonProperty::WeldResult.WeldPressure;
-	m_stHeartbeat.WeldTime = CommonProperty::WeldResult.WeldTime;
+	unsigned int iResult = 0;
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+
+	sendMsg.msgID	= REQ_HEIGHT_CALIBRATE_START_IDX;
+	sendMsg.msgLen  = 0;
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, &iResult, sizeof(unsigned int));
+	sendMsg.msgLen = sizeof(unsigned int);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - response Height check result as following... 
+* 	struct HEIGHT_PROPERTY
+*	{
+*		unsigned int ActualHeight;
+*		unsigned int Pressure;
+*		unsigned int Stroke;
+*		unsigned int HornUpTime;
+*		unsigned int HornDownTime;
+*		unsigned int TotalTime;
+*	};
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseHeightCheck()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+
+	sendMsg.msgID	= REQ_HEIGHT_CALIBRATE_CHECK_IDX;
+	sendMsg.msgLen  = 0;
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, &HeightEncoder::HeightProperty, sizeof(HEIGHT_PROPERTY));
+	sendMsg.msgLen = sizeof(HEIGHT_PROPERTY);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }
 
 /**************************************************************************//**
@@ -383,3 +434,73 @@ void UserInterface::UserInterface_Task(void)
 	taskSuspend(taskIdSelf());
 }
 
+void UserInterface::updateLastWeldResult()
+{
+	m_stHeartbeat.AlarmCode = 0;
+	m_stHeartbeat.Amplitude = CommonProperty::WeldResult.Amplitude;
+	m_stHeartbeat.CycleCounter = CommonProperty::WeldResult.CycleCounter;
+	m_stHeartbeat.PeakPower = CommonProperty::WeldResult.PeakPower;
+	m_stHeartbeat.PostHeight = CommonProperty::WeldResult.PostHeight;
+	m_stHeartbeat.PreHeight = CommonProperty::WeldResult.PreHeight;
+	m_stHeartbeat.RecipeNumber = CommonProperty::WeldResult.RecipeNum;
+	m_stHeartbeat.TotalEnergy = CommonProperty::WeldResult.TotalEnergy;
+	m_stHeartbeat.TriggerPress = CommonProperty::WeldResult.TriggerPressure;
+	m_stHeartbeat.WeldPress = CommonProperty::WeldResult.WeldPressure;
+	m_stHeartbeat.WeldTime = CommonProperty::WeldResult.WeldTime;
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Initialize system configuration. 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseInitializationData()
+{
+	_SystemConfig->InitialValue();
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Sends response to UIC for system configuration request. 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseSystemConfig()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+
+	sendMsg.msgID	= TO_UI_TASK_SYSCONFIG_READ;
+	sendMsg.msgLen  = 0;
+	sendMsg.rspCode = 0;
+
+	if(_SystemConfig)
+	{
+		sendMsg.msgLen = _SystemConfig->Size();
+		memcpy(sendMsg.Buffer, reinterpret_cast<char*>(_SystemConfig.get()) + V_PTR_SIZE, sendMsg.msgLen);
+	}
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* \brief   - Write system configuration.  
+*
+* \param   - Message buffer
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::updateSystemConfigData(char* messagebuf)
+{
+	if(_SystemConfig)
+	{
+		memcpy(reinterpret_cast<char*>(_SystemConfig.get()) + V_PTR_SIZE, messagebuf, _SystemConfig->Size());
+	}
+}

@@ -12,9 +12,8 @@
 
 #ifndef GPIO_H_
 #define GPIO_H_
-#define JN_BOARD  1
-#define LEVEL_ONE 0
-#if JN_BOARD
+#include "commons.h"
+#if INCLUDE_TI_AM5708_JN
 // GPIO pin value definitions
 #define GPIO1_22 0x16
 #define GPIO1_24 0x18
@@ -55,7 +54,7 @@
 
 #define INPUT_SIZE 12
 #define OUTPUT_SIZE 16
-#elif LEVEL_ONE
+#elif INCLUDE_TI_AM5708_BRANSON
 #define GPIO1_3		0x03
 #define GPIO1_4 	0x04
 #define GPIO1_5 	0x05
@@ -112,26 +111,32 @@ private:
 public:
 	enum OUTPUT_PIN
 	{
-#if JN_BOARD
-		O_SPARE 		= GPIO3_31,
-		O_SONICS_ON 	= GPIO3_31,
-		O_ALARM 		= GPIO4_30,
-		O_COOLAIR 		= GPIO4_5,
+#if INCLUDE_TI_AM5708_JN
+		O_READY 		= GPIO3_28,
 		O_GATHER 		= GPIO3_29,
 		O_ANVIL			= GPIO3_30,
 		O_CLAMP			= GPIO3_30,
+		O_SPARE 		= GPIO3_31,
+		O_SONICS_ON 	= GPIO3_31,
+		
 		O_HORN 			= GPIO4_0,
-		O_READY 		= GPIO3_28,
-		O_SEEK 			= GPIO4_7,
-		O_SAFETY 		= GPIO4_3,
 		O_OUT0 			= GPIO4_2,
-		O_OUT1 			= GPIO4_26,
-		O_BUZZ 			= GPIO4_8,
+		O_SAFETY 		= GPIO4_3,
 		O_RUN_PSI 		= GPIO4_4,
-		O_OL_RST_PSI	= GPIO4_13,
-		O_TEST_PSI 		= GPIO4_28,
+		O_COOLAIR 		= GPIO4_5,
 		O_EXT_SEEK_PSI 	= GPIO4_6,
-#elif LEVEL_ONE
+		O_SEEK 			= GPIO4_7,
+		O_BUZZ 			= GPIO4_8,
+		O_OL_RST_PSI	= GPIO4_13,
+		O_OUT1 			= GPIO4_26,
+		O_TEST_PSI 		= GPIO4_28,
+		O_ALARM 		= GPIO4_30,
+#elif INCLUDE_TI_AM5708_BRANSON
+		O_RUN_PSI		= GPIO1_4,	// Sonics on digital IO for AUPS only
+		O_OL_RST_PSI	= GPIO1_5,	// Sonics Overload indicator from AUPS only
+		O_TEST_PSI		= GPIO1_16,	// Sonics test digital IO for AUPS only 
+		O_EXT_SEEK_PSI	= GPIO1_17, // Sonics seek digital IO for AUPS only
+		
 		O_SPARE			= GPIO4_3,  // Sonics indicator for external
 		O_SONICS_ON		= GPIO4_3,	
 		O_ALARM			= GPIO4_4,	// Alarm indicator for external
@@ -139,58 +144,64 @@ public:
 		O_GATHER		= GPIO4_8,	// Gather digital IO
 		O_ANVIL			= GPIO4_9,  // Anvil digital IO
 		O_CLAMP			= GPIO4_9,	// Clamp digital IO
+		
 		O_HORN			= GPIO5_0,	// Horn down/Up digital IO
 		O_READY			= GPIO5_1,	// Ready signal indicator for external
 		O_SEEK			= GPIO5_4,	// Sonics seek indicator for external
 		O_SAFETY		= GPIO5_5,	// Safety digital IO
 		O_OUT0			= GPIO5_6,	// Auxiliary indicator for external
 		O_OUT1			= GPIO5_7,  // Auxiliary indicator for external
-		O_BUZZ			= GPIO5_16,	// Buzzer digital for external
-		O_RUN_PSI		= GPIO1_4,	// Sonics on digital IO for AUPS only
-		O_OL_RST_PSI	= GPIO1_5,	// Sonics Overload indicator from AUPS only
-		O_TEST_PSI		= GPIO1_16,	// Sonics test digital IO for AUPS only 
-		O_EXT_SEEK_PSI	= GPIO1_17, // Sonics seek digital IO for AUPS only
 		O_NULL_IO_01	= GPIO5_8,	// IO validation indicator
 		O_NULL_IO_02	= GPIO5_9,  // IO validation indicator
+		O_BUZZ			= GPIO5_16,	// Buzzer digital for external
+
 		O_MOTOR_IN1		= GPIO6_7,  // motor CW
 		O_MOTOR_IN2		= GPIO6_19, // motor CCW
+		
 		O_SHUT_DOWN		= GPIO7_23  // Shut down control IO
 #endif
 		
 	};
 	enum INPUT_PIN
 	{
-#if JN_BOARD
-		I_OPSIG 	= GPIO1_25,
-		I_IN0 		= GPIO1_24,
-		I_COVCLSE 	= GPIO6_29,
-		I_AIRMON 	= GPIO6_11,
-		I_IN2 		= GPIO6_10,
+#if INCLUDE_TI_AM5708_JN
 		I_IN3 		= GPIO1_22,
-		I_PB1 		= GPIO6_18,
+		I_IN0 		= GPIO1_24,
+		I_OPSIG 	= GPIO1_25,
+
+		I_IN2 		= GPIO6_10,
+		I_AIRMON 	= GPIO6_11,
 		I_PB2 		= GPIO6_17,
-		I_IN4 		= GPIO6_20,
+		I_PB1 		= GPIO6_18,
 		I_OL_PSOUI 	= GPIO6_19,
+		I_IN4 		= GPIO6_20,
+		I_COVCLSE 	= GPIO6_29,
+		
 		I_ESTOPNC 	= GPIO7_22,
 		I_ESTOPNCR 	= GPIO7_23
-#elif LEVEL_ONE
-		I_OPSIG 	= GPIO2_19,  // Remote reset signal 
-		I_IN0 		= GPIO2_22,  // Remote IN0 signal
-		I_COVCLSE 	= GPIO2_24,  // Cover close switch signal
-		I_AIRMON 	= GPIO2_25,  // Alarm monitor sensor signal.
-		I_IN2 		= GPIO3_30,	 // Remote IN2 signal
-		I_IN3 		= GPIO3_31,  // Remote IN3 signal
-		I_PB1 		= GPIO2_28,  // Palm button 1
-		I_PB2 		= GPIO2_29,  // Palm button 2
-		I_IN4 		= GPIO4_2,   // Remote IN4 signal
-		I_OL_PSOUI 	= GPIO2_2,   // Overload signal monitor from AUPS
-		I_ESTOPNC 	= GPIO2_26,  // E-Stop signal 
-		I_ESTOPNCR 	= GPIO2_27,  // E-Stop return signal
-		I_POWER_INT	= GPIO1_3,   // hardware interrupt from power management chip
-		I_SETUP_LOCK = GPIO5_15, // Lock switch signal
-		I_SWITCH_HOLD = GPIO7_22,// Power off request signal 
-		I_24V_LOW	= GPIO7_24,  // 24V lost signal
-		I_USB3_FLT	= GPIO7_25   // USB fault signal
+#elif INCLUDE_TI_AM5708_BRANSON
+		I_POWER_INT		= GPIO1_3,   // hardware interrupt from power management chip
+		
+		I_OL_PSOUI 		= GPIO2_2,   // Overload signal monitor from AUPS
+		I_OPSIG 		= GPIO2_19,  // Remote reset signal 
+		I_IN0 			= GPIO2_22,  // Remote IN0 signal
+		I_COVCLSE 		= GPIO2_24,  // Cover close switch signal
+		I_AIRMON 		= GPIO2_25,  // Alarm monitor sensor signal.	
+		I_ESTOPNC 		= GPIO2_26,  // E-Stop signal 
+		I_ESTOPNCR 		= GPIO2_27,  // E-Stop return signal
+		I_PB1 			= GPIO2_28,  // Palm button 1
+		I_PB2 			= GPIO2_29,  // Palm button 2
+		
+		I_IN2 			= GPIO3_30,	 // Remote IN2 signal
+		I_IN3 			= GPIO3_31,  // Remote IN3 signal
+
+		I_IN4 			= GPIO4_2,   // Remote IN4 signal
+
+		I_SETUP_LOCK 	= GPIO5_15, // Lock switch signal
+		
+		I_SWITCH_HOLD 	= GPIO7_22,// Power off request signal 
+		I_24V_LOW		= GPIO7_24,  // 24V lost signal
+		I_USB3_FLT		= GPIO7_25   // USB fault signal
 #endif
 	};
 	GPIO();

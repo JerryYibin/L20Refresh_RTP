@@ -21,6 +21,7 @@
 #include "L20ACT/ACStrokeDown.h"
 #include "L20ACT/ACStrokeUp.h"
 #include "L20ACT/ACWeldHold.h"
+#include "L20ACT/ACStartSwitch.h"
 class ACStateMachine 
 {
 public:
@@ -58,6 +59,7 @@ protected:
 	ACStrokeDown*			m_StrokeDownObj;
 	ACStrokeUp*				m_StrokeUpObj;
 	ACWeldHold*				m_ToHoldObj;
+	ACStartSwitch*			m_StartSwitchObj;
 private:
 	static ACState*			CurrentStateObj;
 	static ACStateMachine* 	StateMachineObj;

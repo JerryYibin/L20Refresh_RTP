@@ -96,13 +96,13 @@ void ACStrokeUp::Loop()
 	}
 	else if((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(CTRL_HOME_POSITION_ENABLE)) == BIT_MASK(CTRL_HOME_POSITION_ENABLE))
 	{
-		if(ActuatorTask::IsMoving() == false)
+		if(ActuatorTask::GetInstance()->IsMoving() == false)
 		{
-			if (vxbGpioGetValue(GPIO::I_OPSIG) == GPIO_VALUE_HIGH)
-			{
+//			if (vxbGpioGetValue(GPIO::I_OPSIG) == GPIO_VALUE_HIGH)
+//			{
 				ChangeState(AC_READY);
 				ACStateMachine::AC_TX->AC_StatusEvent |= BIT_MASK(STATUS_HOME_POSITION_FOUND);
-			}
+//			}
 		}
 	}
 	else

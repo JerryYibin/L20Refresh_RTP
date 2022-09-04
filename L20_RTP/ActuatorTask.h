@@ -19,23 +19,26 @@ public:
 	enum MESSAGE_IDENTIFY
 	{
 		/* Macro defined to UIC */
-		TO_ACT_TASK_PRESSURE_SET,
+		TO_ACT_TASK_PRESSURE_SET = 0,
 	};
 	ActuatorTask();
 	virtual				~ActuatorTask();
 	
-	void 				ProcessTaskMessage					(MESSAGE& message) override;
+	void 					ProcessTaskMessage					(MESSAGE& message) override;
 	
-	virtual void		PDOUploadRequest 					() = 0;
-	virtual void 		PDODownloadRequest					() = 0;
+	virtual void			PDOUploadRequest 					() = 0;
+	virtual void 			PDODownloadRequest					() = 0;
+	virtual bool			IsMoving							() = 0;
+	virtual unsigned int	GetMaxSpeed							() = 0;
+	virtual void			InitHeightSystem					() = 0;
 	
-	static unsigned int	GetCoreState						();
-	static void			SetCoreState						(unsigned int coreState);
-	static bool			IsMoving							();
-	static unsigned int GetMaxSpeed							();	
+	static unsigned int		GetCoreState						();
+	static void				SetCoreState						(unsigned int coreState);
 	
-	static void			Actuator_System_Task				(void);
-private:
+	static ActuatorTask*	GetInstance							();	
+	
+	static void				Actuator_System_Task				(void);
+protected:
 	MSG_Q_ID		CTRL_MSG_Q_ID;
 	MSG_Q_ID		UI_MSG_Q_ID;
 	MSG_Q_ID 		MAINTENANCE_MSG_Q_ID;
