@@ -23,7 +23,7 @@
 //TABLE AND COLUMN NAMES IN DB
 #define TABLE_WELD_RESULT		"WeldResultTable"
 #define TABLE_WELD_RECIPE		"WeldRecipeTable"
-#define TABLE_WELD_SIGNATURE	"WeldResultSignature"
+#define TABLE_WELD_SIGNATURE	"WeldResultSignatureTable"
 #define COLUMN_GRAPHDATA		"GraphData"
 #define COLUMN_GOLDEN			"Golden"
 

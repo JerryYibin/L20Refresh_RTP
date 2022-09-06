@@ -10,13 +10,14 @@
 
 #include "DBAccess.h"
 #include "DBConfiguration.h"
+#include "../CommonProperty.h"
 
 const string strInsert = "insert into %s ";
 const string strWeldResultTableFormat = 
-		"(CreatedTime, RecipeID, WeldEnergy, TriggerPressure, WeldPressure, "
+		"(partID, DateTime, RecipeID, WeldEnergy, TriggerPressure, WeldPressure, "
 		"WeldAmplitude, WeldTime, WeldPeakPower, TriggerHeight, WeldHeight, "
-		"AlarmFlag, SequenceID, CycleCounter, partID) "
-		"values (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s');";
+		"AlarmFlag, SequenceID, CycleCounter) "
+		"values ('%s','%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d);";
 const string strWeldRecipeTableFormat = 
 		"(UserID, IsValidate, Amplitude, Width, WeldPressure, "
 		"TriggerPressure, TimePlus, TimeMinus, PeakPowerPlus, PeakPowerMinus, "
@@ -59,7 +60,12 @@ public:
 	    DBVersion
 	};
 	
-	
+private:
+    char *struct2Json(WeldStepValueSetting *, int);
+    void json2Struct(const char *json, WeldStepValueSetting *);
+
+    char *vector2Json(vector<WELD_SIGNATURE>);
+    void json2Vector(const char *json, vector<WELD_SIGNATURE> &WeldSignatureVector);
 public:
 	DBAccessL20DB();
 	virtual ~DBAccessL20DB();
@@ -77,6 +83,16 @@ public:
 	virtual int StoreWeldResult(char* buffer) override;
 	virtual int StoreWeldSignature(char* buffer) override;
 	virtual int StoreWeldRecipe(char* buffer) override;
+
+	virtual void QueryWeldResult(char *) override;
+	virtual void QueryWeldSignature(char *) override;
+	virtual void QueryWeldRecipe(char *) override;
+
+	virtual void DeleteOldest(const char *) override;
+#ifdef UNITTEST_DATABASE
+    virtual void ClearTable(const char *) override;
+#endif
+
 	//End of methods to fetch data from database needed for CSV reports generation.	
 };
 

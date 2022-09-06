@@ -16,7 +16,10 @@ It's a good change for Data_Task so Data_Task can access all the source of
 DataTask class owned using the class object pointer. 
  
 **********************************************************************************************************/
-
+#undef PERFORMANCE_MEASURE
+#ifdef PERFORMANCE_MEASURE
+#include <timerDev.h>
+#endif
 #include "DataTask.h"
 #include "Database/DBAccess_l20_db.h"
 extern "C"
@@ -73,11 +76,14 @@ DataTask::~DataTask()
  ******************************************************************************/
 int DataTask::ConnectDB()
 {
-	int nErrCode = SQLITE_ERROR;
-	_ObjDBConn = new DBAccessL20DB();
-	nErrCode = _ObjDBConn->ConnectDB();
-	if(nErrCode > SQLITE_OK)
-		LOGERR("DB Connection Open Error! ErrCode = %d\n",nErrCode, 0, 0);
+	int nErrCode = SQLITE_OK;
+    if(_ObjDBConn == nullptr)
+        {
+    	_ObjDBConn = new DBAccessL20DB();
+    	nErrCode = _ObjDBConn->ConnectDB();
+    	if(nErrCode > SQLITE_OK)
+    		LOGERR("DB Connection Open Error! ErrCode = %d\n",nErrCode, 0, 0);
+        }
 	return nErrCode;
 }
 
@@ -91,10 +97,15 @@ int DataTask::ConnectDB()
  ******************************************************************************/
 int DataTask::CloseDB()
 {
-	int nErrCode = SQLITE_ERROR;
-	nErrCode = _ObjDBConn->CloseDataBaseConnection();
-	if(nErrCode > SQLITE_OK)
-		LOGERR("DB Close Error! ErrCode = %d\n",nErrCode, 0, 0);
+	int nErrCode = SQLITE_OK;
+    if(_ObjDBConn != nullptr)
+        {
+    	nErrCode = _ObjDBConn->CloseDataBaseConnection();
+    	if(nErrCode > SQLITE_OK)
+    		LOGERR("DB Close Error! ErrCode = %d\n",nErrCode, 0, 0);
+        else
+            _ObjDBConn = nullptr;
+        }
 	return nErrCode;
 }
 
@@ -108,85 +119,75 @@ int DataTask::CloseDB()
  ******************************************************************************/
 void DataTask::ProcessTaskMessage(MESSAGE& message)
 {
-    int sta;
-    char cmd[100];
 	switch(message.msgID)
 	{
+	case TO_DATA_TASK_OPEN_DB:
+	    ConnectDB();
+        break;
+	case TO_DATA_TASK_CLOSE_DB:
+	    CloseDB();
+        break;
 	case TO_DATA_TASK_WELD_RECIPE_INSERT:
-		_ObjDBConn->StoreWeldRecipe(message.Buffer);
-		break;
-	case TO_DATA_TASK_WELD_RESULT_INSERT:
+		{
 #ifdef PERFORMANCE_MEASURE
-//		m_startTime = TimeStamp();
+		UINT32 m_startTime = sysTimestampLock();
+#endif 
+		_ObjDBConn->StoreWeldRecipe(message.Buffer);
+#ifdef PERFORMANCE_MEASURE
+        {
+		UINT32 m_endTime = sysTimestampLock();
+        printf("single StoreWeldRecipe took %u microseconds\n", (m_endTime-m_startTime)*1000000/sysTimestampFreq());
+        }
+#endif
+		break;
+		}
+	case TO_DATA_TASK_WELD_RESULT_INSERT:
+		{
+#ifdef PERFORMANCE_MEASURE
+		UINT32 m_startTime = sysTimestampLock();
 #endif 
 		_ObjDBConn->StoreWeldResult(message.Buffer);
 #ifdef PERFORMANCE_MEASURE
-//		m_endTime = TimeStamp();
-//		PerformanceMeasureLog();
+        {
+		UINT32 m_endTime = sysTimestampLock();
+        printf("single StoreWeldResult took %u microseconds\n",
+            (m_endTime-m_startTime)*1000000/sysTimestampFreq());
+        }
 #endif
 		break;
+		}
 	case TO_DATA_TASK_WELD_SIGN_INSERT:
 		_ObjDBConn->StoreWeldSignature(message.Buffer);
 		break;
-
 	case TO_DATA_TASK_WELD_RESULT_QUERY:
-        {
-        sprintf(cmd, "select * from %s order by ID desc limit 1;", TABLE_WELD_RESULT);
-        string str = _ObjDBConn->ExecuteQuery(cmd);
-        printf("DataTask: query data from db %s: %s\n", TABLE_WELD_RESULT, str.c_str());
+        _ObjDBConn->QueryWeldResult(message.Buffer);
 		break;
-        }
 	case TO_DATA_TASK_WELD_RECIPE_QUERY:
-        {
-        sprintf(cmd, "select * from %s order by ID desc limit 1;", TABLE_WELD_RECIPE);
-        string str = _ObjDBConn->ExecuteQuery(cmd);
-        printf("DataTask: query data from db %s: %s\n", TABLE_WELD_RECIPE, str.c_str());
+        _ObjDBConn->QueryWeldRecipe(message.Buffer);
 		break;
-        }
 	case TO_DATA_TASK_WELD_SIGN_QUERY:
-        {
-        sprintf(cmd, "select * from %s order by ID desc limit 1;", TABLE_WELD_SIGNATURE);
-        string str = _ObjDBConn->ExecuteQuery(cmd);
-        printf("DataTask: query data from db %s: %s\n", TABLE_WELD_SIGNATURE, str.c_str());
+        _ObjDBConn->QueryWeldSignature(message.Buffer);
 		break;
-        }
+	case TO_DATA_TASK_WELD_RECIPE_DELETE:
+        _ObjDBConn->DeleteOldest(TABLE_WELD_RECIPE);
+		break;
+	case TO_DATA_TASK_WELD_RESULT_DELETE:
+        _ObjDBConn->DeleteOldest(TABLE_WELD_RESULT);
+		break;
+	case TO_DATA_TASK_WELD_SIGN_DELETE:
+        _ObjDBConn->DeleteOldest(TABLE_WELD_SIGNATURE);
+		break;
+#ifdef UNITTEST_DATABASE
 	case TO_DATA_TASK_WELD_RECIPE_CLEAR:
-        sprintf(cmd, "delete from %s;", TABLE_WELD_RECIPE);
-	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef UNITTEST_DATABASE
-        printf("TO_DATA_TASK_WELD_RECIPE_CLEAR: %d\n", sta);
-#endif
-        sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';",
-                TABLE_WELD_RECIPE);
-	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef UNITTEST_DATABASE
-        printf("TO_DATA_TASK_WELD_RECIPE_CLEAR: %d\n", sta);
-#endif
+        _ObjDBConn->ClearTable(TABLE_WELD_RECIPE);
 		break;
 	case TO_DATA_TASK_WELD_RESULT_CLEAR:
-        sprintf(cmd, "delete from %s;", TABLE_WELD_RESULT);
-	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef UNITTEST_DATABASE
-        printf("TO_DATA_TASK_WELD_RESULT_CLEAR: %d\n", sta);
-#endif
-        sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';", TABLE_WELD_RESULT);
-	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef UNITTEST_DATABASE
-        printf("TO_DATA_TASK_WELD_RESULT_CLEAR: %d\n", sta);
-#endif
+        _ObjDBConn->ClearTable(TABLE_WELD_RESULT);
 		break;
 	case TO_DATA_TASK_WELD_SIGN_CLEAR:
-        sprintf(cmd, "delete from %s;", TABLE_WELD_SIGNATURE);
-	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef UNITTEST_DATABASE
-        printf("TO_DATA_TASK_WELD_SIGN_CLEAR: %d\n", sta);
-#endif
-        sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';", TABLE_WELD_SIGNATURE);
-	    sta = _ObjDBConn->SingleTransaction((string)cmd);
-#ifdef UNITTEST_DATABASE
-        printf("TO_DATA_TASK_WELD_SIGN_CLEAR: %d\n", sta);
-#endif
+        _ObjDBConn->ClearTable(TABLE_WELD_SIGNATURE);
 		break;
+#endif
 	default:
 		LOGERR((char *)"DataTask: --------Unknown Message ID----------- : ", message.msgID, 0, 0);
 		break;

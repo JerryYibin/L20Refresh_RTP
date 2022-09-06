@@ -632,7 +632,16 @@ int SQLiteDB::executeDBQuery(string strSqlStatement, int nRetryCounter)
 	{
 		LOGERR((char *)"executeDBQuery - FAILED, nErrCode: %d",nErrCode,0,0);
 	}
-	
+#if 0 //submit manually
+	else
+	{
+		nErrCode = sqlite3_wal_checkpoint(m_ptrDB, nullptr);
+    	if(nErrCode != SQLITE_OK)
+    	{
+    		LOGERR((char *)"sqlite3_wal_checkpoint - FAILED, nErrCode: %d",nErrCode,0,0);
+    	}
+	}
+#endif
 	return nErrCode;
 }
 
