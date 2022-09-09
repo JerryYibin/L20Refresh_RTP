@@ -42,11 +42,10 @@ public:
 	virtual void QueryWeldResult(char *) = 0;
 	virtual void QueryWeldSignature(char *) = 0;
 	virtual void QueryWeldRecipe(char *) = 0;
+	virtual void QueryWeldRecipeAll(char *) = 0;
+	virtual int UpdateWeldRecipe(char *) = 0;
 
 	virtual void DeleteOldest(const char *) = 0;
-#ifdef UNITTEST_DATABASE
-    virtual void ClearTable(const char *) = 0;
-#endif
 	string GetWeldSignatureGraphBlob(int nRowID, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);
 	vector <int> GetGoldenWeldSignatureRowNumbers(int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);
 	//End of methods to fetch data from database needed for CSV reports generation.

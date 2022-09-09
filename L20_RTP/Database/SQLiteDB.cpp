@@ -577,9 +577,15 @@ int SQLiteDB::DeleteMultipleTableRows(string strTableName, int nMinRowID, int nM
 ******************************************************************************/
 int SQLiteDB::DeleteAllTableRows(string strTableName, int nRetryCounter)
 {
+    int nErrCode;
 	string strQuery = "DELETE FROM " + strTableName + ";";
-	
-	return	executeDBQuery(strQuery, nRetryCounter);			
+    nErrCode = executeDBQuery(strQuery, nRetryCounter);
+    if(nErrCode == SQLITE_OK)
+        {
+    	string strQuery = "UPDATE sqlite_sequence SET seq = 0 WHERE name='" + strTableName + "';";
+        nErrCode = executeDBQuery(strQuery, nRetryCounter);
+        }
+	return nErrCode;
 }
 
 /******************************************************************************

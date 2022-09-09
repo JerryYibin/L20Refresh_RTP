@@ -20,7 +20,10 @@ extern "C"
 {
 	#include "hwif/drv/resource/vxbRtcLib.h"
 }
-
+#undef RTC_MEASURE
+#ifdef RTC_MEASURE
+#include <timerDev.h>
+#endif
 /******************************************************************************
 * \brief - Constructor.
 *
@@ -138,42 +141,51 @@ string DBAccessL20DB::GetWeldSignatureCSVReportHeader2()
 /**************************************************************************//**
 * \brief   - Writing WeldResult into DB
 *      		
-* \param   - char *buffer
+* \param   - char *buffer - not used
 *
 * \return  - UINT8 -status of query exec
 *
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldResult(char* buffer)
 {
-	int nErrCode = SQLITE_ERROR;
-	char insertQuery[DB_QUERY_SIZE] = {0x00};
-	WELD_RESULT *pResult = (WELD_RESULT *)buffer;
 	struct tm timeStamp;
     char timeBuf[20];
+#ifdef RTC_MEASURE
+	UINT32 m_startTime = sysTimestampLock();
+#endif 
 	vxbRtcGet(&timeStamp);
+#ifdef RTC_MEASURE
+	UINT32 m_endTime = sysTimestampLock();
+    printf("vxbRtcGet took %u microseconds\n",
+        (m_endTime-m_startTime)*1000000/sysTimestampFreq());
+#endif
     strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
 
-	sprintf(insertQuery, string(strInsert + strWeldResultTableFormat).c_str(), 
-			TABLE_WELD_RESULT,
-			pResult->PartID,
-			timeBuf,
-			pResult->RecipeNum,
-			pResult->TotalEnergy,
-			pResult->TriggerPressure,
-			pResult->WeldPressure,
-			pResult->Amplitude,
-			pResult->WeldTime,
-			pResult->PeakPower,
-			pResult->PreHeight,
-			pResult->PostHeight,
-			pResult->ALARMS.ALARMflags,
-			0,//sequence ID
-			pResult->CycleCounter
-			);
-	nErrCode = SingleTransaction((string)insertQuery);
+	string strStore =
+        "insert into " + string(TABLE_WELD_RESULT) +
+        " (PartID, DateTime, RecipeID, WeldEnergy, TriggerPressure, WeldPressure, " +
+		"WeldAmplitude, WeldTime, WeldPeakPower, TriggerHeight, WeldHeight, " +
+		"AlarmFlag, SequenceID, CycleCounter) " +
+		"values ('"+
+		CommonProperty::WeldResult.PartID+"','"+//PartID
+		timeBuf+"',"+//DateTime
+		std::to_string(CommonProperty::WeldResult.RecipeNum)+","+//RecipeID
+		std::to_string(CommonProperty::WeldResult.TotalEnergy)+","+//WeldEnergy
+		std::to_string(CommonProperty::WeldResult.TriggerPressure)+","+//TriggerPressure
+		std::to_string(CommonProperty::WeldResult.WeldPressure)+","+//WeldPressure
+		std::to_string(CommonProperty::WeldResult.Amplitude)+","+//WeldAmplitude
+		std::to_string(CommonProperty::WeldResult.WeldTime)+","+//WeldTime
+		std::to_string(CommonProperty::WeldResult.PeakPower)+","+//WeldPeakPower
+		std::to_string(CommonProperty::WeldResult.PreHeight)+","+//TriggerHeight
+		std::to_string(CommonProperty::WeldResult.PostHeight)+","+//WeldHeight
+		std::to_string(CommonProperty::WeldResult.ALARMS.ALARMflags)+","+//AlarmFlag
+		std::to_string(0)+","+//SequenceID
+		std::to_string(CommonProperty::WeldResult.CycleCounter)+");";//CycleCounter
+
+	int nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
     static int count=0;
-    printf("#WeldResult(%d): result %d - %s\n\n", count++,nErrCode, insertQuery);
+    printf("#WeldResult(num %d): result %d\n%s\n\n", count++,nErrCode, strStore.c_str());
 #endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
@@ -183,7 +195,7 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 /**************************************************************************//**
 * \brief   - Writing WeldSignature into DB
 *
-* \param   - char *buffer
+* \param   - char *buffer - WeldResultID
 *
 * \return  - UINT8 - status of query exec
 *
@@ -191,8 +203,6 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 int DBAccessL20DB::StoreWeldSignature(char* buffer)
 {
 	int nErrCode = SQLITE_ERROR;
-	char insertQuery[DB_QUERY_SIZE] = {0x00};
-	int *WeldResultID = (int *)buffer;
 
 #ifdef UNITTEST_DATABASE
     if(CommonProperty::WeldSignatureVector.size()==0)
@@ -214,16 +224,18 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
     char *json = vector2Json(CommonProperty::WeldSignatureVector);
     if(json!=NULL)
         {
-    	sprintf(insertQuery, string(strInsert + strWeldSignatureFormat).c_str(), 
-    			TABLE_WELD_SIGNATURE,
-    			*WeldResultID,
-    			json
-    			);
+    	string strStore =
+            "insert into " + string(TABLE_WELD_SIGNATURE) +
+            " (WeldResultID, WeldGraph) " +
+            "values ("+
+            std::to_string(*(int *)buffer)+",'"+//WeldResultID
+            json+"');";//WeldGraph
+
         free(json);
-    	nErrCode = SingleTransaction((string)insertQuery);
+    	nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
         static int count=0;
-        printf("#WeldSignature(%d): result %d - %s\n\n", count++,nErrCode, insertQuery);
+        printf("#WeldSignature(num %d): result %d\n%s\n\n", count++,nErrCode, strStore.c_str());
 #endif
         }
 	if(nErrCode != 0)
@@ -234,22 +246,17 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 /**************************************************************************//**
 * \brief   - Writing Weld Recipe into DB
 *
-* \param   - char *buffer
+* \param   - char *buffer - not used
 *
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 {
-	int nErrCode = SQLITE_ERROR;
-	char insertQuery[DB_QUERY_SIZE] = {0x00};
-	WeldRecipeSC recipe;
 	struct tm timeStamp;
     char timeBuf[20];
 	vxbRtcGet(&timeStamp);
     strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
-
-	memcpy(&recipe, buffer, sizeof(WeldRecipeSC));
 
 #ifdef UNITTEST_DATABASE
     CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[0].m_Order = 1;
@@ -269,123 +276,238 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
     char *jsonTime = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TimeStep, STEP_MAX);
     char *jsonPower = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_PowerStep, STEP_MAX);
 
-	sprintf(insertQuery, string(strInsert + strWeldRecipeTableFormat).c_str(),
-			TABLE_WELD_RECIPE,
-			0, //userID
-			recipe.m_IsTeachMode,
-			recipe.m_WeldParameter.m_Amplitude,
-			recipe.m_WeldParameter.m_WidthSetting,
-			recipe.m_WeldParameter.m_WPpressure,
-			recipe.m_WeldParameter.m_TPpressure,
-			recipe.m_QualityWindowSetting.m_TimeMax,
-			recipe.m_QualityWindowSetting.m_TimeMin,
-			recipe.m_QualityWindowSetting.m_PeakPowerMax,
-			recipe.m_QualityWindowSetting.m_PeakPowerMin,
-			recipe.m_QualityWindowSetting.m_PreHeightMax,
-			recipe.m_QualityWindowSetting.m_PreHeightMin,
-			recipe.m_QualityWindowSetting.m_HeightMax,
-			recipe.m_QualityWindowSetting.m_HeightMin,
-			recipe.m_AdvancedSetting.m_WeldMode,
-			0,//ModeValue
-			recipe.m_AdvancedSetting.m_PreBurst,
-			recipe.m_AdvancedSetting.m_HoldTime,
-			recipe.m_AdvancedSetting.m_SqueezeTime,
-			recipe.m_AdvancedSetting.m_AfterBurstDelay,
-			recipe.m_AdvancedSetting.m_AfterBurstTime,
-			recipe.m_AdvancedSetting.m_AfterBurstAmplitude,
-			recipe.m_AdvancedSetting.m_DisplayedHeightOffset,
-			recipe.m_AdvancedSetting.m_MeasuredHeightOffset,
-			recipe.m_AdvancedSetting.m_WeldStepMode,
-			jsonEnergy,
-			jsonTime,
-			jsonPower,
-			"m_RecipeName",
-			timeBuf,
-			"m_RecipePicPath"
-			);
+	string strStore =
+        "insert into " + string(TABLE_WELD_RECIPE) +
+        " (UserID, IsValidate, Amplitude, Width, WeldPressure, " +
+        "TriggerPressure, TimePlus, TimeMinus, PeakPowerPlus, PeakPowerMinus, " +
+        "TriggerHeightPlus, TriggerHeightMinus, WeldHeightPlus, WeldHeightMinus, WeldMode, " +
+        "ModeValue, PreBurst, HoldTime, SqueezeTime, AfterBurstDelay, " +
+        "AfterBurstDuration, AfterBurstAmplitude, WeldHeight, MeasuredHeight, StepWeldMode, " +
+        "EnergyToStep, TimeToStep, PowerToStep, RecipeName, DateTime, " +
+        "PresetPicPath) " +
+        "values (" +
+        std::to_string(0)+","+//userID
+        std::to_string(CommonProperty::ActiveRecipeSC.m_IsTeachMode)+","+//IsValidate
+        std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude)+","+//Amplitude
+        std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WidthSetting)+","+//Width
+        std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure)+","+//WeldPressure
+        std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure)+","+//TriggerPressure
+        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMax)+","+//TimePlus
+        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin)+","+//TimeMinus
+        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMax)+","+//PeakPowerPlus
+        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMin)+","+//PeakPowerMinus
+        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PreHeightMax)+","+//TriggerHeightPlus
+        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PreHeightMin)+","+//TriggerHeightMinus
+        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_HeightMax)+","+//WeldHeightPlus
+        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_HeightMin)+","+//WeldHeightMinus
+        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldMode)+","+//WeldMode
+        std::to_string(0)+","+//ModeValue
+        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_PreBurst)+","+//PreBurst
+        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_HoldTime)+","+//HoldTime
+        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_SqueezeTime)+","+//SqueezeTime
+        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstDelay)+","+//AfterBurstDelay
+        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstTime)+","+//AfterBurstDuration
+        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstAmplitude)+","+//AfterBurstAmplitude
+        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_DisplayedHeightOffset)+","+//WeldHeight
+        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_MeasuredHeightOffset)+","+//MeasuredHeight
+        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldStepMode)+",'"+//StepWeldMode
+        jsonEnergy+"','"+//EnergyToStep
+        jsonTime+"','"+//TimeToStep
+        jsonPower+"','"+//PowerToStep
+        CommonProperty::ActiveRecipeSC.m_RecipeName+"','"+//RecipeName
+        timeBuf+"','"+//DateTime
+        CommonProperty::ActiveRecipeSC.m_RecipePicPath+"');";//PresetPicPath
+
     free(jsonEnergy);
     free(jsonTime);
     free(jsonPower);
 
-	nErrCode = SingleTransaction((string)insertQuery);
+	int nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
     static int count=0;
-    printf("#WeldRecipe(%d): result %d - %s\n\n", count++,nErrCode, insertQuery);
+    printf("#WeldRecipe(num %d): result %d\n%s\n\n", count++,nErrCode, strStore.c_str());
 #endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
 }
+/**************************************************************************//**
+*
+* \param   - char *buffer - ID
+*
+******************************************************************************/
 void DBAccessL20DB::QueryWeldResult(char *buffer)
 {
-    char cmd[100];
-	int *id = (int *)buffer;
+    string strQuery =
+        "select * from "+string(TABLE_WELD_RESULT)+
+        " where ID="+
+        std::to_string(*(int *)buffer)+";";
+    string str = ExecuteQuery(strQuery);
 
-    sprintf(cmd, "select * from %s where ID=%d;", TABLE_WELD_RESULT, *id);
-    string str = ExecuteQuery(cmd);
-    printf("QueryWeldResult: %s\n", str.c_str());
+    if(str.size()>0)
+        printf("QueryWeldResult:\n%s\n", str.c_str());
     return;
 }
+/**************************************************************************//**
+*
+* \param   - char *buffer - WeldResultID
+*
+******************************************************************************/
 void DBAccessL20DB::QueryWeldSignature(char *buffer)
 {
-    char cmd[100];
-	int *WeldResultID = (int *)buffer;
+    string strQuery =
+        "select "+string(COLUMN_GRAPHDATA)+
+        " from "+string(TABLE_WELD_SIGNATURE)+
+        " where WeldResultID="+
+        std::to_string(*(int *)buffer)+";";
+    string str = ExecuteQuery(strQuery);
     vector<WELD_SIGNATURE> WeldSignVector;
-    
-    sprintf(cmd, "select WeldGraph from %s where WeldResultID=%d;", TABLE_WELD_SIGNATURE, *WeldResultID);
-    string str = ExecuteQuery(cmd);
     json2Vector(str.c_str(), WeldSignVector);
     return;
 }
+/**************************************************************************//**
+*
+* \param   - char *buffer - not used
+*
+******************************************************************************/
+void DBAccessL20DB::QueryWeldRecipeAll(char *buffer)
+{
+    string strQuery =
+        "select * from "+string(TABLE_WELD_RECIPE)+";";
+    string str = ExecuteQuery(strQuery);
+
+    if(str.size()>0)
+        printf("QueryWeldRecipe:\n%s\n", str.c_str());
+    return;
+}
+/**************************************************************************//**
+*
+* \param   - char *buffer - ID
+*
+******************************************************************************/
 void DBAccessL20DB::QueryWeldRecipe(char *buffer)
 {
-    char cmd[100];
-	int *id = (int *)buffer;
+    string strQuery =
+        "select * from "+string(TABLE_WELD_RECIPE)+
+        " where ID="+
+        std::to_string(*(int *)buffer)+";";
+    string str = ExecuteQuery(strQuery);
+    if(str.size()>0)
+        printf("QueryWeldRecipe:\n%s\n", str.c_str());
 
-    sprintf(cmd, "select * from %s where ID=%d;", TABLE_WELD_RECIPE, *id);
-    string str = ExecuteQuery(cmd);
-    printf("QueryWeldRecipe: %s\n", str.c_str());
-
-    sprintf(cmd, "select EnergyToStep from %s where ID=%d;", TABLE_WELD_RECIPE, *id);
-    str = ExecuteQuery(cmd);
-    printf("EnergyToStep: %s\n", str.c_str());
+    strQuery =
+        "select EnergyToStep from "+string(TABLE_WELD_RECIPE)+
+        " where ID="+
+        std::to_string(*(int *)buffer)+";";
+    str = ExecuteQuery(strQuery);
     json2Struct(str.c_str(), NULL);
 
-    sprintf(cmd, "select TimeToStep from %s where ID=%d;", TABLE_WELD_RECIPE, *id);
-    str = ExecuteQuery(cmd);
-    printf("TimeToStep: %s\n", str.c_str());
+    strQuery =
+        "select TimeToStep from "+string(TABLE_WELD_RECIPE)+
+        " where ID="+
+        std::to_string(*(int *)buffer)+";";
+    str = ExecuteQuery(strQuery);
     json2Struct(str.c_str(), NULL);
 
-    sprintf(cmd, "select PowerToStep from %s where ID=%d;", TABLE_WELD_RECIPE, *id);
-    str = ExecuteQuery(cmd);
-    printf("PowerToStep: %s\n", str.c_str());
+    strQuery =
+        "select PowerToStep from "+string(TABLE_WELD_RECIPE)+
+        " where ID="+
+        std::to_string(*(int *)buffer)+";";
+    str = ExecuteQuery(strQuery);
     json2Struct(str.c_str(), NULL);
     return;
 }
+/**************************************************************************//**
+*
+* \param   - char *buffer - ID
+*
+******************************************************************************/
+int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
+{
+	struct tm timeStamp;
+    char timeBuf[20];
+	vxbRtcGet(&timeStamp);
+    strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
+
+#ifdef UNITTEST_DATABASE
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[0].m_Order = 3;
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[0].m_StepValue = 2;
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[0].m_AmplitudeValue = 1;
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[1].m_Order = 6;
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[1].m_StepValue = 5;
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[1].m_AmplitudeValue = 4;
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[4].m_Order = 9;
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[4].m_StepValue = 8;
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[4].m_AmplitudeValue = 7;
+
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TimeStep[0].m_Order = 333;
+    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_PowerStep[0].m_Order = 444;
+#endif
+    char *jsonEnergy = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep, STEP_MAX);
+    char *jsonTime = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TimeStep, STEP_MAX);
+    char *jsonPower = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_PowerStep, STEP_MAX);
+
+	string strStore =
+        "update " + string(TABLE_WELD_RECIPE) +
+        " set UserID="+std::to_string(0)+//userID
+        ", IsValidate="+std::to_string(CommonProperty::ActiveRecipeSC.m_IsTeachMode)+//IsValidate
+        ", Amplitude="+std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude)+//Amplitude
+        ", Width="+std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WidthSetting)+//Width
+        ", WeldPressure="+std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure)+//WeldPressure
+        ", TriggerPressure="+std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure)+//TriggerPressure
+        ", TimePlus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMax)+//TimePlus
+        ", TimeMinus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin)+//TimeMinus
+        ", PeakPowerPlus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMax)+//PeakPowerPlus
+        ", PeakPowerMinus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMin)+//PeakPowerMinus
+        ", TriggerHeightPlus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PreHeightMax)+//TriggerHeightPlus
+        ", TriggerHeightMinus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PreHeightMin)+//TriggerHeightMinus
+        ", WeldHeightPlus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_HeightMax)+//WeldHeightPlus
+        ", WeldHeightMinus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_HeightMin)+//WeldHeightMinus
+        ", WeldMode="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldMode)+//WeldMode
+        ", ModeValue="+std::to_string(0)+//ModeValue
+        ", PreBurst="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_PreBurst)+//PreBurst
+        ", HoldTime="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_HoldTime)+//HoldTime
+        ", SqueezeTime="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_SqueezeTime)+//SqueezeTime
+        ", AfterBurstDelay="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstDelay)+//AfterBurstDelay
+        ", AfterBurstDuration="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstTime)+//AfterBurstDuration
+        ", AfterBurstAmplitude="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstAmplitude)+//AfterBurstAmplitude
+        ", WeldHeight="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_DisplayedHeightOffset)+//WeldHeight
+        ", MeasuredHeight="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_MeasuredHeightOffset)+//MeasuredHeight
+        ", StepWeldMode="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldStepMode)+//StepWeldMode
+        ", EnergyToStep='"+jsonEnergy+//EnergyToStep
+        "', TimeToStep='"+jsonTime+//TimeToStep
+        "', PowerToStep='"+jsonPower+//PowerToStep
+        "', RecipeName='"+CommonProperty::ActiveRecipeSC.m_RecipeName+//RecipeName
+        "', DateTime='"+timeBuf+//DateTime
+        "', PresetPicPath='"+CommonProperty::ActiveRecipeSC.m_RecipePicPath+//PresetPicPath
+        "' where ID="+std::to_string(*(int *)buffer)+";";
+    free(jsonEnergy);
+    free(jsonTime);
+    free(jsonPower);
+
+	int nErrCode = SingleTransaction(strStore);
+#ifdef UNITTEST_DATABASE
+    static int count=0;
+    printf("#WeldRecipe(len %d): result %d\n%s\n\n", strStore.size(),nErrCode, strStore.c_str());
+#endif
+	if(nErrCode != 0)
+		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+	return nErrCode;
+}
+/**************************************************************************//**
+*
+* \param   - char *table - table name
+*
+******************************************************************************/
 void DBAccessL20DB::DeleteOldest(const char *table)
 {
-    char cmd[200];
-    sprintf(cmd, "delete from %s where ID in (select ID from %s order by ID asc limit 1);",
-        table,table);
-    SingleTransaction((string)cmd);
+    string strQuery =
+        "delete from "+
+        string(table)+" where ID in (select ID from "+
+        string(table)+" order by ID asc limit 1);";
+    SingleTransaction(strQuery);
     return;
 }
-#ifdef UNITTEST_DATABASE
-void DBAccessL20DB::ClearTable(const char *table)
-{
-    int sta;
-    char cmd[200];
-
-    sprintf(cmd, "delete from %s;", table);
-    sta = SingleTransaction((string)cmd);
-    printf("clear %s: %d\n", table, sta);
-
-    sprintf(cmd, "UPDATE sqlite_sequence SET seq = 0 WHERE name='%s';", table);
-    sta = SingleTransaction((string)cmd);
-    printf("sqlite_sequence %s: %d\n", table, sta);
-    return;
-}
-#endif
 char *DBAccessL20DB::struct2Json(WeldStepValueSetting *step, int num)
 {
     char *result;

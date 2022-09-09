@@ -79,9 +79,21 @@ int DataTask::ConnectDB()
 	int nErrCode = SQLITE_OK;
     if(_ObjDBConn == nullptr)
         {
-    	_ObjDBConn = new DBAccessL20DB();
+    	switch(GetSystemType())
+    	{
+    		case L20:
+    		{
+    	        _ObjDBConn = new DBAccessL20DB();
+        		break;
+    		}
+    		default:
+    		{
+    			LOGERR((char *)"MODEL_T : --------NO System Detected-----------", 0, 0, 0);
+                return SQLITE_ERROR;
+    		}
+    	}
     	nErrCode = _ObjDBConn->ConnectDB();
-    	if(nErrCode > SQLITE_OK)
+    	if(nErrCode != SQLITE_OK)
     		LOGERR("DB Connection Open Error! ErrCode = %d\n",nErrCode, 0, 0);
         }
 	return nErrCode;
@@ -119,6 +131,12 @@ int DataTask::CloseDB()
  ******************************************************************************/
 void DataTask::ProcessTaskMessage(MESSAGE& message)
 {
+    if((_ObjDBConn == nullptr)&&(message.msgID != TO_DATA_TASK_OPEN_DB))
+        {
+		LOGERR((char *)"DataTask: --------Database has not been open, Message ID = --- : ", message.msgID, 0, 0);
+        return;
+        }
+
 	switch(message.msgID)
 	{
 	case TO_DATA_TASK_OPEN_DB:
@@ -136,7 +154,8 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 #ifdef PERFORMANCE_MEASURE
         {
 		UINT32 m_endTime = sysTimestampLock();
-        printf("single StoreWeldRecipe took %u microseconds\n", (m_endTime-m_startTime)*1000000/sysTimestampFreq());
+        printf("single StoreWeldRecipe took %u microseconds\n",
+            (m_endTime-m_startTime)*1000000/sysTimestampFreq());
         }
 #endif
 		break;
@@ -159,11 +178,17 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_WELD_SIGN_INSERT:
 		_ObjDBConn->StoreWeldSignature(message.Buffer);
 		break;
-	case TO_DATA_TASK_WELD_RESULT_QUERY:
-        _ObjDBConn->QueryWeldResult(message.Buffer);
+	case TO_DATA_TASK_WELD_RECIPE_QUERY_ALL:
+        _ObjDBConn->QueryWeldRecipeAll(message.Buffer);
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_QUERY:
         _ObjDBConn->QueryWeldRecipe(message.Buffer);
+		break;
+	case TO_DATA_TASK_WELD_RECIPE_UPDATE:
+        _ObjDBConn->UpdateWeldRecipe(message.Buffer);
+		break;
+	case TO_DATA_TASK_WELD_RESULT_QUERY:
+        _ObjDBConn->QueryWeldResult(message.Buffer);
 		break;
 	case TO_DATA_TASK_WELD_SIGN_QUERY:
         _ObjDBConn->QueryWeldSignature(message.Buffer);
@@ -177,17 +202,15 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_WELD_SIGN_DELETE:
         _ObjDBConn->DeleteOldest(TABLE_WELD_SIGNATURE);
 		break;
-#ifdef UNITTEST_DATABASE
 	case TO_DATA_TASK_WELD_RECIPE_CLEAR:
-        _ObjDBConn->ClearTable(TABLE_WELD_RECIPE);
+        _ObjDBConn->DeleteAllTableRows(TABLE_WELD_RECIPE);
 		break;
 	case TO_DATA_TASK_WELD_RESULT_CLEAR:
-        _ObjDBConn->ClearTable(TABLE_WELD_RESULT);
+        _ObjDBConn->DeleteAllTableRows(TABLE_WELD_RESULT);
 		break;
 	case TO_DATA_TASK_WELD_SIGN_CLEAR:
-        _ObjDBConn->ClearTable(TABLE_WELD_SIGNATURE);
+        _ObjDBConn->DeleteAllTableRows(TABLE_WELD_SIGNATURE);
 		break;
-#endif
 	default:
 		LOGERR((char *)"DataTask: --------Unknown Message ID----------- : ", message.msgID, 0, 0);
 		break;

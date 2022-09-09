@@ -14,7 +14,7 @@ extern int atoi(const char *);
 typedef struct
     {
     UINT32 msgID;
-    char Buffer[100];
+    char Buffer[800];
     }MESSAGE;
 
 #define USER_NAME_SIZE      16
@@ -162,23 +162,29 @@ typedef struct
 
 
 enum MESSAGE_IDENTIFY
-{
+    {
     /* Macro defined to DATA TASK */
     TO_DATA_TASK_OPEN_DB,
     TO_DATA_TASK_CLOSE_DB,
-    TO_DATA_TASK_WELD_RECIPE_INSERT,
-    TO_DATA_TASK_WELD_RESULT_INSERT,
-    TO_DATA_TASK_WELD_SIGN_INSERT,
+
+    TO_DATA_TASK_WELD_RECIPE_QUERY_ALL,
     TO_DATA_TASK_WELD_RECIPE_QUERY,
-    TO_DATA_TASK_WELD_RESULT_QUERY,
-    TO_DATA_TASK_WELD_SIGN_QUERY,
+    TO_DATA_TASK_WELD_RECIPE_INSERT,
+    TO_DATA_TASK_WELD_RECIPE_UPDATE,
     TO_DATA_TASK_WELD_RECIPE_DELETE,
-    TO_DATA_TASK_WELD_RESULT_DELETE,
-    TO_DATA_TASK_WELD_SIGN_DELETE,
     TO_DATA_TASK_WELD_RECIPE_CLEAR,
+
+    TO_DATA_TASK_WELD_RESULT_QUERY,
+    TO_DATA_TASK_WELD_RESULT_INSERT,
+    TO_DATA_TASK_WELD_RESULT_DELETE,
     TO_DATA_TASK_WELD_RESULT_CLEAR,
+
+    TO_DATA_TASK_WELD_SIGN_QUERY,
+    TO_DATA_TASK_WELD_SIGN_INSERT,
+    TO_DATA_TASK_WELD_SIGN_DELETE,
     TO_DATA_TASK_WELD_SIGN_CLEAR
-};
+    };
+
 int main(int argc, char *argv[])
     {
     TASK_ID tid = taskOpen(TASK_NAME,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
@@ -195,9 +201,12 @@ int main(int argc, char *argv[])
  *   a for insert
  *     third parameter for count
  *   b for query
+ *     no third parameter for all records
  *     third parameter for ID
  *   c for clear
  *   d for delete oldest
+ *   u for update
+ *     third parameter for ID
  *
  * 2 for WELD_RESULT
  *   a for insert
@@ -245,9 +254,7 @@ int main(int argc, char *argv[])
                         {
                         int i;    
                         int count = 1;
-                        WeldRecipeSC *pData = (WeldRecipeSC *)&buf.Buffer[0];
                         buf.msgID = TO_DATA_TASK_WELD_RECIPE_INSERT;
-                        pData->m_IsTeachMode = 123;
 
                         if(argc>=4)
                             count = atoi(argv[3]);
@@ -264,10 +271,14 @@ int main(int argc, char *argv[])
                         {
                         int *pData = (int *)&buf.Buffer[0];
                         if(argc>=4)
+                            {
                             *pData = atoi(argv[3]);
+                            buf.msgID = TO_DATA_TASK_WELD_RECIPE_QUERY;
+                            }
                         else
-                            *pData = 1;
-                        buf.msgID = TO_DATA_TASK_WELD_RECIPE_QUERY;
+                            {
+                            buf.msgID = TO_DATA_TASK_WELD_RECIPE_QUERY_ALL;
+                            }
                         break;
                         }
                     case 'c':
@@ -276,6 +287,21 @@ int main(int argc, char *argv[])
                     case 'd':
                         buf.msgID = TO_DATA_TASK_WELD_RECIPE_DELETE;
                         break;
+                    case 'u':
+                        {
+                        WeldRecipeSC *pData = (WeldRecipeSC *)&buf.Buffer[0];
+                        pData->m_WeldParameter.m_Amplitude = 456;
+                        if(argc>=4)
+                            {
+                            pData->m_RecipeNumber = atoi(argv[3]);
+                            }
+                        else
+                            {
+                            pData->m_RecipeNumber = 1;
+                            }
+                        buf.msgID = TO_DATA_TASK_WELD_RECIPE_UPDATE;
+                        break;
+                        }
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;
@@ -290,9 +316,7 @@ int main(int argc, char *argv[])
                         {
                         int i;    
                         int count = 1;
-                        WELD_RESULT *pData = (WELD_RESULT *)&buf.Buffer[0];
                         buf.msgID = TO_DATA_TASK_WELD_RESULT_INSERT;
-                        pData->RecipeNum = 456;
 
                         if(argc>=4)
                             count = atoi(argv[3]);

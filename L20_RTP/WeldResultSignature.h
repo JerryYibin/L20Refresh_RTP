@@ -18,12 +18,4 @@ struct WELD_SIGNATURE
 	unsigned int Amplitude;
 };
 
-struct WELD_SIGNATURE_GROUP
-{
-	unsigned int Frquency[200];
-	unsigned int Power[200];
-	unsigned int Height[200];
-	unsigned int length; //<=200
-};
-
 #endif /* WELDRESULTSIGNATURE_H_ */
