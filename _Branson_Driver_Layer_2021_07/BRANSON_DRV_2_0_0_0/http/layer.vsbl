@@ -1,0 +1,41 @@
+/* layer.vsbl file for http sublayer  */
+/*
+ * Copyright (c) 2013-2017 Wind River Systems, Inc.
+ *
+ * The right to copy, distribute, modify, or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable Wind River license agreement.
+ */
+/*
+Modification history
+--------------------
+26jan17,r_w  increase version to 1.0.1.6 (V7MAN-234)
+09oct16,r_w  webserver does not replace spaces (V7MAN-216)
+13jun16,r_w  replace space with "&nbsp;" (V7MAN-185)
+06jun16,r_w  fix http memory issue in httpRpmWmbParse() (V7MAN-189)
+20apr16,jxy  Fix compiler and static analysis warnings
+18apr16,r_w  fix mismatched prototype issue (V7MAN-182)
+05jan16,rtm  update version to 1.0.1.2, add WEBCLI and RETROFIT (US73137)
+02jul14,r_w  update version for support Etag on NVM file system US32703 and fix V7MAN-138
+27may14,r_w  eliminate dependency for V7MAN-62
+14feb14,rdl  replace DEPENDS with API_DEPENDS
+02jan14,rdl  add HELP field, correct SYNOPSIS, correct formatting 
+10may13,r_w  created.
+*/
+
+Layer  BRANSON_HTTP
+    {
+    SYNOPSIS            Branson http protocol request process module
+    HELP                This provides the Branson http protocol request process module for Branson webServices.
+    VERSION             1.2.0.0
+    VENDOR              Branson
+    FEATURE             NETWORKING
+    VSB_REQUIRES
+    LAYER_REQUIRES      FS_DOSFS ZLIB
+    FEATURE_PROVIDES
+    OPTIONAL            YES
+    DEFAULT             NO
+    DOC_BUILD           NO
+    RETROFIT            {REPLACE, 1.0.0.0 -1.0.0.*, VSB_REQUIRES, LAYER_NOT_SUPPORTED}  \
+                        {REPLACE, 1.0.0.0 - 1.1.1.2, FEATURE, WEBCLI}
+    }

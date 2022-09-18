@@ -456,9 +456,6 @@ int main()
 	ADC_AD7689::InitADConverter();
 	HeightEncoder::GetInstance();
 	
-	DAC_TLV5604::SetFrequencyOffset(0x1ff);
-	DAC_TLV5604::SetTunePoint(0x1ff);
-	
 	MainTask *MT 		= new(nothrow) MainTask();
 	if(NULL != MT)
 	{
@@ -481,6 +478,11 @@ int main()
 		}
 		
 		MT->InitAuxClk();
+		
+		DAC_TLV5604::SetFrequencyOffset(0x1ff);
+		DAC_TLV5604::SetTunePoint(0x1ff);
+		unsigned short tmpPressure = Utility::Pressure2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure);
+		DAC_TLV5604::SetPressure(tmpPressure);
 		
 #ifdef SHUTDOWN_EVENT_REGISTER
 		

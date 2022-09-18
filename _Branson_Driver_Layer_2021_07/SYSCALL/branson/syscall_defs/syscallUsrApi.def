@@ -1,0 +1,151 @@
+##############################################################################
+# syscallUsrApi.def.template - Template for user-defined system call API's
+#
+# Copyright 2004, 2022 Wind River Systems, Inc.
+#
+#
+#  DESCRIPTION:
+#  This file defines system call function API for user-defined VxWorks system
+#  calls. It complements syscallApi.def in that it allows VxWorks users to 
+#  experiment with their own custom system calls.
+#
+#  FORMAT:
+# 
+#  The format is identical to that used by syscallApi.def.
+#
+#  A system call function API definition line has the format:
+#
+#  <name> <#args> [ <argument list> ] [ <return size> ] [ <configMacro(s)> ]
+#
+#  The name is the name of the system call. It must be the same as the name
+#  mentioned in syscallNum.def.
+#
+#  <#args> is the number of arguments taken by the system call. For functions
+#  taking 64-bit arguments on a 32-bit system, <#args> must be increased so
+#  that <#args> reflects the total number of native-words occupied by the
+#  entire argument list. <#args> must not exceed 8.
+#
+#  <argument list> optionally defines the parameter list for this system call
+#  for the purpose of generating the nameScArgs structure. The argument list is
+#  enclosed in []'s, and individual arguments are separated by semicolons.
+#
+#  <return size> is an optional parameter that specifies the size of the
+#  return value.  Valid entries are int, long and ptr.  If omitted, a 32-bit
+#  return value is assumed.  This parameter is enclosed in []'s.
+#
+#  <configMacro(s)> is an optional list of macros, at least one of which must
+#  be defined, in order for this system call to be included into the system.
+#  configMacro's are used as a means to configure specific system calls in
+#  or out of a given system build. 
+#
+#  For example, the _read() system call number has the signature:
+#
+#       ssize_t _read (int fd, void * buf, size_t maxBytes)
+#
+#  This must be specified in this file in the following format:
+#
+#  _read 3 [ int fd; void * buf; size_t maxBytes; ] [ long ] WIND_IO
+#
+#  Given the definition above, the read system call will be included into
+#  the system only if WIND_IO is #defined in the configuration.
+#  
+########################################################################
+
+logMsg                      7 [char *; _Vx_usr_arg_t; _Vx_usr_arg_t; _Vx_usr_arg_t; _Vx_usr_arg_t; _Vx_usr_arg_t; _Vx_usr_arg_t;] [int]
+eqepDevNumGet               0 [] [UINT32]
+vxbEqepShow                 1 [UINT32;] [STATUS]
+vxbEqepGetMaxCount          1 [UINT32;] [STATUS]
+vxbEqepSetMaxCount          2 [UINT32; UINT32;] [STATUS]
+vxbEqepGetInitCount         1 [UINT32;] [STATUS]
+vxbEqepSetInitCount         2 [UINT32; UINT32] [STATUS]
+vxbEqepGetPosCount          1 [UINT32;] [STATUS]
+vxbEqepGetDirection         1 [UINT32;] [STATUS]
+
+sysAuxClkRateSet            1 [_Vx_freq_t;] [STATUS]
+sysAuxClkDisable            0 [] [void]
+sysAuxClkEnable             0 [] [void]
+sysAuxClkConnectInternal    0 [] [STATUS]
+
+vxbGpioAlloc                1 [UINT32;] [STATUS]
+vxbGpioFree                 1 [UINT32;] [STATUS]
+vxbGpioIsFree               1 [UINT32;] [BOOL]
+vxbGpioSetDir               2 [UINT32; UINT32;] [STATUS]
+vxbGpioGetDir               1 [UINT32;] [UINT32]
+vxbGpioGetValue             1 [UINT32;] [UINT32]
+vxbGpioSetValue             2 [UINT32; UINT32;] [STATUS]
+vxbGpioSetDebounce          2 [UINT32; UINT32;] [STATUS]
+vxbGpioIntConfig            3 [UINT32; INTR_TRIGER; INTR_POLARITY;] [STATUS]
+vxbGpioIntConnectInternal   1 [UINT32;] [STATUS]
+vxbGpioIntDisconnect        3 [UINT32; VOIDFUNCPTR; void *;] [STATUS]
+vxbGpioIntEnable            3 [UINT32; VOIDFUNCPTR; void *;] [STATUS]
+vxbGpioIntDisable           3 [UINT32; VOIDFUNCPTR; void *;] [STATUS]
+
+ehrpwmDevNumGet             0 [] [UINT32]
+vxbEhrPwmGetTbStatus        1 [UINT32;] [STATUS]
+vxbEhrPwmSetEmulation       1 [UINT32;] [STATUS]
+vxbEhrPwmSetTBCTL           2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetTBCTL           1 [UINT32;] [STATUS]
+vxbEhrPwmSetTbPWMFreq       3 [UINT32; UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetTbPRD           1 [UINT32;] [STATUS]
+vxbEhrPwmSetTbPWMDir        2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetTbPWMDir        1 [UINT32;] [STATUS]
+vxbEhrPwmSetTbCounter       2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetTbCounter       1 [UINT32;] [STATUS]
+vxbEhrPwmSetTbClk           2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetTbClk           1 [UINT32;] [STATUS]
+vxbEhrPwmSetTbPWMCfg        3 [UINT32; UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetTbPWMCfg        1 [UINT32;] [STATUS]
+vxbEhrPwmGetTbAQConfA       1 [UINT32;] [STATUS]
+vxbEhrPwmSetTbAQConfA       2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetTbAQConfB       1 [UINT32;] [STATUS]
+vxbEhrPwmSetTbAQConfB       2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetCMPA            1 [UINT32;] [STATUS]
+vxbEhrPwmSetCMPA            2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetCMPB            1 [UINT32;] [STATUS]
+vxbEhrPwmSetCMPB            2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmSetAQSFRC          2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetAQSFRC          1 [UINT32;] [STATUS]
+vxbEhrPwmSetIntEvt          2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetIntEvt          1 [UINT32;] [STATUS]
+vxbEhrPwmSetIntPrd          2 [UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetIntPrd          1 [UINT32;] [STATUS]
+vxbEhrPwmEnableInt          3 [UINT32; UINT32; UINT32;] [STATUS]
+vxbEhrPwmDisableInt         1 [UINT32;] [STATUS]
+vxbEhrPwmRegISRInternal     5 [UINT32; UINT32; UINT32;] [STATUS]
+vxbEhrPwmGetIntStatus       1 [UINT32;] [STATUS]
+
+mcspiDevNumGet              0 [] [UINT32]
+vxbMcSpiTrans               3 [UINT32; SPI_HARDWARE *; SPI_TRANSFER *;] [STATUS]
+
+vxbRtcGet                   1 [struct tm *;] [STATUS]
+vxbRtcSet                   1 [struct tm *;] [STATUS]
+
+vxbMsDelay                  1 [int;] [void]
+
+canDevCount                 0 [] [int]
+
+logERR                      8 [UINT8 *; UINT32; const UINT8 *; UINT32; UINT32; _Vx_usr_arg_t; _Vx_usr_arg_t; _Vx_usr_arg_t;] [STATUS]
+logWARN                     8 [UINT8 *; UINT32; const UINT8 *; UINT32; UINT32; _Vx_usr_arg_t; _Vx_usr_arg_t; _Vx_usr_arg_t;] [STATUS]
+logDBG                      8 [UINT8 *; UINT32; const UINT8 *; UINT32; UINT32; _Vx_usr_arg_t; _Vx_usr_arg_t; _Vx_usr_arg_t;] [STATUS]
+
+sysTimestampFreq            0 [] [UINT32]
+sysTimestampLock            0 [] [UINT32]
+
+# RunTimeFeature   0 [ ] [ INT32 ]
+# IPConfiguration   4 [ char *ipAddr; char *subnetAddr; char *gatewayAddr; int subnetMask; ] [ STATUS ]
+# QSPIFlashErase          2   [ unsigned int offset; unsigned int length; ]
+# QSPIFlashWrite          3   [ unsigned int offset; unsigned int length; unsigned int src; ] [ int ]
+# QSPIFlashRead           3   [ unsigned int offset; unsigned int length; unsigned int dest; ] [ int ]
+# QspiLibBlockErase       1   [ unsigned int block; ]
+# QspiLibWrite            3   [ unsigned int dstOffsetAddr; unsigned int srcAddr; unsigned int length; ] [ unsigned int ]
+# QspiLibRead             3   [ unsigned int srcOffsetAddr; unsigned int dstAddr; unsigned int length; ] [ unsigned int ]
+# QspiLibInit             0   []
+# QspiLibPrintId          0   []
+# SioPollInput            2   [ SIO_CHAN * pChan; char *pChar; ] [ INT32 ]
+# SioPollOutput           2   [ SIO_CHAN * pChan; char outChar; ] [ INT32 ]
+# Gpio24VLowShutdown     0 [ ] [ STATUS ]
+# PcGpio15VLow   0 [ ] [ STATUS ]
+# PcGpio5VLow       0 [ ] [ STATUS ]
+# EmmcExtCsdDecode        1   [ EST_LIFE * emmc_est_life; ] [ STATUS ]
+# GetRTClowPwr     1   [ RTCtimerStr * pTime; ] [ INT32 ]
+

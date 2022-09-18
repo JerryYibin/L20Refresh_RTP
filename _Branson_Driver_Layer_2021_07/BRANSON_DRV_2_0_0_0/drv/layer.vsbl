@@ -1,0 +1,29 @@
+/* layer.vsbl - BRANSON device driver library layer */
+/*
+ * Copyright (c) 2013-2020 Wind River Systems, Inc.
+ *
+ * The right to copy, distribute, modify, or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable Wind River license agreement.
+ */
+
+/*
+Modification history
+--------------------
+12nov20,x_z  create
+*/
+
+Layer BRANSON_DRV_SR2107
+    {
+    SYNOPSIS    VxBus device driver library for Branson
+    HELP        This provides the VxBus device driver library for Branson.
+    VERSION     2.0.0.0
+    FEATURE     NOT_DEFINED
+    VENDOR      Branson
+    FEATURE     COREOS
+    OPTIONAL    NO
+    DEFAULT     YES
+    DOC_BUILD   NO
+    FASTBUILD   YES
+    HELP        layer for Branson specific drivers and libraries
+    }

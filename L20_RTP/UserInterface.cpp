@@ -24,6 +24,7 @@ UserInterface owned using the class object pointer.
 #include "versions.h"
 #include "HeightEncoder.h"
 #include "HeightCalibration.h"
+#include "ActuatorTask.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -44,6 +45,7 @@ UserInterface::UserInterface()
 {
 	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
+	ACT_MSG_Q_ID  = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]);
 	// Load the data message Q name
 	string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
 	DATA_MSG_Q_ID_CTRL = CP->getMsgQId (Data_Task + "/Control");
@@ -93,6 +95,8 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_SETUP_WELD_PARAM:
 		updateActiveRecipeGeneralParam(message.Buffer);
+		message.msgID = ActuatorTask::TO_ACT_TASK_PRESSURE_SET;
+		SendToMsgQ(message, ACT_MSG_Q_ID);
 		break;
 	case TO_UI_TASK_SETUP_QUALITY_PARAM:
 		updateActiveRecipeQualityParam(message.Buffer);

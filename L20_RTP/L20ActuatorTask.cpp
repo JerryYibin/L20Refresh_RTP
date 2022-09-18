@@ -64,6 +64,7 @@ void L20ActuatorTask::PDOUploadRequest()
 #if INCLUDE_TI_AM5708_JN
 		iResult = _ObjDCan->Sending(&tmpPressure);
 #elif INCLUDE_TI_AM5708_BRANSON
+		//TODO It is the temporarily approach for the pressure setting on Branson level 1 board only. 
 		iResult = DAC_TLV5604::SetPressure(tmpPressure.DAC_Pressure);
 #else
 		iResult = OK;

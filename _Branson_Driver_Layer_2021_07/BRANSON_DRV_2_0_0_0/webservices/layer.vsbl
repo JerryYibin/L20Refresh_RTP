@@ -1,0 +1,38 @@
+/* layer.vsbl file for user layer  */
+/*
+ * Copyright (c) 2014-2016 Wind River Systems, Inc.
+ *
+ * The right to copy, distribute, modify, or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable Wind River license agreement.
+ */
+/*
+Modification history
+--------------------
+08sep16,r_w  update to 1.0.1.5 for V7MAN-209
+20apr16,jxy  1.0.1.4, Fix compiler and static analysis warnings
+05jan16,rtm  update version to 1.0.1.3, add WEBCLI and RETROFIT (US73137)
+13may15,r_w  remove ipnet_ssl dependence
+30jul15,r_w  update version to 1.0.1.1 for V7MAN-148
+06nov14,r_w  update version to 1.0.1.0 due to modify configuration and fix V7MAN-138
+27may14,r_w  Update version due to eliminate dependency for V7MAN-62
+28mar14,r_w  Created.
+*/
+
+Layer  BRANSON_WEBSERVICES
+    {
+    SYNOPSIS          Branson Webserver 
+    HELP              This provides the Branson Webserver code.
+    VERSION           1.2.0.0
+    VENDOR            Branson
+    FEATURE           NETWORKING
+    VSB_REQUIRES      
+    LAYER_REQUIRES    WEBCLI_MIBWAY BRANSON_HTTP
+    FEATURE_REQUIRES
+    OPTIONAL          YES
+    DEFAULT           NO
+    DOC_BUILD         YES
+    RETROFIT          {REPLACE, 1.0.0.0 -1.0.0.*, VSB_REQUIRES, LAYER_NOT_SUPPORTED}  \
+                      {REPLACE, 1.0.0.0 - 1.1.1.3, FEATURE, WEBCLI}
+    }
+    

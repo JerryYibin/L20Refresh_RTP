@@ -111,7 +111,7 @@
                 <stringAttribute value="-I$(VSB_DIR)/usr/3pp/develop/usr/include"/>
             </listAttribute>
             <listAttribute key="BLD::Info|Libs|L20_VSB_ARMARCH7llvm_ld">
-                <stringAttribute value="-lcrypto -lssl -lnet"/>
+                <stringAttribute value="-lcrypto -lssl -lnet -ljson"/>
                 <stringAttribute value="-L$(VSB_DIR)/usr/3pp/develop/usr/lib"/>
                 <stringAttribute value="-lsqlite3"/>
             </listAttribute>

@@ -1,0 +1,8 @@
+VxWorks Driver Version History:
+
+V2.0.0.0 (22.07.2015)
+--------------------------
+
+ Created for VxWorks 7
+ 
+ Limitations: This version only supports netX based PCI and PCIe hardware

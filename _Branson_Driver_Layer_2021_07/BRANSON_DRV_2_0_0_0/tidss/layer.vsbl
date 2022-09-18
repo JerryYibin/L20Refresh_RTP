@@ -1,0 +1,35 @@
+/* layer.vsbl - TI DSS frame buffer driver  */
+
+/*
+ * Copyright (c) 2013-2017 Wind River Systems, Inc.
+ *
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable Wind River License agreement.
+ */
+
+/*
+modification history
+--------------------
+11nov17,s_m  Added support for 480x800 and updated version
+27jul17,s_m  custom layer for AM5728
+16apr15,yat  Add DOC_BUILD NO (V7GFX-245)
+14feb14,rdl  replace DEPENDS with API_DEPENDS
+24jan14,mgc  Modified for VxWorks 7 release
+06jan14,rdl  add HELP field, correct formatting 
+*/
+
+
+Layer BRANSON_TIDSSFB
+    {
+    SYNOPSIS        Branson TI DSS frame buffer driver
+    HELP            This provides the TI DSS frame buffer driver for Branson.
+    VERSION         10.0.0.1
+    VENDOR          Branson
+    FEATURE         MULTIMEDIA
+    LAYER_REQUIRES  FBDEV
+    VSB_REQUIRES    CPU_ARMARCH7
+    OPTIONAL        YES
+    DEFAULT         NO
+    DOC_BUILD       NO
+    }

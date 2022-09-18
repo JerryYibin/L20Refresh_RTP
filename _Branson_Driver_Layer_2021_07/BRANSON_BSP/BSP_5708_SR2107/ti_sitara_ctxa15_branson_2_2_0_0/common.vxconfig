@@ -1,0 +1,31 @@
+# common.vxconfig - VSB configuration flags and options for ti_sitara_a15 BSP
+
+# Copyright (c) 2015-2016, 2018 Wind River Systems, Inc.
+#
+# The right to copy, distribute, modify or otherwise make use
+# of this software may be licensed only pursuant to the terms
+# of an applicable Wind River license agreement.
+
+#
+# modification history
+# --------------------
+# 06jul18,mpc  simplified configuration (F10748)
+# 04mar16,gls  made ARMV7_CORE_CTX_A15_BSP visible
+# 22oct15,yjw created (US40646)
+#
+#
+# DESCRIPTION
+#
+# This file defines the VxWorks Source Build configuration options that apply
+# only to the ti_sitara_a15 BSP.
+#
+################################################################################
+
+# HIDDEN: This option is not exposed
+
+config BSP_CONFIG
+    bool
+    depends on ARM
+    select HAS_CTX_A15
+    default y
+

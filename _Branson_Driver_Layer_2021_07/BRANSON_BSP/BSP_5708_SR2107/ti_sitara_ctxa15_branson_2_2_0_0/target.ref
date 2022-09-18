@@ -1,0 +1,935 @@
+\" ti_sitara_ctxa15/target.ref - TI Cortex-A15 Sitara target-specific documentation
+\"
+\" Copyright (c) 2014, 2016, 2017 Wind River Systems, Inc.
+\"
+\" The right to copy, distribute, modify or otherwise make use
+\" of this software may be licensed only pursuant to the terms
+\" of an applicable Wind River license agreement.
+\"
+\" modification history
+\" --------------------
+\" 09feb17,ghl  add Mailbox support for AM572x (F8373)
+\" 11nov16,jnl  update to support AM57xx IDK 1.3B (F7314)
+\" 12oct16,mw1  add USB2 support for AM572x. (F7945)(V7CON-418)
+\" 06jul16,myt  add SD/eMMC support for AM572x. (F5938)
+\" 26may16,j_x  add USB support for AM572x. (F5938)
+\" 04may16,m_w  update clock system, replace DRV_CLK_FDT_AM5
+\"              with DRV_CLK_FDT_AM4. (F7158)
+\" 28mar16,hma  add the am57xx sata support (US75803)
+\" 15mar16,jnl  added VxBL description (US75898)
+\" 01jul14,yjw  created (US64529)
+\"
+\TITLE ti_sitara_ctxa15 - TI CORTEX-A15 SITARA
+
+EXTERNAL DEPENDENCIES
+None
+
+INTRODUCTION
+
+This section includes getting-started information, including subsections
+detailing ROM installation, boot ROM instructions, and jumper settings
+for VxWorks operation.
+
+\sh Supported Boards
+
+The current release of this BSP only supports below boards:
+
+\cs
+TI AM572x IDK board
+\ce
+
+For TI AM572x IDK board, before using the board with VxWorks, verify that the board
+runs in the factory configuration using vendor-supplied ROMs and checking the UART(J19)
+ connection.
+
+\sh Getting the board running VxWorks
+This section will guide you how to run VxWorks on the TI AM572X IDK board.
+
+1. Creating VxWorks image
+
+    1.1 Create and config a VSB (VxWorks Source Build)
+
+    A VSB must be created before a VIP could be used, and it could be created
+    based on the BSP: ti_sitara_ctxa15_1_0_0_0.
+
+        1.1.1 Create a VSB
+
+        In the step of "Project Setup" in WorkBench, select
+        ti_sitara_ctxa15_1_0_0_0 BSP.
+
+        Or, use the wrtool commands in the VxWorks 7 Development Shell, specify
+        current directory as wrtool workspace location:
+
+\cs
+        wrtool -data .
+\ce
+
+        then use the following command to create a VSB:
+
+\cs
+        prj vsb create -bsp ti_sitara_ctxa15_1_0_0_0 -S ~/myVsb
+        prj vsb create -cpu ARMARCH7 -S ~/myVsb
+\ce
+
+        The BSP version number "1_0_0_0" may be changed as the BSP updated,
+        you may need to choose in the WorkBench or check which version you
+        want by below command in the VxWorks 7 Development Shell:
+
+\cs
+        prj vsb listBsps
+\ce
+
+        If only the newest BSP version installed needs to be used to create
+        the VSB by using the prj tool, below command can be used:
+
+\cs
+        prj vsb create -bsp ti_sitara_ctxa15 -S ~/myVsb
+\ce
+
+        This allows for newest version auto check
+
+        1.1.2 Configure the VSB
+
+        For CPU based VSB, the following layers need to be enabled in the Source
+        Build Configuration Editor of WorkBench:
+
+\cs
+        FDT
+        BOARDLIB
+        TI_SITARA
+\ce
+
+        Or just use below command to add all the layers needed:
+
+\cs
+        prj vsb add TI_SITARA
+\ce
+
+        1.1.3 Build the VSB
+
+        Build the VSB in the WorkBench or use below command in the
+        VxWorks7 Development Shell:
+
+\cs
+        prj build
+\ce
+
+    1.2 Create a VIP based on the new VSB
+
+        Please note: Both WorkBench and the VxWorks7 Development Shell can
+        be used for VIP creating and configuring. All below sections will only
+        use the VxWorks7 Development Shell command as an example, and the
+        corresponding operation in WorkBench is quite straight forward.
+
+        1.2.1 Create a VIP based on the new VSB
+
+        In the same directory of the new VSB, use below command to create a VIP
+        for BSP version "1_0_0_0":
+
+\cs
+        prj vip create -vsb myVsb ti_sitara_ctxa15_1_0_0_0 diab myVip
+\ce
+
+        Or use below command to create a VIP for the newest BSP version
+        installed:
+
+\cs
+        prj vip create -vsb myVsb ti_sitara_ctxa15 diab myVip
+\ce
+
+        1.2.2 Configure and build the VIP
+
+            1.2.2.1 Configure the device tree blob (DTB) loading method
+
+            The VxWorks 7 ARM BSP uses device tree nodes to describe device
+            specific information, and there are two methods to load the device
+            tree blob:
+                - Embedded:     the device tree blob is embedded in the VxWorks
+                                image.
+                - Independent:  an independent file is created for the device
+                                tree blob. And the independent method is used
+                                by default.
+
+            Note: when kernel is running in the embedded DTB mode, the kernel
+            bootline is retrieved directly from the Device Tree Source file
+            'chosen' node. It is not from U-Boot 'bootargs' environment
+            variable.
+
+            To use the embedded method, use below command in the VIP directory:
+
+\cs
+            prj vip component add INCLUDE_STANDALONE_DTB
+\ce
+
+            1.2.2.2 Configure the booting method and image type
+
+            The U-Boot can boot up two kinds of VxWorks images: uVxWorks and raw
+            bin file vxWorks.bin. The uVxWorks is used for U-Boot "bootm"
+            command, and needs an independent DTB file. The vxWorks.bin is used
+            for U-Boot "go" command and needs embedded DTB.
+
+            Use one of the below commands to create different VxWorks image:
+
+\cs
+            prj build myVip -target uVxWorks
+            prj build myVip -target vxWorks.bin
+            prj build myVip -target vxWorks
+\ce
+
+            After building passed, the related DTB file (with .dtb suffix)
+	    are also created in the "default" subdirectory of the VIP.
+	    For this BSP, "am572x_idk_ca15.dtb" will be created.
+
+2. Running VxWorks on U-Boot
+
+    2.1 Updating the U-Boot image
+
+        The pre-flashed U-Boot images supplied by the vendor cannot be used to
+        boot up the VxWorks image. And the Wind River supplied U-Boot images
+        can be found under the "_bootloader" subdirectory of the BSP.
+
+        For AM572X IDK board, please rename AM572X_IDK_MLO to MLO,
+        AM572X_IDK_u-boot.img to u-boot.img.
+
+        To update your U-boot loader, simply pull the SD card and copy these two
+        files (u-boot.img, MLO) from "_bootloader" directory into SD card root
+        directory.
+        Note: The SD card needs to be FAT32 format and bootable (partition as
+        boot active), refer to secion 'Creating an active partition on a SD
+        card from Windows' to create a bootable SD card.
+
+    2.2 Downloading the VxWorks image
+
+        2.2.1 Start a TFTP server
+
+        Open a TFTP server on your host. Make sure the root directory is your
+        project directory of the VIP which contains the VxWorks image.
+
+        2.2.2 Configure the U-Boot environment
+
+        When board boots up, the U-Boot will prompt you to enter U-Boot shell,
+        press any key then to get into U-Boot shell before count down finished.
+        Type the following commands to setup the U-Boot environment.
+
+\cs
+        setenv ipaddr 192.168.1.100
+        setenv netmask 255.255.255.0
+        setenv serverip 192.168.1.1
+        saveenv
+\ce
+
+        And then type the following command to update the VxWorks Bootline:
+
+\cs
+        setenv bootargs 'cpsw(0,0)host:vxWorks h=192.168.0.2
+                e=192.168.0.3:fffffe00 g=192.168.0.1 u=target pw=vxTarget f=0x0'
+        saveenv
+\ce
+
+        Note:
+        1)  This is just an example, you must change the network parameters
+            according to your actual situation.
+
+        2)  Wrong setting of the "bootargs" parameter may cause the network
+            failed to work. And if you do not want to set the "bootargs" in
+            U-Boot, use below command to delete the parameter in U-Boot will
+            make VxWorks using the default setting in the BSP's device tree
+            file.
+
+
+        2.2.3 Download and run the vxWorks.bin image for U-Boot
+
+        2.2.3.1 Download vxWorks.bin image for U-Boot
+
+        The vxWorks.bin image is used for U-Boot "go" command, so the
+        downloading address must be the same as "KERNEL_LOAD_ADRS".
+        For this BSP, it's 0x80100000. Also, it is used along with the
+        embedded DTB, so component INCLUDE_STANDALONE_DTB is needed for the
+        vxWorks.bin building.
+
+        Use below command to download the vxWorks.bin image for U-Boot:
+
+\cs
+        tftp 0x84100000 vxWorks.bin
+\ce
+
+        2.2.3.2. Running the vxWorks.bin image on U-Boot
+
+        Use "go <image running address>" to run the vxWorks.bin image as below:
+
+\cs
+        go 0x84100000
+\ce
+
+        2.2.4 Download and run the uVxWorks image for U-Boot
+
+        2.2.4.1 Download uVxWorks image for U-Boot
+
+        The uVxWorks image is used along with an independent DTB file, and
+        the downloading address must not destroy the spaces used by VxWorks.
+        Below is an example for this BSP:
+
+        In the U-Boot shell, type the following command to download uVxWorks:
+
+\cs
+        tftp 0x90000000 uVxWorks
+\ce
+
+        type the following command to download DTB:
+
+\cs
+        tftp 0xa0000000 am572x_idk_ca15.dtb
+\ce
+
+        2.2.4.2 Running the uVxWorks image on U-Boot
+
+        Use "bootm <image address> - <DTB address>" command to load and run
+        uVxWorks image as below:
+
+\cs
+        bootm 0x90000000 - 0xa0000000
+\ce
+
+    3.1 Create vxWorks-7 BOOTAPP:
+
+        The vxWorks-7 BOOTAPP is a special kernel image with a built-in
+        bootloader shell. The creation of the BOOTAPP is similar to that of
+        a normal kernel image, the only difference is that the BOOTAPP
+        related components shall be included in the kernel configuration.
+        Use the PROFILE_BOOTAPP in VIP creation to include the default
+        components for BOOTAPP:
+
+\cs
+        prj vip create -vsb myVsb ti_sitara_ctxa15 diab myBooApp -profile PROFILE_BOOTAPP
+\ce
+
+    3.2 Use BOOTAPP with U-BOOT
+
+        Please refer to section 2.2.4.1 for how to run BOOTAPP uVxWorks
+        image and binary using U-BOOT.
+
+        NOTE: when downloading the vxWorks.bin binary, the destination address
+        shall be 0x86000000 instead of 0x84100000, because the KERNEL_LOAD_ADRS
+        for BOOTAPP is 0x86000000.
+
+    3.3 Use BOOTAPP to load vxWorks image
+
+        The BOOTAPP can only boot up traditional vxWorks image type,
+        and the image should have INCLUDE_STANDALONE_DTB component
+        configured. Below is an example of BOOTAPP parameter setting for ftp
+        loading vxWorks:
+
+\cs
+           boot device          : cpsw
+           unit number          : 0
+           processor number     : 0
+           host name            : host
+           file name            : vxWorks
+           inet on ethernet (e) : 192.168.1.100
+           host inet (h)        : 192.168.1.1
+           user (u)             : target
+           ftp password (pw)    : vxTarget
+           flags (f)            : 0x0
+\ce
+
+    3.4 Enable vxWorks Image to inherits bootline passed from BOOTAPP
+
+        The vxWorks-7's default mode is to read the bootline from the
+        DTB, instead of inheriting it from BOOTAPP as vxWorks prior to 7.0 does.
+        If the prior vxWorks-7 compatible mode is preferred, the
+        INCLUDE_PATCH_STANDALONE_DTB component should be added in the
+        configuration of the vxWorks Image that is to be booted. (NOTE: do not
+        do this in the BOOTAPP's configuration):
+
+\cs
+        prj vip component add INCLUDE_PATCH_STANDALONE_DTB
+\ce
+
+        This component replaces the "bootargs" entry in DTB with the
+        bootline passed from the BOOTAPP. The vxWorks Image will get the
+        modified DTB, so effectively the BOOTAPP's bootline is inherited
+        by the vxWorks Image.
+
+        NOTE: the INCLUDE_PATCH_STANDALONE_DTB requires INCLUDE_STANDALONE_DTB.
+
+4. Running VxWorks on VxBL (VxWorks Boot Loader)
+
+    VxBL is a newly developed bootloader designed to work with VxWorks 7
+    kernels and replace the legacy bootrom. This section describes how to
+    use VxBL to load and run VxWorks 7 kernels.
+
+    NOTE: VxBL does not support to boot the M4, if need to boot the M4,
+    should use U-BOOT.
+
+    4.1 Creating VxBL project for ti_sitara_ctxa15
+
+    NOTE: Instructions here MUST be executed under VxWorks development shell
+
+\cs
+        cd $(WIND_BASE)/pkgs/boot/vxbl
+        make project CPU=ARMARCH7 BSP=ti_sitara_ctxa15 TOOL=gnu FORCE=1 OUTPUT=<your_project_directory>
+        cd <your_project_directory>
+        make
+\ce
+
+    The final bootloader image is located at: <your_project_directory>/MLO
+
+    4.2 Copying VxBL and VxWorks images to SD/micro SD card
+
+        Plug the SD/micro SD card to your PC, then copy MLO and your VxWorks
+        images to SD/micro SD card.
+
+        NOTE: 1) FAT32 and FAT16 are supported
+              2) MLO must be located under the root directory of the first
+                 FAT partition
+
+    4.3 Loading uVxWorks using VxBL
+
+        Plug the SD/micro SD card to your board, and power-on the board, VxBL
+        will run, it looks like the following:
+
+            Copyright 2012-2015 Wind River Systems
+
+            VxWorks ti_sitara_ctxa15 Stage 1 Bootstrap (32-bit version)
+            Built on: Mar 22 2016 14:50:58
+
+            FAT: registering FAT partitions
+            mounting FAT OK
+            info - loader VxWorks 7 registered
+            ENV: error opening /dev/nvram: No such file or directory
+            ENV: using default settings
+            vxbl@
+
+        Type the following commands in the VxBL shell to load VxWorks:
+
+\cs
+            load /fat0/uVxWorks 0x85000000
+            load /fat0/am572x_idk_ca15.dtb 0x87C00000
+            boot 0x85000000 - 0x87C00000
+\ce
+
+        or
+
+\cs
+            load /fat0/vxWorks 0x85000000
+            boot 0x85000000
+\ce
+
+        NOTE: the name of DTB file may vary depending on board type, please
+              refer to 'DEVICE TREE' section for more details.
+5. Summary
+
+    Below is a summary about configuring and running VxWorks 7:
+
+\ts
+                | uVxWorks      | vxWorks.bin           | vxWorks
+--------------------------------------------------------------------------------
+Boot Loader     | U-Boot/VxBl   | U-Boot                | 6.9.x bootrom/VxBL
+DTB Mode        | independent   | embedded              | embedded
+Component Needed|               | INCLUDE_STANDALONE_DTB| INCLUDE_STANDALONE_DTB
+Boot Method     | bootm         | go                    | same as 6.9.x
+\te
+
+DEVICE TREE
+This BSP uses device tree nodes to describe the device specific information
+on the board. The supported drivers will get configuration data from
+the device tree source files (with suffix .dts) under the BSP directory.
+For the structure of the device tree source file, please refer to the
+ePAPR specification here:
+http://www.power.org/technology-introduction/standards-specifications/
+
+The supported boards and the corresponding device tree source files of this BSP
+are mapped as below:
+
+\ts
+Board                   | Device Tree Source
+-----------------------------------------------
+TI AM572x IDK           | am572x_idk_ca15.dts
+\te
+
+FEATURES
+
+This section describes all features of the board, supported or not.
+It documents all configurations of the board and the interaction between
+features and configuration items.
+
+\sh List of Hardware Features (TI AM572x IDK)
+
+\ts
+Hardware Interface  | Controller  | Driver/Component               | Status
+------------------------------------------------------------------------------
+UART                | on-chip     | DRV_SIO_TI_AM3                 | SUPPORTED
+TIMER               | on-chip     | DRV_TIMER_FDT_OMAP3            | SUPPORTED
+GPIO                | on-chip     | DRV_GPIO_FDT_OMAP              | SUPPORTED
+I2C                 | on-chip     | DRV_AM38XX_I2C                 | SUPPORTED
+1000MB-ETHERNET     | on-chip     | DRV_END_FDT_TI_CPSW            | SUPPORTED
+RTC                 | on-chip     | DRV_FDT_RTC_AM3                | SUPPORTED
+CLOCK               | on-chip     | DRV_CLK_FDT_AM4                | SUPPORTED
+PINMUX              | on-chip     | DRV_PINMUX_FDT_AM3             | SUPPORTED
+PCIE                | on-chip     | DRV_FDT_TI_AM572X_PCIE         | SUPPORTED
+SATA                | on-chip     | DRV_STORAGE_ATA_HOST           | SUPPORTED
+EDMA                | on-chip     | DRV_TI_EDMA3                   | SUPPORTED
+SPI                 | on-chip     | N/A                            | UNSUPPORTED
+WDT                 | on-chip     | N/A                            | UNSUPPORTED
+USB                 | on-chip     | INCLUDE_USB_XHCI_HCD_INIT      | SUPPORTED
+NAND FLASH          | on-chip     | N/A                            | UNSUPPORTED
+SD/MMC0             | on-chip     | DRV_TI_MMCHS_CTRL              | SUPPORTED
+DCAN                | on-chip     | N/A                            | UNSUPPORTED
+LCD                 | on-chip     | N/A                            | UNSUPPORTED
+MAILBOX             | on-chip     | DRV_FDT_TI_OMAP_MAILBOX        | SUPPORTED
+SPINLOCK            | on-chip     | N/A                            | UNSUPPORTED
+SGX                 | on-chip     | N/A                            | UNSUPPORTED
+HDMI                | on-chip     | N/A                            | UNSUPPORTED
+\te
+
+\sh List of features
+
+\ts
+Module          | Status
+------------------------------
+FPU(VFPv4)      | SUPPORTED
+L2 cache        | SUPPORTED
+NEON            | SUPPORTED
+\te
+
+\sh Feature Interactions
+
+Refer to the board vendor's documentation.
+
+HARDWARE DETAILS
+
+This section documents the details of the device drivers and board
+hardware elements.Hardware resources are shared with ti_sitara_cm4,
+and conldn't be accessed by two bsps at the same time.
+
+\sh Verified Hardware
+
+This BSP has been verified on below boards:
+
+\ts
+Board                   | Type and Revision
+------------------------------------------------------------------
+TI AM572X IDK           | TI AM572X IDK board REV 1.2A
+TI AM572X IDK           | TI AM572X IDK board REV 1.3B
+\te
+
+\sh Serial Configuration
+
+The universal asynchronous receiver/transmitter serial interface is
+compatible with the industry standard 16C750. It is supported by
+component DRV_SIO_TI_AM3
+
+UART3(J19) is used as serial console, it's UART-To-USB port.
+
+No special configuration needed.
+The default configuration is:
+    Baud Rate: 115200
+    Data: 8 bit
+    Parity: None
+    Stop: 1 bit
+    Flow Control: None
+
+\sh Ethernet Controller
+
+The TI AM572X board embeds with a 3-port gigabit switch controller(CPSW),
+there are two gigabit RJ45 ports was deployed on board.
+
+To enable Ethernet Controller (CPSW) in VxWorks, there are 2 methods:
+1. Use profile PROFILE_DEVELOPMENT when creating VIP, the related components
+   will be added and the network will be configured automatically.
+2. When creating the VIP with the default profile, add the following component
+   to the kernel configuration manually.
+
+\cs
+    prj vip component add DRV_END_FDT_TI_CPSW INCLUDE_MICREL_PHY
+\ce
+
+The Ethernet Address (also known as the MAC address or Station address) of the
+on-chip network controller is configured from CTRL_MAC_ID0 and CTRL_MAC_ID1.
+To change it, open the device tree source file, find the following property and
+modify it,
+
+\cs
+    local-mac-address = [ 00 40 47 E0 A8 32 ];
+\ce
+
+Then remove following property for port1 or
+
+\cs
+    reg = <0x4a002514 0x4>,    /@ CTRL_MAC_ID0_LO @/
+          <0x4a002518 0x4>;    /@ CTRL_MAC_ID0_HI @/
+\ce
+
+remove following property for port2
+\cs
+    reg = <0x4a00251c 0x4>,    /@ CTRL_MAC_ID1_LO @/
+          <0x4a002520 0x4>;    /@ CTRL_MAC_ID1_HI @/
+\ce
+
+\sh Network Configuration
+The port allows 10/100/1000M connection. The driver will auto-negotiate
+and configure the port accordingly.
+
+\sh GPIO
+
+General purpose input/output is supported in this release of BSP.
+To use GPIO, add the following component for the VIP:
+
+\cs
+    prj vip component add DRV_GPIO_FDT_OMAP
+\ce
+
+The client user should then use VxBus GPIO APIs to access the GPIO function.
+
+\sh Timers
+
+For AM572x, there are ARM Generic Timer and 16 full featured general purpose
+timers (DMTIMER[1 - 16]) with modes to free-run, count up and reload.
+The supported timers can be read or written on-the-fly without stopping the
+count.
+
+ARM Generic Timer is used as delay timer by default.
+
+To use DMTIMER, add the following component for the VIP:
+
+\cs
+    prj vip component add DRV_TIMER_FDT_OMAP3
+\ce
+
+To use ARM Generic Timer, add the following component for the VIP:
+
+\cs
+    prj vip component add DRV_ARMV7_GEN_TIMER
+\ce
+
+\sh RTC
+
+This release of BSP supports an on-chip Real-Time Clock.
+
+To use RTC, add the following component for the VIP:
+
+\cs
+    prj vip component add DRV_FDT_RTC_AM3
+\ce
+
+\sh I2C
+
+I2C is supported in this release of BSP.
+To use I2C, add the following component for the VIP:
+
+\cs
+    prj vip component add DRV_AM38XX_I2C
+\ce
+
+The client user should then use VxBus I2C APIs to access the I2C function.
+
+\sh PCIe
+
+PCIe is supported in this release of BSP for TI AM572X IDK board.
+To use PCIe, add the following component for the VIP:
+
+\cs
+    prj vip component add DRV_FDT_TI_AM572X_PCIE
+\ce
+
+The component involve GPIO component DRV_GPIO_FDT_OMAP for device reset.
+
+\sh SATA
+
+SATA is supported in this release of BSP for AM572X boards .
+To use SATA, add the following component for the VIP:
+
+\cs
+    prj vip component add DRV_STORAGE_ATA_HOST
+\ce
+
+\sh USB
+
+Both USB1 host mode and USB2 host mode are supported in this release of BSP for
+TI AM572X IDK board.
+
+To enable the USB controller as host mode:
+
+1. VSB
+
+While in the created VSB, XHCI and PHY layers need to bea dded.
+To use different USB devices, USB class drivers need be enabled as well.
+USB mass storage class driver layer is added as an example.
+
+\cs
+    prj vsb add USB_XHCI
+    prj vsb add USB_PHY
+    prj vsb add USB_STORAGE
+\ce
+
+2. VIP
+
+While in the created VIP, components for XHCI and PHY components need be
+enabled. To use different USB devices, USB class drivers need be enabled too.
+Please refer to USB programmer guide for more details to enable kinds of USB
+class drivers. For example, following components will add USB mass storage class
+driver to support USB mass storage devices:
+
+\cs
+    prj vip component add INCLUDE_USB_XHCI_HCD_INIT
+    prj vip component add INCLUDE_USB_PHY_FSL_ONCHIP
+    prj vip component add INCLUDE_USB_GEN2_STORAGE_INIT
+\ce
+
+\sh SD/eMMC
+
+The SD/eMMC is supported in this release of BSP for TI AM572X IDK board.
+
+To enable the SD/eMMC controller as host mode:
+
+1. VSB
+
+SD/MMC0 is supported in this release of BSP.
+To use SD/MMC0, following layers need to be built in the created VSB:
+
+\cs
+    prj vsb add SDMMC_CORE
+    prj vsb add SDMMC_SDHC
+    prj vsb add SDMMC_STORAGE
+    prj vsb add SDMMC_TIMMCHS
+\ce
+
+2. VIP
+
+Add following components for the VIP:
+
+\cs
+    prj vip component add DRV_TI_MMCHS_CTRL
+    prj vip component add DRV_SDSTORAGE_CARD
+    prj vip component add DRV_GPIO_FDT_OMAP
+    prj vip component add DRV_TI_EDMA3
+\ce
+
+\sh Clock
+
+Clock control module manages the gating (that is, switching off) and enabling
+of the clocks to the device modules on chip. Each module in the device may also
+have specific clock requirements. Certain module clocks must be active when
+operating in specific modes, or may be gated otherwise. Globally, the activation
+and gating of the module clocks are managed by the clock module. Hence, the
+clock module must be aware of when to activate and when to gate the module
+clocks. Normally, a clock to a device was gated in default unless explicitly
+open it in DTS file. For example, to activate the clock to pcie, these
+lines need to be added into pcie in am572x_idk_ca15.dts:
+
+\cs
+    pcie: pcie@20000000         /@ subsystem @/
+        {
+        ...
+        clocks = <&clkin_20mhz>, <&pciss1Clk>;    /@ clock name in am572x-clocks.dtsi @/
+        clock-names = "clkin_20mhz", "pciss1Clk"; /@ clock name in am572x-clocks.dtsi @/
+        ...
+        };
+\ce
+
+The pcie driver will call vxbClkEnableAll() to acative two clocks
+clkin_20mhz and pciss1Clk, clock control module will take responsibility of
+ vxbClkEnableAll() to complete all the job to activate these two clocks.
+All the supported clock and ID mappings can be found in  am572x-clocks.dtsi
+or by running function vxbClkLibShow() when in flight.
+
+For detail information of clock, please reference "AM572X Sitara
+Processors Technical Reference Manual" chapter "Power, Reset, and Clock
+Management (PRCM)".
+
+To use clock module, add the following component for the VIP:
+
+\cs
+    prj vip component add DRV_CLK_FDT_AM4
+\ce
+
+Clock module is a basic component for this BSP and is added into BSP by default,
+remove this component will lead module do not work because the clock to module
+was not activated.
+
+\sh PinMux
+
+The SCM module which supplies PinMux management functionality is supported in
+this release of BSP and must be enabled by default. It is supported by
+component DRV_PINMUX_FDT_AM3.
+
+The PinMux module provides several groups of PinMux setting values in the SCM
+device tree nodes, each group includes the whole PinMux setting of a specified
+device. The device driver that needs PinMux function should find a supported
+group handle to write its device tree source node.
+
+The CPSW is an example which referenced the PinMux group handle of cpsw:
+
+\cs
+    cpsw_ma: ethernet@48484000
+        {
+        compatible = "ti,cpsw-ma";
+        ...
+        pinmux-0 = <&cpsw_pads>;
+        };
+\ce
+
+The client user could enable the PinMux setting in the probe or attach
+function.
+
+\cs
+    vxbPinMuxEnable (pDev);
+\ce
+
+\sh SMP
+
+VxWorks SMP(Symmetric Multiprocessing) kernels can be configured for use on
+the multiprocessor target hardware supported by this BSP. Please refer to
+the chapter "VxWorks SMP" in the "VxWorks 7 Programmer's Guide" for
+details about the SMP-specific features in the operating system.
+
+For convenience, some key features for using SMP with this BSP are highlighted
+below.
+
+1. MMU
+
+   VxWorks SMP does not support MMU-less configuration.
+
+2. Cache and bus snoop
+
+   Cache cannot be disabled in a VxWorks SMP system. Direct calls to the
+   function cacheDisable() will do nothing.
+
+   Also, only copy-back mode is tested and supported for VxWorks SMP kernels.
+   This will be the default configuration set by BSP. Changing the cache mode
+   to write-through may result in unpredictable behavior.
+
+3. CPU number
+
+   The project parameter VX_SMP_NUM_CPUS is used to specify the number of CPUs
+   assigned to the SMP kernel. The CPU number we are discussing here includes
+   all the hardware units which have the same behavior as CPU, for example,
+   the thread, hyper-thread, etc. VxWorks supports less than all of the CPUs in
+   a multiprocessor system to participate in the SMP kernel. This allows some
+   CPUs to be used for other purposes such as dedicated "bare-iron" tasks or
+   additional asymmetric operating systems. CPUs not assigned to the SMP kernel
+   are left in the default, power-on reset state.
+
+   The maximum CPU number for this BSP is 2. Note, the maximum possible value
+   for vxWorks is 32.
+
+\sh Creating an active partition on a SD card from Windows
+
+This section describes how to create an active partition on a SD card from
+Windows by using DISKPART utility on Windows 7.
+
+The DISKPART utility will be used to correct disks that do not have a partition
+set to active and format them with a FAT or FAT32 file-system.
+
+   a. Insert a SD card to host and find the SD card name.
+
+   b. In a DOS command shell run the following commands to ensure SD card is
+      Configured with an active partition.
+
+      Execute 'diskpart.exe' as administrator, and then list the disks.
+
+      'NOTE': Commands below are indicated after the `DISKPART>" prompt.
+
+\cs
+      DISKPART> list disk
+
+        Disk ###  Status         Size     Free     Dyn  Gpt
+        --------  -------------  -------  -------  ---  ---
+        Disk 0    Online          465 GB  1024 KB
+        Disk 1    Online         1907 MB      0 B
+\ce
+
+      Observe SD card number in the displayed list (SD card is Disk 1) and
+      select disk 1
+
+\cs
+      DISKPART> select disk 1
+
+      Disk 1 is now the selected disk.
+\ce
+
+      List disks again to make sure you have the correct drive selected,
+      indicated by the "*" character.
+
+\cs
+      DISKPART> list disk
+
+        Disk ###  Status         Size     Free     Dyn  Gpt
+        --------  -------------  -------  -------  ---  ---
+        Disk 0    Online          465 GB  1024 KB
+      * Disk 1    Online         1907 MB      0 B
+\ce
+
+      Clean the disk, create primary partition and make it active as indicated
+      below.
+
+\cs
+      DISKPART> clean
+
+      DiskPart succeeded in cleaning the disk.
+
+      DISKPART> create partition primary
+
+      DiskPart succeeded in creating the specified partition.
+
+      DISKPART> select partition 1
+
+      Partition 1 is now the selected partition.
+
+      DISKPART> active
+
+      DiskPart marked the current partition as active.
+\ce
+
+      Now format the disk as fat or fat32. It will take about 2 minutes,
+      depending on the disk size.
+
+      `when FAT16 file-system is desired':
+\cs
+      DISKPART> format fs=fat
+
+        100 percent completed
+
+      Diskpart successfully formatted the volume.
+\ce
+
+      `when FAT32 file-system is desired':
+\cs
+      DISKPART> format fs=fat32
+
+        100 percent completed
+
+      Diskpart successfully formatted the volume.
+\ce
+
+      Assign a drive letter and exit.
+
+\cs
+      DISKPART> assign
+
+      DiskPart successfully assigned the drive letter or mount point.
+
+      DISKPART> exit
+\ce
+
+      Note the drive letter that is assigned to the SD card.
+
+\sh Board layout
+
+Please refer to the board's quick start guide.
+
+BIBLIOGRAPHY
+
+\ts
+\tb ARM Architecture Reference Manual
+\tb Cortex-A15 Technical Reference Manual
+\tb AM572x Sitara Processors Technical Reference Manual
+\te
+
+SEE ALSO
+
+\tb Workbench User's Guide
+\tb VxWorks 7 Programmer's Guide
+\tb VxWorks 7 Configuration and Build Guide
+\tb VxWorks 7 Architecture Supplement
+\tb VxWorks 7 BSP and Driver Guide

@@ -1,0 +1,208 @@
+# Copyright (c) 2014 Wind River Systems, Inc.
+#
+# The right to copy, distribute, modify or otherwise make use
+# of this software may be licensed only pursuant to the terms
+# of an applicable Wind River license agreement.
+
+#Modification history
+#--------------------
+#27may14,r_w  Created
+#
+
+menu "Advanced Web Server Properties"
+
+config  WEBCLI_JAVASCRIPT_DIGEST_ENABLED
+        bool "Enable Javascript authentication"
+        default y
+        help
+            Enable Javascript authentication.
+
+config  WEBCLI_kHwIdleTimeoutSecs
+	    depends on WEBCLI_JAVASCRIPT_DIGEST_ENABLED
+        int "secure session timeout"
+        default 120
+        help
+            secure session timeout.
+
+config  WEBCLI_kHwMaxSimultaneousClients
+	    depends on WEBCLI_JAVASCRIPT_DIGEST_ENABLED
+        int "Max Simultaneous Clients Number"
+        default 10
+        help
+            Max Simultaneous Clients Number.
+
+config  WEBCLI_kJavaScriptLogonPage
+	    depends on WEBCLI_JAVASCRIPT_DIGEST_ENABLED
+        string "logon web page for authentication"
+        default "logon.html"
+        help
+            logon web page for authentication.
+
+config  WEBCLI_INCLUDE_HTTP_LIVE_CONTROL
+        bool "Enable Live Control Java processing"
+        default y
+        help
+            This option enables the Live Control processing support.
+
+config  WEBCLI_HTTP_LC_POLL_MED
+	    depends on WEBCLI_INCLUDE_HTTP_LIVE_CONTROL
+        int "Define the medium priority polling frequency"
+        default 500
+        help
+            Define the medium priority polling frequency.
+
+config  WEBCLI_HTTP_LC_POLL_HGH
+	    depends on WEBCLI_INCLUDE_HTTP_LIVE_CONTROL
+        int "Define the high priority polling frequency"
+        default 300
+        help
+            Define the high priority polling frequency.
+            
+config  WEBCLI_INCLUDE_SMTP_ENABLE
+        bool "Enable SMTP support"
+        default y
+        help
+            This option enables the SMTP processing support.
+
+config  WEBCLI_HTTP_ETAG_ENABLE
+        bool "Enable ETAG support for HTTP"
+        default y
+        help
+            This option enables the HTTP ETAG support.
+
+config  WEBCLI_STANDALONE_WEBSERVER
+        bool "Enable the standalone webserver in HTTP component"
+#       depends on !WEBCLI_BACKPLANE && !WEBCLI_CLI && !WEBCLI_MIBWAY
+        default n
+        help
+            This option instantiate standalone HTTP Server which is is special(nontypical) use case.(no backplane,no CLI,no MIBway).
+
+endmenu
+
+menu "RPM configuration for Web Server"
+
+config  WEBCLI_INCLUDE_HTTP_CGI
+        bool "include CGI support RPM"
+        default y
+        help
+            include CGI support.
+
+config  WEBCLI_INCLUDE_HTTP_UPLOAD
+        bool "include file upload RPM"
+        default y
+        help
+            include file upload RPM.
+            
+config  WEBCLI_INCLUDE_HTTP_LOG
+        bool "logfile support RPM"
+        default y
+        help
+            logfile support RPM.
+            
+config  WEBCLI_HTTP_LOG_FILE
+	    depends on WEBCLI_INCLUDE_HTTP_LOG
+        string "where to store your logfile"
+        default "/logfile.txt"
+        help
+            where to store your logfile if using logging RPM.
+
+config  WEBCLI_HTTP_LOG_FILE_SIZE_MAX_BYTES
+	    depends on WEBCLI_INCLUDE_HTTP_LOG
+        int "Configure the log file max size bytes"
+        default 100000
+        help
+            This option configure the log file max size bytes.
+            
+config  WEBCLI_INCLUDE_HTTP_MIME_HDR_PROC
+        bool "include MIME header processing"
+        default y
+        help
+            include MIME header processing.
+            
+config  WEBCLI_INCLUDE_HTTP_MIME_GUESSTYPE
+        bool "include MIME type guessing support"
+        default y
+        help
+            include MIME type guessing support.
+
+config  WEBCLI_INCLUDE_HTTP_FS
+        bool "include file system RPM"
+        default y
+        help
+            include file system RPM.
+            
+config  WEBCLI_INCLUDE_HTTP_ALIASING
+        bool "include RPM alias"
+        default y
+        help
+            include RPM alias.
+
+config  WEBCLI_INCLUDE_HTTP_ACCESS_CTRL
+        bool "include access control RPM"
+        default y
+        help
+            include access control RPM.
+
+config  WEBCLI_INCLUDE_HTTP_IP_CHECKING
+        bool "include and enable IP checking"
+        default y
+        help
+            include and enable IP checking.
+
+config  WEBCLI_INCLUDE_HTTP_PWD_CHECKING
+        bool "include password checking - needs INCLUDE_HTTP_MIME_HDR_PROC"
+        default y
+        help
+            include password checking - needs INCLUDE_HTTP_MIME_HDR_PROC.
+
+config  WEBCLI_INCLUDE_HTTP_SHOWAUTH
+        bool "show authentication information"
+        default y
+        help
+            show authentication information.
+            
+config  WEBCLI_INCLUDE_HTTP_WMB_INTERFACE
+        bool "include WMB RPM"
+        default y
+        help
+            include WMB RPM.
+
+config  WEBCLI_INCLUDE_HTTP_POST
+        bool "include form post RPM"
+        default y
+        help
+            include form post RPM.
+
+endmenu
+
+menu "File System Image Generation"
+
+config  WEBCLI_ROMBUILD_IMAGE
+        bool "Build NVM FileSystem Flag"
+        default y
+        help
+            Build NVM FileSystem Flag.
+
+config  WEBCLI_HTTP_SECTOR_SIZE
+	    depends on WEBCLI_ROMBUILD_IMAGE
+        hex "Rom Build File System Sector Size"
+        default 0x00010000
+        help
+            Rom Build File System Sector Size.
+
+config  WEBCLI_HTTP_NVRAM_SIZE
+	    depends on WEBCLI_ROMBUILD_IMAGE
+        hex "Rom Build File System NVRAM Size"
+        default 0x00080000
+        help
+            Rom Build File System NVRAM Size.
+
+config  WEBCLI_HTTP_NVRAM_START
+	    depends on WEBCLI_ROMBUILD_IMAGE
+        hex "Rom Build File System NVRAM Start"
+        default 0x00000000
+        help
+            Rom Build File System NVRAM Start.
+
+endmenu
+

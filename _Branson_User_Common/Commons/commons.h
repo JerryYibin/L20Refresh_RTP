@@ -27,7 +27,7 @@ database directory and alarm index.
 #define INCLUDE_TI_AM5708_BRANSON 1
 #define INCLUDE_TI_AM5708_JN 0
 //MMC2/eMMC Storage
-#define MMC_EMMC_DEV_NAME	"/mmc1"
+#define MMC_EMMC_DEV_NAME	"/mmc1a"
 
 #define PATH_SEPARATOR		"/"
 //Database file names

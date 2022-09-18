@@ -74,6 +74,13 @@ STATUS SCTask::SendToMsgQ (MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks
 			else
 				LOGERR((char *) "SCTask : SendToMsgQ: eventSend Error\n",0,0,0);
 		}
+		else if(msgQID == CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]))
+		{
+			if(eventSend (CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_QEVENT) == OK)
+				status = OK;
+			else
+				LOGERR((char *) "SCTask : SendToMsgQ: eventSend Error\n",0,0,0);
+		}
 		else
 			status = OK;
 	}

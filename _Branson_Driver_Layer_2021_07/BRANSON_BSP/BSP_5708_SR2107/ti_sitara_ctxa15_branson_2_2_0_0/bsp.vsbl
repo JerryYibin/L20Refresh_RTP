@@ -1,0 +1,50 @@
+/* bsp.vsbl - TI Cortex-A15 Sitara family BSP metadata file */
+
+/*
+ * Copyright (c) 2015-2020 Wind River Systems, Inc.
+ *
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable Wind River license agreement.
+ */
+
+/*
+modification history
+--------------------
+24mar20,whu  version 2.0.4.1 (V7STO-1611)
+27nov19,wdy  version 2.0.4.0, cleaned the dtc warnings (VXWPG-526)
+04nov19,mze  add ARM dependency
+21aug19,jff  version 2.0.3.0, added generic component dependencies (VXWPG-248)
+08apr19,mpc  added CORTEX series CPU type definitions (F11131)
+17jan19,mze  now contains VX7CERT logic (F11506)
+21dec18,shg  version 2.0.1.0, migrate target.ref to xxx_readme.md + BSP Supplement
+             (F11134)
+29nov18,d_l  version 2.0.1.0 to add eMMC support (F11446)
+24oct18,whu  updated to version 2.0.0.1
+17jul18,mpc  BSP rename (F10748)
+08apr18,j_x  remove sata description
+30jan18,wch  version 1.0.7.0 (F6878)
+02aug17,d_l  version 1.0.6.0, update for SD UHS support (F9151)
+27jun17,jnl  version 1.0.5.0, added qspi flash support for vxbl (F9190)
+23jan17,ghl  updated to version 1.0.4.0, added Mailbox for AM572x (F8373)
+31oct16,wch  updated to version 1.0.3.0
+08oct16,mw1  add usb2_mod,usb1 and usb1phy to support USB2. (F7945)
+06jul16,myt  add SD/eMMC support for AM572x. (F5938)
+19may16,m_w  version 1.0.2.0, updated clock DTS,required TI_SITARA_CLK.(F7158)
+28apr16,sye  removed dependency for END (V7PRO-2998)
+27apr16,jnl  version 1.0.1.0, added support for vxbl (US75898)
+25sep15,yjw  created (US64529)
+*/
+
+Layer ti_sitara_ctxa15_branson
+    {
+    SYNOPSIS            TI Cortex-A15 Sitara family board support package (BSP)
+    HELP                This layer provides the board support package (BSP) \
+                        for TI Cortex-A15 Sitara family.
+    VERSION             2.2.0.0
+    VENDOR              Wind River
+    LAYER_REQUIRES      FDT VXBUS_DRV UTILS TI_SITARA ARM USB CAN
+    FEATURE_REQUIRES    {CPU_CORTEX_A15, {ARM ARM_NEW_CPU_TYPES},}
+    DOC_BUILD           DOXYGEN VX7CERT
+    RETROFIT {ADD, 2.0.0.0 - 2.0.2.*, LAYER_REQUIRES, ARM}
+    }

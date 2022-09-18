@@ -11,6 +11,7 @@
 
 #include "DAC_SPI.h"
 #include "Logger.h"
+#include "commons.h"
 SPI_HARDWARE 		DAC_TLV5604::m_Descriptor;
 SPI_TRANSFER 		DAC_TLV5604::m_Transfer;
 DAC_TLV5604::DAC	DAC_TLV5604::m_Register;
@@ -25,7 +26,11 @@ DAC_TLV5604::~DAC_TLV5604() {
 
 int DAC_TLV5604::InitDAConverter()
 {
+#if INCLUDE_TI_AM5708_JN
 	m_Descriptor.chipSelect 	= SPI_SLAVE_1;
+#elif INCLUDE_TI_AM5708_BRANSON
+	m_Descriptor.chipSelect 	= SPI_SLAVE_3;
+#endif
 	m_Descriptor.bitWidth 		= NUM_BITS_PERTRANSFER_16;
 	m_Descriptor.devFreq 		= 1000000;
 	m_Descriptor.mode 			= SPI_CLK_MODE1 | SPI_FULL_DUPLEX;
