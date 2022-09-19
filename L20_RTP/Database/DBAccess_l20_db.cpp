@@ -148,6 +148,8 @@ string DBAccessL20DB::GetWeldSignatureCSVReportHeader2()
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldResult(char* buffer)
 {
+    WELD_RESULT *pData = (WELD_RESULT *)buffer;
+
 	struct tm timeStamp;
     char timeBuf[20];
 #ifdef RTC_MEASURE
@@ -167,20 +169,20 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 		"WeldAmplitude, WeldTime, WeldPeakPower, TriggerHeight, WeldHeight, " +
 		"AlarmFlag, SequenceID, CycleCounter) " +
 		"values ('"+
-		CommonProperty::WeldResult.PartID+"','"+//PartID
+		pData->PartID+"','"+//PartID
 		timeBuf+"',"+//DateTime
-		std::to_string(CommonProperty::WeldResult.RecipeNum)+","+//RecipeID
-		std::to_string(CommonProperty::WeldResult.TotalEnergy)+","+//WeldEnergy
-		std::to_string(CommonProperty::WeldResult.TriggerPressure)+","+//TriggerPressure
-		std::to_string(CommonProperty::WeldResult.WeldPressure)+","+//WeldPressure
-		std::to_string(CommonProperty::WeldResult.Amplitude)+","+//WeldAmplitude
-		std::to_string(CommonProperty::WeldResult.WeldTime)+","+//WeldTime
-		std::to_string(CommonProperty::WeldResult.PeakPower)+","+//WeldPeakPower
-		std::to_string(CommonProperty::WeldResult.PreHeight)+","+//TriggerHeight
-		std::to_string(CommonProperty::WeldResult.PostHeight)+","+//WeldHeight
-		std::to_string(CommonProperty::WeldResult.ALARMS.ALARMflags)+","+//AlarmFlag
+		std::to_string(pData->RecipeNum)+","+//RecipeID
+		std::to_string(pData->TotalEnergy)+","+//WeldEnergy
+		std::to_string(pData->TriggerPressure)+","+//TriggerPressure
+		std::to_string(pData->WeldPressure)+","+//WeldPressure
+		std::to_string(pData->Amplitude)+","+//WeldAmplitude
+		std::to_string(pData->WeldTime)+","+//WeldTime
+		std::to_string(pData->PeakPower)+","+//WeldPeakPower
+		std::to_string(pData->PreHeight)+","+//TriggerHeight
+		std::to_string(pData->PostHeight)+","+//WeldHeight
+		std::to_string(pData->ALARMS.ALARMflags)+","+//AlarmFlag
 		std::to_string(0)+","+//SequenceID
-		std::to_string(CommonProperty::WeldResult.CycleCounter)+");";//CycleCounter
+		std::to_string(pData->CycleCounter)+");";//CycleCounter
 
 	int nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
@@ -253,28 +255,16 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 {
+    WeldRecipeSC *pData = (WeldRecipeSC *)buffer;
+
 	struct tm timeStamp;
     char timeBuf[20];
 	vxbRtcGet(&timeStamp);
     strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
 
-#ifdef UNITTEST_DATABASE
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[0].m_Order = 1;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[0].m_StepValue = 2;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[0].m_AmplitudeValue = 3;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[1].m_Order = 4;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[1].m_StepValue = 5;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[1].m_AmplitudeValue = 6;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[4].m_Order = 7;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[4].m_StepValue = 8;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[4].m_AmplitudeValue = 9;
-
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TimeStep[0].m_Order = 111;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_PowerStep[0].m_Order = 222;
-#endif
-    char *jsonEnergy = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep, STEP_MAX);
-    char *jsonTime = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TimeStep, STEP_MAX);
-    char *jsonPower = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_PowerStep, STEP_MAX);
+    char *jsonEnergy = struct2Json(pData->m_WeldParameter.m_EnergyStep, STEP_MAX);
+    char *jsonTime = struct2Json(pData->m_WeldParameter.m_TimeStep, STEP_MAX);
+    char *jsonPower = struct2Json(pData->m_WeldParameter.m_PowerStep, STEP_MAX);
 
 	string strStore =
         "insert into " + string(TABLE_WELD_RECIPE) +
@@ -287,36 +277,36 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
         "PresetPicPath) " +
         "values (" +
         std::to_string(0)+","+//userID
-        std::to_string(CommonProperty::ActiveRecipeSC.m_IsTeachMode)+","+//IsValidate
-        std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude)+","+//Amplitude
-        std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WidthSetting)+","+//Width
-        std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure)+","+//WeldPressure
-        std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure)+","+//TriggerPressure
-        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMax)+","+//TimePlus
-        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin)+","+//TimeMinus
-        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMax)+","+//PeakPowerPlus
-        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMin)+","+//PeakPowerMinus
-        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PreHeightMax)+","+//TriggerHeightPlus
-        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PreHeightMin)+","+//TriggerHeightMinus
-        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_HeightMax)+","+//WeldHeightPlus
-        std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_HeightMin)+","+//WeldHeightMinus
-        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldMode)+","+//WeldMode
+        std::to_string(pData->m_IsTeachMode)+","+//IsValidate
+        std::to_string(pData->m_WeldParameter.m_Amplitude)+","+//Amplitude
+        std::to_string(pData->m_WeldParameter.m_WidthSetting)+","+//Width
+        std::to_string(pData->m_WeldParameter.m_WPpressure)+","+//WeldPressure
+        std::to_string(pData->m_WeldParameter.m_TPpressure)+","+//TriggerPressure
+        std::to_string(pData->m_QualityWindowSetting.m_TimeMax)+","+//TimePlus
+        std::to_string(pData->m_QualityWindowSetting.m_TimeMin)+","+//TimeMinus
+        std::to_string(pData->m_QualityWindowSetting.m_PeakPowerMax)+","+//PeakPowerPlus
+        std::to_string(pData->m_QualityWindowSetting.m_PeakPowerMin)+","+//PeakPowerMinus
+        std::to_string(pData->m_QualityWindowSetting.m_PreHeightMax)+","+//TriggerHeightPlus
+        std::to_string(pData->m_QualityWindowSetting.m_PreHeightMin)+","+//TriggerHeightMinus
+        std::to_string(pData->m_QualityWindowSetting.m_HeightMax)+","+//WeldHeightPlus
+        std::to_string(pData->m_QualityWindowSetting.m_HeightMin)+","+//WeldHeightMinus
+        std::to_string(pData->m_AdvancedSetting.m_WeldMode)+","+//WeldMode
         std::to_string(0)+","+//ModeValue
-        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_PreBurst)+","+//PreBurst
-        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_HoldTime)+","+//HoldTime
-        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_SqueezeTime)+","+//SqueezeTime
-        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstDelay)+","+//AfterBurstDelay
-        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstTime)+","+//AfterBurstDuration
-        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstAmplitude)+","+//AfterBurstAmplitude
-        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_DisplayedHeightOffset)+","+//WeldHeight
-        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_MeasuredHeightOffset)+","+//MeasuredHeight
-        std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldStepMode)+",'"+//StepWeldMode
+        std::to_string(pData->m_AdvancedSetting.m_PreBurst)+","+//PreBurst
+        std::to_string(pData->m_AdvancedSetting.m_HoldTime)+","+//HoldTime
+        std::to_string(pData->m_AdvancedSetting.m_SqueezeTime)+","+//SqueezeTime
+        std::to_string(pData->m_AdvancedSetting.m_AfterBurstDelay)+","+//AfterBurstDelay
+        std::to_string(pData->m_AdvancedSetting.m_AfterBurstTime)+","+//AfterBurstDuration
+        std::to_string(pData->m_AdvancedSetting.m_AfterBurstAmplitude)+","+//AfterBurstAmplitude
+        std::to_string(pData->m_AdvancedSetting.m_DisplayedHeightOffset)+","+//WeldHeight
+        std::to_string(pData->m_AdvancedSetting.m_MeasuredHeightOffset)+","+//MeasuredHeight
+        std::to_string(pData->m_AdvancedSetting.m_WeldStepMode)+",'"+//StepWeldMode
         jsonEnergy+"','"+//EnergyToStep
         jsonTime+"','"+//TimeToStep
         jsonPower+"','"+//PowerToStep
-        CommonProperty::ActiveRecipeSC.m_RecipeName+"','"+//RecipeName
+        pData->m_RecipeName+"','"+//RecipeName
         timeBuf+"','"+//DateTime
-        CommonProperty::ActiveRecipeSC.m_RecipePicPath+"');";//PresetPicPath
+        pData->m_RecipePicPath+"');";//PresetPicPath
 
     free(jsonEnergy);
     free(jsonTime);
@@ -424,62 +414,50 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 {
+    WeldRecipeSC *pData = (WeldRecipeSC *)buffer;
+
 	struct tm timeStamp;
     char timeBuf[20];
 	vxbRtcGet(&timeStamp);
     strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
 
-#ifdef UNITTEST_DATABASE
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[0].m_Order = 3;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[0].m_StepValue = 2;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[0].m_AmplitudeValue = 1;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[1].m_Order = 6;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[1].m_StepValue = 5;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[1].m_AmplitudeValue = 4;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[4].m_Order = 9;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[4].m_StepValue = 8;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep[4].m_AmplitudeValue = 7;
-
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TimeStep[0].m_Order = 333;
-    CommonProperty::ActiveRecipeSC.m_WeldParameter.m_PowerStep[0].m_Order = 444;
-#endif
-    char *jsonEnergy = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergyStep, STEP_MAX);
-    char *jsonTime = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TimeStep, STEP_MAX);
-    char *jsonPower = struct2Json(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_PowerStep, STEP_MAX);
+    char *jsonEnergy = struct2Json(pData->m_WeldParameter.m_EnergyStep, STEP_MAX);
+    char *jsonTime = struct2Json(pData->m_WeldParameter.m_TimeStep, STEP_MAX);
+    char *jsonPower = struct2Json(pData->m_WeldParameter.m_PowerStep, STEP_MAX);
 
 	string strStore =
         "update " + string(TABLE_WELD_RECIPE) +
         " set UserID="+std::to_string(0)+//userID
-        ", IsValidate="+std::to_string(CommonProperty::ActiveRecipeSC.m_IsTeachMode)+//IsValidate
-        ", Amplitude="+std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude)+//Amplitude
-        ", Width="+std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WidthSetting)+//Width
-        ", WeldPressure="+std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure)+//WeldPressure
-        ", TriggerPressure="+std::to_string(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure)+//TriggerPressure
-        ", TimePlus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMax)+//TimePlus
-        ", TimeMinus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin)+//TimeMinus
-        ", PeakPowerPlus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMax)+//PeakPowerPlus
-        ", PeakPowerMinus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMin)+//PeakPowerMinus
-        ", TriggerHeightPlus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PreHeightMax)+//TriggerHeightPlus
-        ", TriggerHeightMinus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PreHeightMin)+//TriggerHeightMinus
-        ", WeldHeightPlus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_HeightMax)+//WeldHeightPlus
-        ", WeldHeightMinus="+std::to_string(CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_HeightMin)+//WeldHeightMinus
-        ", WeldMode="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldMode)+//WeldMode
+        ", IsValidate="+std::to_string(pData->m_IsTeachMode)+//IsValidate
+        ", Amplitude="+std::to_string(pData->m_WeldParameter.m_Amplitude)+//Amplitude
+        ", Width="+std::to_string(pData->m_WeldParameter.m_WidthSetting)+//Width
+        ", WeldPressure="+std::to_string(pData->m_WeldParameter.m_WPpressure)+//WeldPressure
+        ", TriggerPressure="+std::to_string(pData->m_WeldParameter.m_TPpressure)+//TriggerPressure
+        ", TimePlus="+std::to_string(pData->m_QualityWindowSetting.m_TimeMax)+//TimePlus
+        ", TimeMinus="+std::to_string(pData->m_QualityWindowSetting.m_TimeMin)+//TimeMinus
+        ", PeakPowerPlus="+std::to_string(pData->m_QualityWindowSetting.m_PeakPowerMax)+//PeakPowerPlus
+        ", PeakPowerMinus="+std::to_string(pData->m_QualityWindowSetting.m_PeakPowerMin)+//PeakPowerMinus
+        ", TriggerHeightPlus="+std::to_string(pData->m_QualityWindowSetting.m_PreHeightMax)+//TriggerHeightPlus
+        ", TriggerHeightMinus="+std::to_string(pData->m_QualityWindowSetting.m_PreHeightMin)+//TriggerHeightMinus
+        ", WeldHeightPlus="+std::to_string(pData->m_QualityWindowSetting.m_HeightMax)+//WeldHeightPlus
+        ", WeldHeightMinus="+std::to_string(pData->m_QualityWindowSetting.m_HeightMin)+//WeldHeightMinus
+        ", WeldMode="+std::to_string(pData->m_AdvancedSetting.m_WeldMode)+//WeldMode
         ", ModeValue="+std::to_string(0)+//ModeValue
-        ", PreBurst="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_PreBurst)+//PreBurst
-        ", HoldTime="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_HoldTime)+//HoldTime
-        ", SqueezeTime="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_SqueezeTime)+//SqueezeTime
-        ", AfterBurstDelay="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstDelay)+//AfterBurstDelay
-        ", AfterBurstDuration="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstTime)+//AfterBurstDuration
-        ", AfterBurstAmplitude="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_AfterBurstAmplitude)+//AfterBurstAmplitude
-        ", WeldHeight="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_DisplayedHeightOffset)+//WeldHeight
-        ", MeasuredHeight="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_MeasuredHeightOffset)+//MeasuredHeight
-        ", StepWeldMode="+std::to_string(CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldStepMode)+//StepWeldMode
+        ", PreBurst="+std::to_string(pData->m_AdvancedSetting.m_PreBurst)+//PreBurst
+        ", HoldTime="+std::to_string(pData->m_AdvancedSetting.m_HoldTime)+//HoldTime
+        ", SqueezeTime="+std::to_string(pData->m_AdvancedSetting.m_SqueezeTime)+//SqueezeTime
+        ", AfterBurstDelay="+std::to_string(pData->m_AdvancedSetting.m_AfterBurstDelay)+//AfterBurstDelay
+        ", AfterBurstDuration="+std::to_string(pData->m_AdvancedSetting.m_AfterBurstTime)+//AfterBurstDuration
+        ", AfterBurstAmplitude="+std::to_string(pData->m_AdvancedSetting.m_AfterBurstAmplitude)+//AfterBurstAmplitude
+        ", WeldHeight="+std::to_string(pData->m_AdvancedSetting.m_DisplayedHeightOffset)+//WeldHeight
+        ", MeasuredHeight="+std::to_string(pData->m_AdvancedSetting.m_MeasuredHeightOffset)+//MeasuredHeight
+        ", StepWeldMode="+std::to_string(pData->m_AdvancedSetting.m_WeldStepMode)+//StepWeldMode
         ", EnergyToStep='"+jsonEnergy+//EnergyToStep
         "', TimeToStep='"+jsonTime+//TimeToStep
         "', PowerToStep='"+jsonPower+//PowerToStep
-        "', RecipeName='"+CommonProperty::ActiveRecipeSC.m_RecipeName+//RecipeName
+        "', RecipeName='"+pData->m_RecipeName+//RecipeName
         "', DateTime='"+timeBuf+//DateTime
-        "', PresetPicPath='"+CommonProperty::ActiveRecipeSC.m_RecipePicPath+//PresetPicPath
+        "', PresetPicPath='"+pData->m_RecipePicPath+//PresetPicPath
         "' where ID="+std::to_string(*(int *)buffer)+";";
     free(jsonEnergy);
     free(jsonTime);

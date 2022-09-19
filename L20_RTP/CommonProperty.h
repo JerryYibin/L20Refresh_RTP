@@ -73,13 +73,10 @@ public:						/* Public member data */
 	bool					m_bTaskRun;
 	// static member for global access
 	static WELD_RESULT				WeldResult;
-	static WELD_RESULT				WeldResultForUI[50];
 	static WeldRecipeSC				ActiveRecipeSC;
 	static SYSTEM_INFO				SystemInfo;
 	static vector<WELD_SIGNATURE> 	WeldSignatureVector;
-	
-	static HMI_WELD_SIGNATURE_POINTS	WeldSignatureForUI[50];
-	
+
 private:					/* Private member functions */
 	
 	CommonProperty				();

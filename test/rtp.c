@@ -256,6 +256,20 @@ int main(int argc, char *argv[])
                         int count = 1;
                         buf.msgID = TO_DATA_TASK_WELD_RECIPE_INSERT;
 
+                        WeldRecipeSC *pData = (WeldRecipeSC *)&buf.Buffer[0];
+                        pData->m_WeldParameter.m_EnergyStep[0].m_Order = 3;
+                        pData->m_WeldParameter.m_EnergyStep[0].m_StepValue = 2;
+                        pData->m_WeldParameter.m_EnergyStep[0].m_AmplitudeValue = 1;
+                        pData->m_WeldParameter.m_EnergyStep[1].m_Order = 6;
+                        pData->m_WeldParameter.m_EnergyStep[1].m_StepValue = 5;
+                        pData->m_WeldParameter.m_EnergyStep[1].m_AmplitudeValue = 4;
+                        pData->m_WeldParameter.m_EnergyStep[4].m_Order = 9;
+                        pData->m_WeldParameter.m_EnergyStep[4].m_StepValue = 8;
+                        pData->m_WeldParameter.m_EnergyStep[4].m_AmplitudeValue = 7;
+
+                        pData->m_WeldParameter.m_TimeStep[0].m_Order = 333;
+                        pData->m_WeldParameter.m_PowerStep[0].m_Order = 444;
+
                         if(argc>=4)
                             count = atoi(argv[3]);
                         if((count<1)||(count>1000))
@@ -317,6 +331,9 @@ int main(int argc, char *argv[])
                         int i;    
                         int count = 1;
                         buf.msgID = TO_DATA_TASK_WELD_RESULT_INSERT;
+
+                        WELD_RESULT *pData = (WELD_RESULT *)&buf.Buffer[0];
+                        pData->RecipeNum = 123;
 
                         if(argc>=4)
                             count = atoi(argv[3]);
