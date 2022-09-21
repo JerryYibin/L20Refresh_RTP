@@ -13,9 +13,9 @@
  	 Use this class to access L20 refresh database file sample_L20.db.  
  
 **********************************************************************************************************/
-#include <jansson.h>
 #include "DBAccess_l20_db.h"
 #include "commons.h"
+#include "../Utility.h"
 extern "C"
 {
 	#include "hwif/drv/resource/vxbRtcLib.h"
@@ -141,14 +141,14 @@ string DBAccessL20DB::GetWeldSignatureCSVReportHeader2()
 /**************************************************************************//**
 * \brief   - Writing WeldResult into DB
 *      		
-* \param   - char *buffer - not used
+* \param   - char *buffer
 *
 * \return  - UINT8 -status of query exec
 *
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldResult(char* buffer)
 {
-    WELD_RESULT *pData = (WELD_RESULT *)buffer;
+    WELD_RESULT* pData = &CommonProperty::WeldResult;
 
 	struct tm timeStamp;
     char timeBuf[20];
@@ -223,23 +223,23 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
     	CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
         }
 #endif
-    char *json = vector2Json(CommonProperty::WeldSignatureVector);
-    if(json!=NULL)
-        {
+    string jsonStr;
+    Utility::Vector2JSON(&CommonProperty::WeldSignatureVector, jsonStr);
+    if(jsonStr.empty() != true)
+    {
     	string strStore =
             "insert into " + string(TABLE_WELD_SIGNATURE) +
             " (WeldResultID, WeldGraph) " +
             "values ("+
             std::to_string(*(int *)buffer)+",'"+//WeldResultID
-            json+"');";//WeldGraph
+            jsonStr+"');";//WeldGraph
 
-        free(json);
     	nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
         static int count=0;
-        printf("#WeldSignature(num %d): result %d\n%s\n\n", count++,nErrCode, strStore.c_str());
+        LOG("#WeldSignature(num %d): result %d\n%s\n\n", count++,nErrCode, strStore.c_str());
 #endif
-        }
+	}
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
@@ -248,7 +248,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 /**************************************************************************//**
 * \brief   - Writing Weld Recipe into DB
 *
-* \param   - char *buffer - not used
+* \param   - char *buffer
 *
 * \return  - UINT8 - status of query exec
 *
@@ -262,9 +262,10 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 	vxbRtcGet(&timeStamp);
     strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
 
-    char *jsonEnergy = struct2Json(pData->m_WeldParameter.m_EnergyStep, STEP_MAX);
-    char *jsonTime = struct2Json(pData->m_WeldParameter.m_TimeStep, STEP_MAX);
-    char *jsonPower = struct2Json(pData->m_WeldParameter.m_PowerStep, STEP_MAX);
+    string jsonStrEnergy, jsonStrTime, jsonStrPower;
+    Utility::Struct2JSON(pData->m_WeldParameter.m_EnergyStep, STEP_MAX, jsonStrEnergy);
+    Utility::Struct2JSON(pData->m_WeldParameter.m_TimeStep, STEP_MAX, jsonStrTime);
+    Utility::Struct2JSON(pData->m_WeldParameter.m_PowerStep, STEP_MAX, jsonStrPower);
 
 	string strStore =
         "insert into " + string(TABLE_WELD_RECIPE) +
@@ -301,31 +302,32 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
         std::to_string(pData->m_AdvancedSetting.m_DisplayedHeightOffset)+","+//WeldHeight
         std::to_string(pData->m_AdvancedSetting.m_MeasuredHeightOffset)+","+//MeasuredHeight
         std::to_string(pData->m_AdvancedSetting.m_WeldStepMode)+",'"+//StepWeldMode
-        jsonEnergy+"','"+//EnergyToStep
-        jsonTime+"','"+//TimeToStep
-        jsonPower+"','"+//PowerToStep
+		jsonStrEnergy+"','"+//EnergyToStep
+		jsonStrTime+"','"+//TimeToStep
+		jsonStrPower+"','"+//PowerToStep
         pData->m_RecipeName+"','"+//RecipeName
         timeBuf+"','"+//DateTime
         pData->m_RecipePicPath+"');";//PresetPicPath
 
-    free(jsonEnergy);
-    free(jsonTime);
-    free(jsonPower);
-
 	int nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
     static int count=0;
-    printf("#WeldRecipe(num %d): result %d\n%s\n\n", count++,nErrCode, strStore.c_str());
+    LOG("#WeldRecipe(num %d): result %d\n%s\n\n", count++,nErrCode, strStore.c_str());
 #endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
 }
+
 /**************************************************************************//**
+* \brief   - Query Weld Result from DB
 *
-* \param   - char *buffer - ID
+* \param   - char *buffer
+*
+* \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
+//TODO Is it temporary code for test only, because there is not any return?
 void DBAccessL20DB::QueryWeldResult(char *buffer)
 {
     string strQuery =
@@ -335,14 +337,19 @@ void DBAccessL20DB::QueryWeldResult(char *buffer)
     string str = ExecuteQuery(strQuery);
 
     if(str.size()>0)
-        printf("QueryWeldResult:\n%s\n", str.c_str());
+        LOG("QueryWeldResult:\n%s\n", str.c_str());
     return;
 }
+
 /**************************************************************************//**
+* \brief   - Query Weld Signature from DB
 *
-* \param   - char *buffer - WeldResultID
+* \param   - char *buffer
+*
+* \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
+//TODO Is it temporary code for test only, because there is not any return?
 void DBAccessL20DB::QueryWeldSignature(char *buffer)
 {
     string strQuery =
@@ -352,14 +359,19 @@ void DBAccessL20DB::QueryWeldSignature(char *buffer)
         std::to_string(*(int *)buffer)+";";
     string str = ExecuteQuery(strQuery);
     vector<WELD_SIGNATURE> WeldSignVector;
-    json2Vector(str.c_str(), WeldSignVector);
+    Utility::JSON2Vector(str, &WeldSignVector);
     return;
 }
+
 /**************************************************************************//**
+* \brief   - Query all Weld Recipe records from DB
 *
-* \param   - char *buffer - not used
+* \param   - char *buffer
+*
+* \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
+//TODO Is it temporary code for test only, because there is not any return?
 void DBAccessL20DB::QueryWeldRecipeAll(char *buffer)
 {
     string strQuery =
@@ -367,14 +379,19 @@ void DBAccessL20DB::QueryWeldRecipeAll(char *buffer)
     string str = ExecuteQuery(strQuery);
 
     if(str.size()>0)
-        printf("QueryWeldRecipe:\n%s\n", str.c_str());
+        LOG("QueryWeldRecipe:\n%s\n", str.c_str());
     return;
 }
+
 /**************************************************************************//**
+* \brief   - Query Specific Weld Recipe from DB
 *
-* \param   - char *buffer - ID
+* \param   - char *buffer
+*
+* \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
+//TODO Is it temporary code for test only, because there is not any return?
 void DBAccessL20DB::QueryWeldRecipe(char *buffer)
 {
     string strQuery =
@@ -383,100 +400,107 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
         std::to_string(*(int *)buffer)+";";
     string str = ExecuteQuery(strQuery);
     if(str.size()>0)
-        printf("QueryWeldRecipe:\n%s\n", str.c_str());
+        LOG("QueryWeldRecipe:\n%s\n", str.c_str());
 
     strQuery =
         "select EnergyToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
         std::to_string(*(int *)buffer)+";";
     str = ExecuteQuery(strQuery);
-    json2Struct(str.c_str(), NULL);
+    Utility::JSON2Struct(str, NULL);
 
     strQuery =
         "select TimeToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
         std::to_string(*(int *)buffer)+";";
     str = ExecuteQuery(strQuery);
-    json2Struct(str.c_str(), NULL);
+    Utility::JSON2Struct(str, NULL);
 
     strQuery =
         "select PowerToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
         std::to_string(*(int *)buffer)+";";
     str = ExecuteQuery(strQuery);
-    json2Struct(str.c_str(), NULL);
+    Utility::JSON2Struct(str, NULL);
     return;
 }
+
 /**************************************************************************//**
+* \brief   - Update Specific Weld Recipe to DB
 *
-* \param   - char *buffer - ID
+* \param   - char *buffer (recipe structure)
+*
+* \return  - UINT8 - Database status
 *
 ******************************************************************************/
 int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 {
-    WeldRecipeSC *pData = (WeldRecipeSC *)buffer;
+    WeldRecipeSC *pRecipe = (WeldRecipeSC *)buffer;
 
 	struct tm timeStamp;
     char timeBuf[20];
 	vxbRtcGet(&timeStamp);
     strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
 
-    char *jsonEnergy = struct2Json(pData->m_WeldParameter.m_EnergyStep, STEP_MAX);
-    char *jsonTime = struct2Json(pData->m_WeldParameter.m_TimeStep, STEP_MAX);
-    char *jsonPower = struct2Json(pData->m_WeldParameter.m_PowerStep, STEP_MAX);
+    string jsonStrEnergy, jsonStrTime, jsonStrPower;
+    Utility::Struct2JSON(pRecipe->m_WeldParameter.m_EnergyStep, STEP_MAX, jsonStrEnergy);
+    Utility::Struct2JSON(pRecipe->m_WeldParameter.m_TimeStep, STEP_MAX, jsonStrTime);
+    Utility::Struct2JSON(pRecipe->m_WeldParameter.m_PowerStep, STEP_MAX, jsonStrPower);
 
 	string strStore =
-        "update " + string(TABLE_WELD_RECIPE) +
-        " set UserID="+std::to_string(0)+//userID
-        ", IsValidate="+std::to_string(pData->m_IsTeachMode)+//IsValidate
-        ", Amplitude="+std::to_string(pData->m_WeldParameter.m_Amplitude)+//Amplitude
-        ", Width="+std::to_string(pData->m_WeldParameter.m_WidthSetting)+//Width
-        ", WeldPressure="+std::to_string(pData->m_WeldParameter.m_WPpressure)+//WeldPressure
-        ", TriggerPressure="+std::to_string(pData->m_WeldParameter.m_TPpressure)+//TriggerPressure
-        ", TimePlus="+std::to_string(pData->m_QualityWindowSetting.m_TimeMax)+//TimePlus
-        ", TimeMinus="+std::to_string(pData->m_QualityWindowSetting.m_TimeMin)+//TimeMinus
-        ", PeakPowerPlus="+std::to_string(pData->m_QualityWindowSetting.m_PeakPowerMax)+//PeakPowerPlus
-        ", PeakPowerMinus="+std::to_string(pData->m_QualityWindowSetting.m_PeakPowerMin)+//PeakPowerMinus
-        ", TriggerHeightPlus="+std::to_string(pData->m_QualityWindowSetting.m_PreHeightMax)+//TriggerHeightPlus
-        ", TriggerHeightMinus="+std::to_string(pData->m_QualityWindowSetting.m_PreHeightMin)+//TriggerHeightMinus
-        ", WeldHeightPlus="+std::to_string(pData->m_QualityWindowSetting.m_HeightMax)+//WeldHeightPlus
-        ", WeldHeightMinus="+std::to_string(pData->m_QualityWindowSetting.m_HeightMin)+//WeldHeightMinus
-        ", WeldMode="+std::to_string(pData->m_AdvancedSetting.m_WeldMode)+//WeldMode
-        ", ModeValue="+std::to_string(0)+//ModeValue
-        ", PreBurst="+std::to_string(pData->m_AdvancedSetting.m_PreBurst)+//PreBurst
-        ", HoldTime="+std::to_string(pData->m_AdvancedSetting.m_HoldTime)+//HoldTime
-        ", SqueezeTime="+std::to_string(pData->m_AdvancedSetting.m_SqueezeTime)+//SqueezeTime
-        ", AfterBurstDelay="+std::to_string(pData->m_AdvancedSetting.m_AfterBurstDelay)+//AfterBurstDelay
-        ", AfterBurstDuration="+std::to_string(pData->m_AdvancedSetting.m_AfterBurstTime)+//AfterBurstDuration
-        ", AfterBurstAmplitude="+std::to_string(pData->m_AdvancedSetting.m_AfterBurstAmplitude)+//AfterBurstAmplitude
-        ", WeldHeight="+std::to_string(pData->m_AdvancedSetting.m_DisplayedHeightOffset)+//WeldHeight
-        ", MeasuredHeight="+std::to_string(pData->m_AdvancedSetting.m_MeasuredHeightOffset)+//MeasuredHeight
-        ", StepWeldMode="+std::to_string(pData->m_AdvancedSetting.m_WeldStepMode)+//StepWeldMode
-        ", EnergyToStep='"+jsonEnergy+//EnergyToStep
-        "', TimeToStep='"+jsonTime+//TimeToStep
-        "', PowerToStep='"+jsonPower+//PowerToStep
-        "', RecipeName='"+pData->m_RecipeName+//RecipeName
-        "', DateTime='"+timeBuf+//DateTime
-        "', PresetPicPath='"+pData->m_RecipePicPath+//PresetPicPath
-        "' where ID="+std::to_string(*(int *)buffer)+";";
-    free(jsonEnergy);
-    free(jsonTime);
-    free(jsonPower);
+        "update " 				+ string(TABLE_WELD_RECIPE) +
+        " set UserID=" 			+ std::to_string(0)+//userID
+        ", IsValidate=" 		+ std::to_string(pRecipe->m_IsTeachMode)+//IsValidate
+        ", Amplitude=" 			+ std::to_string(pRecipe->m_WeldParameter.m_Amplitude)+//Amplitude
+        ", Width=" 				+ std::to_string(pRecipe->m_WeldParameter.m_WidthSetting)+//Width
+        ", WeldPressure="	 	+ std::to_string(pRecipe->m_WeldParameter.m_WPpressure)+//WeldPressure
+        ", TriggerPressure=" 	+ std::to_string(pRecipe->m_WeldParameter.m_TPpressure)+//TriggerPressure
+        ", TimePlus=" 			+ std::to_string(pRecipe->m_QualityWindowSetting.m_TimeMax)+//TimePlus
+        ", TimeMinus=" 			+ std::to_string(pRecipe->m_QualityWindowSetting.m_TimeMin)+//TimeMinus
+        ", PeakPowerPlus=" 		+ std::to_string(pRecipe->m_QualityWindowSetting.m_PeakPowerMax)+//PeakPowerPlus
+        ", PeakPowerMinus=" 	+ std::to_string(pRecipe->m_QualityWindowSetting.m_PeakPowerMin)+//PeakPowerMinus
+        ", TriggerHeightPlus="	+ std::to_string(pRecipe->m_QualityWindowSetting.m_PreHeightMax)+//TriggerHeightPlus
+        ", TriggerHeightMinus="	+ std::to_string(pRecipe->m_QualityWindowSetting.m_PreHeightMin)+//TriggerHeightMinus
+        ", WeldHeightPlus=" 	+ std::to_string(pRecipe->m_QualityWindowSetting.m_HeightMax)+//WeldHeightPlus
+        ", WeldHeightMinus=" 	+ std::to_string(pRecipe->m_QualityWindowSetting.m_HeightMin)+//WeldHeightMinus
+        ", WeldMode=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_WeldMode)+//WeldMode
+        ", ModeValue=" 			+ std::to_string(0)+//ModeValue
+        ", PreBurst=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_PreBurst)+//PreBurst
+        ", HoldTime=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_HoldTime)+//HoldTime
+        ", SqueezeTime=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_SqueezeTime)+//SqueezeTime
+        ", AfterBurstDelay=" 		+ std::to_string(pRecipe->m_AdvancedSetting.m_AfterBurstDelay)+//AfterBurstDelay
+        ", AfterBurstDuration=" 	+ std::to_string(pRecipe->m_AdvancedSetting.m_AfterBurstTime)+//AfterBurstDuration
+        ", AfterBurstAmplitude="	+ std::to_string(pRecipe->m_AdvancedSetting.m_AfterBurstAmplitude)+//AfterBurstAmplitude
+        ", WeldHeight=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_DisplayedHeightOffset)+//WeldHeight
+        ", MeasuredHeight=" 		+ std::to_string(pRecipe->m_AdvancedSetting.m_MeasuredHeightOffset)+//MeasuredHeight
+        ", StepWeldMode=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_WeldStepMode)+//StepWeldMode
+        ", EnergyToStep='" 			+ jsonStrEnergy+//EnergyToStep
+        "', TimeToStep='" 			+ jsonStrTime+//TimeToStep
+        "', PowerToStep='" 			+ jsonStrPower+//PowerToStep
+        "', RecipeName='" 			+ pRecipe->m_RecipeName+//RecipeName
+        "', DateTime='" 			+ timeBuf+//DateTime
+        "', PresetPicPath='" 		+ pRecipe->m_RecipePicPath+//PresetPicPath
+        "' where ID=" 				+ std::to_string(*(int *)buffer)+";";
 
 	int nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
     static int count=0;
-    printf("#WeldRecipe(len %d): result %d\n%s\n\n", strStore.size(),nErrCode, strStore.c_str());
+    LOG("#WeldRecipe(len %d): result %d\n%s\n\n", strStore.size(),nErrCode, strStore.c_str());
 #endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
 }
+
 /**************************************************************************//**
+* \brief   - Delete table, please confirm what's the purpose of the function.
 *
-* \param   - char *table - table name
+* \param   - table name
+*
+* \return  - none
 *
 ******************************************************************************/
+//TODO Is it temporary code for test only, because there is not any return?
 void DBAccessL20DB::DeleteOldest(const char *table)
 {
     string strQuery =
@@ -486,167 +510,3 @@ void DBAccessL20DB::DeleteOldest(const char *table)
     SingleTransaction(strQuery);
     return;
 }
-char *DBAccessL20DB::struct2Json(WeldStepValueSetting *step, int num)
-{
-    char *result;
-    if((step==NULL)||(num<=0)||(num>STEP_MAX))
-        {
-        return NULL;
-        }
-
-    json_t *array1 = json_array();
-    json_t *array2 = json_array();
-    json_t *array3 = json_array();
-    json_t *all  = json_object();
-
-    for(UINT32 i = 0; i < num; i++)
-        {
-        json_array_append_new(array1, json_integer(step[i].m_Order));
-        json_array_append_new(array2, json_integer(step[i].m_StepValue));
-        json_array_append_new(array3, json_integer(step[i].m_AmplitudeValue));
-        }
-    json_object_set_new(all, "0", array1);
-    json_object_set_new(all, "1", array2);
-    json_object_set_new(all, "2", array3);
-
-    result = json_dumps(all, 0);
-
-    json_delete(all);
-    return result;
-}
-void DBAccessL20DB::json2Struct(const char *json, WeldStepValueSetting *)
-{
-    int i;
-    void *each;
-    json_t *all;
-    json_t *array;
-    json_t *mem;
-
-    if(json == NULL)
-        return;
-    all = json_loads(json, 0, NULL);
-    if(all == NULL)
-        {
-        printf("invalid json\n");
-        return;
-        }
-
-    array = json_object_get(all, "0");
-    printf("\tOrder: ");
-    for(i=0; i<json_array_size(array); i++)
-        {
-        mem = json_array_get(array,i);
-        printf("%d ", json_integer_value(mem));
-        }
-    printf("\n");
-
-    array = json_object_get(all, "1");
-    printf("\tStepValue: ");
-    for(i=0; i<json_array_size(array); i++)
-        {
-        mem = json_array_get(array,i);
-        printf("%d ", json_integer_value(mem));
-        }
-    printf("\n");
-
-    array = json_object_get(all, "2");
-    printf("\tAmplitudeValue: ");
-    for(i=0; i<json_array_size(array); i++)
-        {
-        mem = json_array_get(array,i);
-        printf("%d ", json_integer_value(mem));
-        }
-    printf("\n");
-
-    json_delete(all);
-    return;
-    }
-
-char *DBAccessL20DB::vector2Json(vector<WELD_SIGNATURE> WeldSignatureVector)
-{
-    char *result;
-    if(WeldSignatureVector.size()==0)
-        {
-        return NULL;
-        }
-
-    json_t *array1 = json_array();
-    json_t *array2 = json_array();
-    json_t *array3 = json_array();
-    json_t *array4 = json_array();
-    json_t *all  = json_object();
-
-    for(UINT32 i = 0; i < WeldSignatureVector.size(); i++)
-        {
-        json_array_append_new(array1, json_integer(WeldSignatureVector[i].Frquency));
-        json_array_append_new(array2, json_integer(WeldSignatureVector[i].Power));
-        json_array_append_new(array3, json_integer(WeldSignatureVector[i].Height));
-        json_array_append_new(array4, json_integer(WeldSignatureVector[i].Amplitude));
-        }
-    json_object_set_new(all, "0", array1);
-    json_object_set_new(all, "1", array2);
-    json_object_set_new(all, "2", array3);
-    json_object_set_new(all, "3", array4);
-
-    result = json_dumps(all, 0);
-
-    json_delete(all);
-    return result;
-}
-void DBAccessL20DB::json2Vector(const char *json, vector<WELD_SIGNATURE> &WeldSignVector)
-{
-    int i;
-    void *each;
-    json_t *all;
-    json_t *array;
-    json_t *mem;
-
-    if(json == NULL)
-        return;
-    printf("QueryWeldSignature: %s\n", json);
-    all = json_loads(json, 0, NULL);
-    if(all == NULL)
-        {
-        printf("invalid json\n");
-        return;
-        }
-
-    array = json_object_get(all, "0");
-    printf("\tFrquency: ");
-    for(i=0; i<json_array_size(array); i++)
-        {
-        mem = json_array_get(array,i);
-        printf("%d ", json_integer_value(mem));
-        }
-    printf("\n");
-
-    array = json_object_get(all, "1");
-    printf("\tPower: ");
-    for(i=0; i<json_array_size(array); i++)
-        {
-        mem = json_array_get(array,i);
-        printf("%d ", json_integer_value(mem));
-        }
-    printf("\n");
-
-    array = json_object_get(all, "2");
-    printf("\tHeight: ");
-    for(i=0; i<json_array_size(array); i++)
-        {
-        mem = json_array_get(array,i);
-        printf("%d ", json_integer_value(mem));
-        }
-    printf("\n");
-
-    array = json_object_get(all, "3");
-    printf("\tAmplitude: ");
-    for(i=0; i<json_array_size(array); i++)
-        {
-        mem = json_array_get(array,i);
-        printf("%d ", json_integer_value(mem));
-        }
-    printf("\n");
-    json_delete(all);
-    return;
-    }
-

@@ -15,10 +15,7 @@
 class DBAccessL20DB: public DBAccess 
 {
 private:
-    char *struct2Json(WeldStepValueSetting *, int);
-    void json2Struct(const char *json, WeldStepValueSetting *);
-    char *vector2Json(vector<WELD_SIGNATURE>);
-    void json2Vector(const char *json, vector<WELD_SIGNATURE> &WeldSignatureVector);
+
 public:
 	DBAccessL20DB();
 	virtual ~DBAccessL20DB();
@@ -33,19 +30,18 @@ public:
 	string GetWeldSignatureCSVReportHeader1() override;
 	string GetWeldSignatureCSVReportHeader2() override;
 	
-	virtual int StoreWeldResult(char* buffer) override;
-	virtual int StoreWeldSignature(char* buffer) override;
-	virtual int StoreWeldRecipe(char* buffer) override;
+	virtual int 	StoreWeldResult(char* buffer) 		override;
+	virtual int 	StoreWeldSignature(char* buffer)	override;
+	virtual int 	StoreWeldRecipe(char* buffer) 		override;
 
-	virtual void QueryWeldResult(char *) override;
-	virtual void QueryWeldSignature(char *) override;
-	virtual void QueryWeldRecipe(char *) override;
-	virtual void QueryWeldRecipeAll(char *) override;
-	virtual int UpdateWeldRecipe(char *) override;
+	virtual void	QueryWeldResult(char *) 			override;
+	virtual void 	QueryWeldSignature(char *) 			override;
+	virtual void 	QueryWeldRecipe(char *) 			override;
+	virtual void 	QueryWeldRecipeAll(char *) 			override;
+	virtual int 	UpdateWeldRecipe(char *) 			override;
 
-	virtual void DeleteOldest(const char *) override;
+	virtual void 	DeleteOldest(const char *) 			override;
 
 	//End of methods to fetch data from database needed for CSV reports generation.	
 };
 #endif /* DBACCESS_L20_DB_H_ */
-

@@ -25,27 +25,29 @@ public:
 	virtual ~DBAccess();
 	
 	//Pure virtual function. Each child class (e.g. DBAccessP1BaseDB) must provide a ConnectDB() implementation based on the database file name that it will operate on.
-	virtual int ConnectDB() = 0;
+	virtual int		ConnectDB() = 0;
 	
 	//Methods to fetch data from database needed for CSV reports generation.		
-	virtual string GetWeldResultCSVParameters(int nRowID, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT) = 0;
-	virtual string GetWeldResultCSVReportHeader() = 0;
+	virtual string	GetWeldResultCSVParameters(int nRowID, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT) = 0;
+	virtual string	GetWeldResultCSVReportHeader() = 0;
 	
-	virtual string GetWeldSignatureCSVParameters(int nRowID, int &nBlobParamNumber, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT) = 0;
-	virtual string GetWeldSignatureCSVReportHeader1() = 0;
-	virtual string GetWeldSignatureCSVReportHeader2() = 0;
+	virtual string	GetWeldSignatureCSVParameters(int nRowID, int &nBlobParamNumber, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT) = 0;
+	virtual string	GetWeldSignatureCSVReportHeader1() = 0;
+	virtual string	GetWeldSignatureCSVReportHeader2() = 0;
 	
-	virtual int StoreWeldResult(char* buffer) = 0;
-	virtual int StoreWeldSignature(char* buffer) = 0;
-	virtual int StoreWeldRecipe(char* buffer) = 0;
+	virtual int 	StoreWeldResult(char* buffer)		= 0;
+	virtual int 	StoreWeldSignature(char* buffer)	= 0;
+	virtual int 	StoreWeldRecipe(char* buffer)		= 0;
 
-	virtual void QueryWeldResult(char *) = 0;
-	virtual void QueryWeldSignature(char *) = 0;
-	virtual void QueryWeldRecipe(char *) = 0;
-	virtual void QueryWeldRecipeAll(char *) = 0;
-	virtual int UpdateWeldRecipe(char *) = 0;
+	virtual void 	QueryWeldResult(char *)				= 0;
+	virtual void 	QueryWeldSignature(char *)			= 0;
+	virtual void 	QueryWeldRecipe(char *)				= 0;
+	
+	virtual void 	QueryWeldRecipeAll(char *)			= 0;
+	virtual int 	UpdateWeldRecipe(char *)			= 0;
 
-	virtual void DeleteOldest(const char *) = 0;
+	virtual void 	DeleteOldest(const char *)			= 0;
+	
 	string GetWeldSignatureGraphBlob(int nRowID, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);
 	vector <int> GetGoldenWeldSignatureRowNumbers(int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);
 	//End of methods to fetch data from database needed for CSV reports generation.

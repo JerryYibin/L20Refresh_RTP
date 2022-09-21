@@ -78,24 +78,20 @@ int DataTask::ConnectDB()
 {
 	int nErrCode = SQLITE_OK;
     if(_ObjDBConn == nullptr)
-        {
+	{
     	switch(GetSystemType())
     	{
-    		case L20:
-    		{
-    	        _ObjDBConn = new DBAccessL20DB();
-        		break;
-    		}
-    		default:
-    		{
-    			LOGERR((char *)"MODEL_T : --------NO System Detected-----------", 0, 0, 0);
-                return SQLITE_ERROR;
-    		}
+    	case L20:
+    		_ObjDBConn = new DBAccessL20DB();
+        	break;
+		default:
+			LOGERR((char *)"MODEL_T : --------NO System Detected-----------", 0, 0, 0);
+			return SQLITE_ERROR;
     	}
     	nErrCode = _ObjDBConn->ConnectDB();
     	if(nErrCode != SQLITE_OK)
     		LOGERR("DB Connection Open Error! ErrCode = %d\n",nErrCode, 0, 0);
-        }
+	}
 	return nErrCode;
 }
 
@@ -110,14 +106,14 @@ int DataTask::ConnectDB()
 int DataTask::CloseDB()
 {
 	int nErrCode = SQLITE_OK;
-    if(_ObjDBConn != nullptr)
-        {
-    	nErrCode = _ObjDBConn->CloseDataBaseConnection();
+	if(_ObjDBConn != nullptr)
+	{
+		nErrCode = _ObjDBConn->CloseDataBaseConnection();
     	if(nErrCode > SQLITE_OK)
     		LOGERR("DB Close Error! ErrCode = %d\n",nErrCode, 0, 0);
         else
             _ObjDBConn = nullptr;
-        }
+	}
 	return nErrCode;
 }
 
@@ -132,10 +128,10 @@ int DataTask::CloseDB()
 void DataTask::ProcessTaskMessage(MESSAGE& message)
 {
     if((_ObjDBConn == nullptr)&&(message.msgID != TO_DATA_TASK_OPEN_DB))
-        {
-		LOGERR((char *)"DataTask: --------Database has not been open, Message ID = --- : ", message.msgID, 0, 0);
+    {
+    	LOGERR((char *)"DataTask: --------Database has not been open, Message ID = --- : ", message.msgID, 0, 0);
         return;
-        }
+    }
 
 	switch(message.msgID)
 	{
@@ -146,7 +142,6 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	    CloseDB();
         break;
 	case TO_DATA_TASK_WELD_RECIPE_INSERT:
-		{
 #ifdef PERFORMANCE_MEASURE
 		UINT32 m_startTime = sysTimestampLock();
 #endif 
@@ -159,9 +154,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         }
 #endif
 		break;
-		}
 	case TO_DATA_TASK_WELD_RESULT_INSERT:
-		{
 #ifdef PERFORMANCE_MEASURE
 		UINT32 m_startTime = sysTimestampLock();
 #endif 
@@ -174,7 +167,6 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         }
 #endif
 		break;
-		}
 	case TO_DATA_TASK_WELD_SIGN_INSERT:
 		_ObjDBConn->StoreWeldSignature(message.Buffer);
 		break;

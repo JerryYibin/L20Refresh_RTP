@@ -13,6 +13,10 @@
 #define PRESSURE_MAX	120000
 #define AMPLITUDE_MAX	72
 #include "Common.h"
+#include "recipedef.h"
+#include "WeldResultSignature.h"
+#include <vector>
+using namespace std;
 class Utility {
 public:
 	Utility();
@@ -33,6 +37,11 @@ public:
 	static UINT16 FrequencyOffset2HEX	(INT32 physical);
 	static UINT16 Pressure2HEX			(UINT32 physical);
 	static UINT32 Energy2HEX			(UINT32 physical);
+	
+    static int Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr);
+    static int JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray);
+    static int Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string& jsonStr);
+    static int JSON2Vector(const string jsonStr, vector<WELD_SIGNATURE>* _ptrVector);
 	
 	
 };

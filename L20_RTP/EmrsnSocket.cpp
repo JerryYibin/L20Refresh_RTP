@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include "EmrsnSocket.h"
 #include "Logger.h"
-
+#include "commons.h"
 // Set the flag value to false at first time calling
 bool EmrsnSocket::bStaticWSAStartupSocket = false;  
 
@@ -342,10 +342,13 @@ int EmrsnSocket::Accept(SOCKET_CLIENT_TYPE clientType)
 	 * note: needs to be taken from the boot line
 	 * will write boot line to eeprom and read from there
 	 */
-	
+#ifdef INCLUDE_TI_AM5708_BRANSON
+	addrLow.aslong  = inet_addr(clientType == HMI_SOCKET_CONNECTION ? "192.168.1.1" : "192.168.0.1");
+	addrHi.aslong  = inet_addr(clientType == HMI_SOCKET_CONNECTION ? "192.168.1.255": "192.168.0.255");
+#else
 	addrLow.aslong  = inet_addr(clientType == HMI_SOCKET_CONNECTION ? "192.168.1.1" : "192.168.1.129");
 	addrHi.aslong  = inet_addr(clientType == HMI_SOCKET_CONNECTION ? "192.168.1.128": "192.168.1.255");
-		
+#endif
 	// Check this socket
 	if (dwsock < 0)
 	{

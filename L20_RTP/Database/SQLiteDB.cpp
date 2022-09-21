@@ -581,10 +581,10 @@ int SQLiteDB::DeleteAllTableRows(string strTableName, int nRetryCounter)
 	string strQuery = "DELETE FROM " + strTableName + ";";
     nErrCode = executeDBQuery(strQuery, nRetryCounter);
     if(nErrCode == SQLITE_OK)
-        {
+    {
     	string strQuery = "UPDATE sqlite_sequence SET seq = 0 WHERE name='" + strTableName + "';";
-        nErrCode = executeDBQuery(strQuery, nRetryCounter);
-        }
+    	nErrCode = executeDBQuery(strQuery, nRetryCounter);
+    }
 	return nErrCode;
 }
 

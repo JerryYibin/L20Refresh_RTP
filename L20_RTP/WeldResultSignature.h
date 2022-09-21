@@ -9,6 +9,14 @@
 ***************************************************************************/
 #ifndef WELDRESULTSIGNATURE_H_
 #define WELDRESULTSIGNATURE_H_
+enum SIGNATURE_DATA_TYPE
+{
+	FRQUENCY = 0,
+	POWER,
+	HEIGHT,
+	AMPLITUDE,
+	TOTAL
+};
 
 struct WELD_SIGNATURE
 {
@@ -23,6 +31,7 @@ struct HMI_WELD_SIGNATURE_POINTS
 	unsigned int Frquency[200];
 	unsigned int Power[200];
 	unsigned int Height[200];
+	unsigned int Time[200];
 	unsigned int length; //<=200
 };
 
