@@ -206,13 +206,12 @@ int main(int argc, char *argv[])
  *   c for clear
  *   d for delete oldest
  *   u for update
- *     third parameter for ID
+ *     third parameter for some data
  *
  * 2 for WELD_RESULT
  *   a for insert
  *     third parameter for count
- *   b for query
- *     third parameter for ID
+ *   b for query latest RESULT_FOR_UI_MAX records
  *   c for clear
  *   d for delete oldest
  *
@@ -221,8 +220,7 @@ int main(int argc, char *argv[])
  *     third parameter for WeldResultID
  *   x for multi-insert
  *     third parameter for count
- *   b for query
- *     third parameter for ID
+ *   b for query latest RESULT_FOR_UI_MAX records
  *   c for clear
  *   d for delete oldest
  */
@@ -307,11 +305,11 @@ int main(int argc, char *argv[])
                         pData->m_WeldParameter.m_Amplitude = 456;
                         if(argc>=4)
                             {
-                            pData->m_RecipeNumber = atoi(argv[3]);
+                            pData->m_WeldParameter.m_WidthSetting = atoi(argv[3]);
                             }
                         else
                             {
-                            pData->m_RecipeNumber = 1;
+                            pData->m_WeldParameter.m_WidthSetting = 1;
                             }
                         buf.msgID = TO_DATA_TASK_WELD_RECIPE_UPDATE;
                         break;

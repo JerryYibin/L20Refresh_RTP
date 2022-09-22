@@ -141,7 +141,7 @@ string DBAccessL20DB::GetWeldSignatureCSVReportHeader2()
 /**************************************************************************//**
 * \brief   - Writing WeldResult into DB
 *      		
-* \param   - char *buffer
+* \param   - char *buffer - not used
 *
 * \return  - UINT8 -status of query exec
 *
@@ -158,7 +158,7 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 	vxbRtcGet(&timeStamp);
 #ifdef RTC_MEASURE
 	UINT32 m_endTime = sysTimestampLock();
-    printf("vxbRtcGet took %u microseconds\n",
+    LOG("vxbRtcGet took %u microseconds\n",
         (m_endTime-m_startTime)*1000000/sysTimestampFreq());
 #endif
     strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
@@ -187,10 +187,24 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 	int nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
     static int count=0;
-    printf("#WeldResult(num %d): result %d\n%s\n\n", count++,nErrCode, strStore.c_str());
+    LOG("#WeldResult(num %d): result %d\n", count++,nErrCode);
 #endif
-	if(nErrCode != 0)
+
+	if(nErrCode == 0)
+	{
+        int id = GetLatestID(TABLE_WELD_RESULT);
+#ifdef UNITTEST_DATABASE
+        LOG("# store WeldResult to ID %d\n",id);
+#endif
+        if(id>DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
+            {
+            DeleteOldest(TABLE_WELD_RESULT);
+            }
+	}
+	else
+	{
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+	}
 	return nErrCode;
 }
 
@@ -234,13 +248,25 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
             std::to_string(*(int *)buffer)+",'"+//WeldResultID
             jsonStr+"');";//WeldGraph
 
+        jsonStr.shrink_to_fit();
     	nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
         static int count=0;
-        LOG("#WeldSignature(num %d): result %d\n%s\n\n", count++,nErrCode, strStore.c_str());
+        LOG("#WeldSignature(num %d): result %d\n", count++,nErrCode);
 #endif
 	}
-	if(nErrCode != 0)
+	if(nErrCode == 0)
+	{
+        int id = GetLatestID(TABLE_WELD_SIGNATURE);
+#ifdef UNITTEST_DATABASE
+        LOG("# store WeldSignature to ID %d\n", id);
+#endif
+        if(id>DB_RECORDS_STORAGE_WELD_SIGNAT_LIMIT)
+            {
+            DeleteOldest(TABLE_WELD_SIGNATURE);
+            }
+	}
+	else
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
 }
@@ -248,13 +274,23 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 /**************************************************************************//**
 * \brief   - Writing Weld Recipe into DB
 *
-* \param   - char *buffer
+* \param   - char *buffer - WeldRecipeSC data
 *
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 {
+    int id = GetLatestID(TABLE_WELD_RECIPE);
+#ifdef UNITTEST_DATABASE
+    LOG("#WeldRecipe ID: %d ", id);
+#endif
+    if(id>=DB_RECORDS_STORAGE_WELD_RECIPE_LIMIT)
+        {
+		LOGERR((char*) "Database_T: WeldRecipe reached the limit.\n", 0, 0, 0);
+        return SQLITE_ERROR;
+        }
+
     WeldRecipeSC *pData = (WeldRecipeSC *)buffer;
 
 	struct tm timeStamp;
@@ -308,11 +344,14 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
         pData->m_RecipeName+"','"+//RecipeName
         timeBuf+"','"+//DateTime
         pData->m_RecipePicPath+"');";//PresetPicPath
+        jsonStrEnergy.shrink_to_fit();
+        jsonStrTime.shrink_to_fit();
+        jsonStrPower.shrink_to_fit();
 
 	int nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
     static int count=0;
-    LOG("#WeldRecipe(num %d): result %d\n%s\n\n", count++,nErrCode, strStore.c_str());
+    LOG("#WeldRecipe(num %d): result %d\n", count++, nErrCode);
 #endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
@@ -320,9 +359,9 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 }
 
 /**************************************************************************//**
-* \brief   - Query Weld Result from DB
+* \brief   - Query the latest records from table Weld Result
 *
-* \param   - char *buffer
+* \param   - char *buffer - not used
 *
 * \return  - UINT8 - status of query exec
 *
@@ -330,43 +369,98 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 //TODO Is it temporary code for test only, because there is not any return?
 void DBAccessL20DB::QueryWeldResult(char *buffer)
 {
-    string strQuery =
-        "select * from "+string(TABLE_WELD_RESULT)+
-        " where ID="+
-        std::to_string(*(int *)buffer)+";";
-    string str = ExecuteQuery(strQuery);
+    int id = GetLatestID(TABLE_WELD_RESULT);
+    for(int count=0; count<RESULT_FOR_UI_MAX; count++)
+    {
+        string strQuery =
+            "select * from "+string(TABLE_WELD_RESULT)+
+            " where ID = "+std::to_string(id--)+";";
+        string str = ExecuteQuery(strQuery);
+		if(str.empty())
+		{
+            break;
+        }
+        else
+		{
+#ifdef UNITTEST_DATABASE
+            LOG("QueryWeldResult:\n%s\n", str.c_str());
 
-    if(str.size()>0)
-        LOG("QueryWeldResult:\n%s\n", str.c_str());
+            //todo 
+            CommonProperty::WeldResultForUI[count].RecipeNum = 1;//RecipeID
+            CommonProperty::WeldResultForUI[count].PartID[0] = 0;//PartID
+            CommonProperty::WeldResultForUI[count].RecipeNum = 1;//RecipeID
+            CommonProperty::WeldResultForUI[count].TotalEnergy = 1;//WeldEnergy
+            CommonProperty::WeldResultForUI[count].TriggerPressure = 1;//TriggerPressure
+            CommonProperty::WeldResultForUI[count].WeldPressure = 1;//WeldPressure
+            CommonProperty::WeldResultForUI[count].Amplitude = 1;//WeldAmplitude
+            CommonProperty::WeldResultForUI[count].WeldTime = 1;//WeldTime
+            CommonProperty::WeldResultForUI[count].PeakPower = 1;//WeldPeakPower
+            CommonProperty::WeldResultForUI[count].PreHeight = 1;//TriggerHeight
+            CommonProperty::WeldResultForUI[count].PostHeight = 1;//WeldHeight
+            CommonProperty::WeldResultForUI[count].ALARMS.ALARMflags = 1;//AlarmFlag
+            CommonProperty::WeldResultForUI[count].CycleCounter = 1;//CycleCounter
+#endif
+		}
+    }
     return;
 }
 
 /**************************************************************************//**
-* \brief   - Query Weld Signature from DB
+* \brief   - Query the latest records from table Weld Signature
 *
-* \param   - char *buffer
+* \param   - char *buffer - not used
 *
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
-//TODO Is it temporary code for test only, because there is not any return?
 void DBAccessL20DB::QueryWeldSignature(char *buffer)
 {
-    string strQuery =
-        "select "+string(COLUMN_GRAPHDATA)+
-        " from "+string(TABLE_WELD_SIGNATURE)+
-        " where WeldResultID="+
-        std::to_string(*(int *)buffer)+";";
-    string str = ExecuteQuery(strQuery);
-    vector<WELD_SIGNATURE> WeldSignVector;
-    Utility::JSON2Vector(str, &WeldSignVector);
+    int id = GetLatestID(TABLE_WELD_SIGNATURE);
+    for(int count=0; count<RESULT_FOR_UI_MAX; count++)
+    {
+        string strQuery =
+            "select "+string(COLUMN_GRAPHDATA)+
+            " from "+string(TABLE_WELD_SIGNATURE)+
+            " where ID = "+std::to_string(id--)+";";
+        string str = ExecuteQuery(strQuery);
+		if(str.empty())
+		{
+            break;
+        }
+        else
+		{
+#ifdef UNITTEST_DATABASE
+            LOG("\nQueryWeldSignature:\n%s\n", str.c_str());
+#endif
+
+            vector<WELD_SIGNATURE> WeldSignVector;
+            Utility::JSON2Vector(str, &WeldSignVector);
+            int i = 0;
+            for(; i< WeldSignVector.size();i++)
+                {
+                CommonProperty::WeldSignatureForUI[count].Frquency[i] = WeldSignVector[i].Frquency;
+                CommonProperty::WeldSignatureForUI[count].Power[i] = WeldSignVector[i].Power;
+                CommonProperty::WeldSignatureForUI[count].Height[i] = WeldSignVector[i].Height;
+                CommonProperty::WeldSignatureForUI[count].Time[i] = WeldSignVector[i].Amplitude;
+#ifdef UNITTEST_DATABASE
+                LOG("\tOrder(%d): Frquency %d, Power %d, Height %d, Amplitude %d\n",
+                    i,
+                    WeldSignVector[i].Frquency,
+                    WeldSignVector[i].Power,
+                    WeldSignVector[i].Height,
+                    WeldSignVector[i].Amplitude);
+#endif
+                }
+            CommonProperty::WeldSignatureForUI[count].length = i;
+		}
+    }
     return;
 }
 
 /**************************************************************************//**
 * \brief   - Query all Weld Recipe records from DB
 *
-* \param   - char *buffer
+* \param   - char *buffer - not used
 *
 * \return  - UINT8 - status of query exec
 *
@@ -378,15 +472,17 @@ void DBAccessL20DB::QueryWeldRecipeAll(char *buffer)
         "select * from "+string(TABLE_WELD_RECIPE)+";";
     string str = ExecuteQuery(strQuery);
 
+#ifdef UNITTEST_DATABASE
     if(str.size()>0)
-        LOG("QueryWeldRecipe:\n%s\n", str.c_str());
+        LOG("QueryWeldRecipe all:\n%s\n", str.c_str());
+#endif
     return;
 }
 
 /**************************************************************************//**
 * \brief   - Query Specific Weld Recipe from DB
 *
-* \param   - char *buffer
+* \param   - char *buffer - WeldRecipe ID
 *
 * \return  - UINT8 - status of query exec
 *
@@ -399,41 +495,71 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
         " where ID="+
         std::to_string(*(int *)buffer)+";";
     string str = ExecuteQuery(strQuery);
+#ifdef UNITTEST_DATABASE
     if(str.size()>0)
         LOG("QueryWeldRecipe:\n%s\n", str.c_str());
+#endif
 
     strQuery =
         "select EnergyToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
         std::to_string(*(int *)buffer)+";";
     str = ExecuteQuery(strQuery);
-    Utility::JSON2Struct(str, NULL);
+    WeldStepValueSetting energy[STEP_MAX];
+    Utility::JSON2Struct(str, &energy[0]);
+#ifdef UNITTEST_DATABASE
+    LOG("\nEnergyToStep\n");
+    for(int i=0; i<STEP_MAX; i++)
+        {
+        LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
+            i, energy[i].m_StepValue, energy[i].m_AmplitudeValue);
+        }
+#endif
 
     strQuery =
         "select TimeToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
         std::to_string(*(int *)buffer)+";";
     str = ExecuteQuery(strQuery);
-    Utility::JSON2Struct(str, NULL);
+    WeldStepValueSetting timeStep[STEP_MAX];
+    Utility::JSON2Struct(str, &timeStep[0]);
+#ifdef UNITTEST_DATABASE
+    LOG("\nTimeToStep\n");
+    for(int i=0; i<STEP_MAX; i++)
+        {
+        LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
+            i, timeStep[i].m_StepValue, timeStep[i].m_AmplitudeValue);
+        }
+#endif
 
     strQuery =
         "select PowerToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
         std::to_string(*(int *)buffer)+";";
     str = ExecuteQuery(strQuery);
-    Utility::JSON2Struct(str, NULL);
+    WeldStepValueSetting power[STEP_MAX];
+    Utility::JSON2Struct(str, &power[0]);
+#ifdef UNITTEST_DATABASE
+    LOG("\nPowerToStep\n");
+    for(int i=0; i<STEP_MAX; i++)
+        {
+        LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
+            i, power[i].m_StepValue, power[i].m_AmplitudeValue);
+        }
+#endif
     return;
 }
 
 /**************************************************************************//**
 * \brief   - Update Specific Weld Recipe to DB
 *
-* \param   - char *buffer (recipe structure)
+* \param   - int ID - id of record to be updated
+*          - char *buffer - WeldRecipeSC data
 *
 * \return  - UINT8 - Database status
 *
 ******************************************************************************/
-int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
+int DBAccessL20DB::UpdateWeldRecipe(int ID, char *buffer)
 {
     WeldRecipeSC *pRecipe = (WeldRecipeSC *)buffer;
 
@@ -480,12 +606,14 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
         "', RecipeName='" 			+ pRecipe->m_RecipeName+//RecipeName
         "', DateTime='" 			+ timeBuf+//DateTime
         "', PresetPicPath='" 		+ pRecipe->m_RecipePicPath+//PresetPicPath
-        "' where ID=" 				+ std::to_string(*(int *)buffer)+";";
+        "' where ID=" 				+ std::to_string(ID)+";";
+        jsonStrEnergy.shrink_to_fit();
+        jsonStrTime.shrink_to_fit();
+        jsonStrPower.shrink_to_fit();
 
 	int nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
-    static int count=0;
-    LOG("#WeldRecipe(len %d): result %d\n%s\n\n", strStore.size(),nErrCode, strStore.c_str());
+    LOG("# update WeldRecipe: result %d\n", nErrCode);
 #endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
@@ -495,7 +623,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 /**************************************************************************//**
 * \brief   - Delete table, please confirm what's the purpose of the function.
 *
-* \param   - table name
+* \param   - char *table - table name
 *
 * \return  - none
 *
@@ -510,3 +638,14 @@ void DBAccessL20DB::DeleteOldest(const char *table)
     SingleTransaction(strQuery);
     return;
 }
+
+int DBAccessL20DB::GetLatestID(const char *table)
+{
+    string strQuery =
+        "select seq from sqlite_sequence where name='" +
+        string(table) +
+        "';";
+    string str = ExecuteQuery(strQuery);
+    return atoi(str.c_str());
+}
+

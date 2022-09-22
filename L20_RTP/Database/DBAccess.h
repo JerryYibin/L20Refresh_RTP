@@ -44,7 +44,7 @@ public:
 	virtual void 	QueryWeldRecipe(char *)				= 0;
 	
 	virtual void 	QueryWeldRecipeAll(char *)			= 0;
-	virtual int 	UpdateWeldRecipe(char *)			= 0;
+	virtual int 	UpdateWeldRecipe(int ,char *)			= 0;
 
 	virtual void 	DeleteOldest(const char *)			= 0;
 	

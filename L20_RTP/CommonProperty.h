@@ -26,6 +26,9 @@
 #define TOTAL_NUM_OF_TASK			CommonProperty::END_OF_TASKS
 #define PRESSURE_NUM 81
 using namespace std;
+
+#define RESULT_FOR_UI_MAX 50
+
 class CommonProperty {
 public:
 	enum TASK_INDEX
@@ -73,12 +76,12 @@ public:						/* Public member data */
 	bool					m_bTaskRun;
 	// static member for global access
 	static WELD_RESULT				WeldResult;
-	static WELD_RESULT				WeldResultForUI[50];
+	static WELD_RESULT				WeldResultForUI[RESULT_FOR_UI_MAX];
 	static WeldRecipeSC				ActiveRecipeSC;
 	static SYSTEM_INFO				SystemInfo;
 	static vector<WELD_SIGNATURE> 	WeldSignatureVector;
 	
-	static HMI_WELD_SIGNATURE_POINTS	WeldSignatureForUI[50];
+	static HMI_WELD_SIGNATURE_POINTS	WeldSignatureForUI[RESULT_FOR_UI_MAX];
 	
 private:					/* Private member functions */
 	

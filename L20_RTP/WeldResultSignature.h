@@ -9,6 +9,9 @@
 ***************************************************************************/
 #ifndef WELDRESULTSIGNATURE_H_
 #define WELDRESULTSIGNATURE_H_
+
+#define HMI_SIGNA_POINT_MAX 200
+
 enum SIGNATURE_DATA_TYPE
 {
 	FRQUENCY = 0,
@@ -28,10 +31,10 @@ struct WELD_SIGNATURE
 
 struct HMI_WELD_SIGNATURE_POINTS
 {
-	unsigned int Frquency[200];
-	unsigned int Power[200];
-	unsigned int Height[200];
-	unsigned int Time[200];
+	unsigned int Frquency[HMI_SIGNA_POINT_MAX];
+	unsigned int Power[HMI_SIGNA_POINT_MAX];
+	unsigned int Height[HMI_SIGNA_POINT_MAX];
+	unsigned int Time[HMI_SIGNA_POINT_MAX];
 	unsigned int length; //<=200
 };
 

@@ -107,8 +107,8 @@ int	Utility::Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned i
         return ERROR;
 	}
 
-    json_t *jsonArray[STEP_MAX] = {nullptr};
-    for(int i = 0; i < STEP_MAX; i++)
+    json_t *jsonArray[size];
+    for(int i = 0; i < size; i++)
     {
     	jsonArray[i] = json_array();
     }
@@ -123,10 +123,6 @@ int	Utility::Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned i
     
     result = json_dumps(all, 0);
 
-    for(int i = 0; i < STEP_MAX; i++)
-    {
-    	json_delete(jsonArray[i]);
-    }
     json_delete(all);
     jsonStr = result;
     return OK;
@@ -150,45 +146,39 @@ int Utility::JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray)
     json_t *all;
     json_t *array;
     json_t *mem;
-    int size = 0;
     int index = 0;
 
     if(_ptrArray == nullptr)
+        {
+        printf("invalid _ptrArray\n");
     	return ERROR;
-    
+        }
+
     all = json_loads(jsonStr.c_str(), 0, NULL);
     if(all == NULL)
     {
         printf("invalid json\n");
         return ERROR;
     }
-    size = json_array_size(all);
-    if(size > STEP_MAX)
-    	return ERROR;
     
-    for(int i = 0; i < size; i++)
+    for(int i = 0; i < STEP_MAX; i++)
     {
-        printf("\tOrder: %d", i);
     	array = json_object_get(all, std::to_string(i).c_str());
     	index = 0;
     	if(index < json_array_size(array))
     	{
     		mem = json_array_get(array, index);
     		_ptrArray[i].m_StepValue = json_integer_value(mem);
-    		printf("\tStepValue: %d", _ptrArray[i].m_StepValue);
     	}
     	index++;
     	if(index < json_array_size(array))
     	{
     		mem = json_array_get(array, index);
     		_ptrArray[i].m_AmplitudeValue = json_integer_value(mem);
-    		printf("\tAmplitudeValue: %d", _ptrArray[i].m_AmplitudeValue);
     	}
-    	printf("\n");
     }
     
-    //Not sure if the all need to delete
-//    json_delete(all);
+    json_delete(all);
     return OK;
 }
 
@@ -208,7 +198,7 @@ int Utility::JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray)
 int Utility::Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string& jsonStr)
 {
     char *result;
-    if(_ptrVector->size()==0)
+    if((_ptrVector->size()==0)||(_ptrVector->size()>HMI_SIGNA_POINT_MAX))
 	{
         return ERROR;
 	}
@@ -229,13 +219,8 @@ int Utility::Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string& jsonS
         json_object_set_new(all, std::to_string(i).c_str(), jsonArray[i]);
 	}
 
-
     result = json_dumps(all, 0);
 
-    for(int i = 0; i < SIGNATURE_DATA_TYPE::TOTAL; i++)
-    {
-    	json_delete(jsonArray[i]);
-    }
     json_delete(all);
     jsonStr = result;
     return OK;
@@ -262,61 +247,50 @@ int Utility::JSON2Vector(const string jsonStr, vector<WELD_SIGNATURE>* _ptrVecto
 
     if(jsonStr.empty() == true)
         return ERROR;
-    printf("QueryWeldSignature: %s\n", jsonStr.c_str());
     if(_ptrVector == nullptr)
     	return ERROR;
+
     all = json_loads(jsonStr.c_str(), 0, NULL);
     if(all == NULL)
 	{
         printf("invalid json\n");
         return ERROR;
 	}
-    
-    size = json_array_size(all);
-    if(size == 0)
-    	return ERROR;
 
-    _ptrVector->clear();
-    for(int i = 0; i < size; i++)
+    for(int i = 0; (array = json_object_get(all, std::to_string(i).c_str()))!=NULL; i++)
     {
-        printf("\tOrder: %d", i);
-    	array = json_object_get(all, std::to_string(i).c_str());
     	index = 0;
     	if(index < json_array_size(array))
     	{
     		mem = json_array_get(array, index);
     		signature.Frquency = json_integer_value(mem);
-    		printf("\tFrquency: %d", signature.Frquency);
     	}
+
     	index++;
     	if(index < json_array_size(array))
     	{
     		mem = json_array_get(array, index);
     		signature.Power = json_integer_value(mem);
-    		printf("\tPower: %d", signature.Power);
     	}
+
     	index++;
     	if(index < json_array_size(array))
     	{
     		mem = json_array_get(array, index);
     		signature.Height = json_integer_value(mem);
-    		printf("\tHeight: %d", signature.Height);
     	}
+
     	index++;
     	if(index < json_array_size(array))
     	{
     		mem = json_array_get(array, index);
     		signature.Amplitude = json_integer_value(mem);
-    		printf("\tAmplitude: %d", signature.Amplitude);
     	}
     	
     	_ptrVector->push_back(signature);
-    	printf("\n");
     }
     
-    //Not sure if the all need to delete
-//    json_delete(all);
+    json_delete(all);
     return OK;
 }
-
 
