@@ -143,7 +143,6 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         break;
 	case TO_DATA_TASK_WELD_RECIPE_INSERT:
 #ifdef PERFORMANCE_MEASURE
-		{
 		UINT32 m_startTime = sysTimestampLock();
 #endif 
 		_ObjDBConn->StoreWeldRecipe(message.Buffer);
@@ -151,12 +150,10 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		UINT32 m_endTime = sysTimestampLock();
         printf("single StoreWeldRecipe took %u microseconds\n",
             (m_endTime-m_startTime)*1000000/sysTimestampFreq());
-        }
 #endif
 		break;
 	case TO_DATA_TASK_WELD_RESULT_INSERT:
 #ifdef PERFORMANCE_MEASURE
-		{
 		UINT32 m_startTime = sysTimestampLock();
 #endif 
 		_ObjDBConn->StoreWeldResult(message.Buffer);
@@ -164,7 +161,6 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		UINT32 m_endTime = sysTimestampLock();
         printf("single StoreWeldResult took %u microseconds\n",
             (m_endTime-m_startTime)*1000000/sysTimestampFreq());
-        }
 #endif
 		break;
 	case TO_DATA_TASK_WELD_SIGN_INSERT:
@@ -177,10 +173,10 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->QueryWeldRecipe(message.Buffer);
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_UPDATE:
-        _ObjDBConn->UpdateWeldRecipe(1, message.Buffer);// todo for id
+        _ObjDBConn->UpdateWeldRecipe(message.Buffer);
 		break;
 	case TO_DATA_TASK_WELD_RESULT_QUERY:
-        _ObjDBConn->QueryWeldResult(message.Buffer);
+        _ObjDBConn->QueryBlockWeldResult(message.Buffer);
 		break;
 	case TO_DATA_TASK_WELD_SIGN_QUERY:
         _ObjDBConn->QueryWeldSignature(message.Buffer);

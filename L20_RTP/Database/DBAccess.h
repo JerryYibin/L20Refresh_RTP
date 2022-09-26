@@ -39,12 +39,12 @@ public:
 	virtual int 	StoreWeldSignature(char* buffer)	= 0;
 	virtual int 	StoreWeldRecipe(char* buffer)		= 0;
 
-	virtual void 	QueryWeldResult(char *)				= 0;
+	virtual void 	QueryBlockWeldResult(char *)		= 0;
 	virtual void 	QueryWeldSignature(char *)			= 0;
 	virtual void 	QueryWeldRecipe(char *)				= 0;
 	
 	virtual void 	QueryWeldRecipeAll(char *)			= 0;
-	virtual int 	UpdateWeldRecipe(int ,char *)			= 0;
+	virtual int 	UpdateWeldRecipe(char *)			= 0;
 
 	virtual void 	DeleteOldest(const char *)			= 0;
 	

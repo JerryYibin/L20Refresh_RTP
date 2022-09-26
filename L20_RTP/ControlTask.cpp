@@ -80,10 +80,7 @@ void ControlTask::updateOperationMode(char* buff)
 	case SETUP_SCREEN:
 		tmpOperationMode = SCStateMachine::WELD;
 		break;
-//	case HEIGHT_CALIBRATION_SCREEN:
-// TODO It is the HMI software bug, it is not able to send the correct to SC so far. In order to follow with the HMI current status, The magic code has to 
-// add to instead of the index.
-	case 9:
+	case HEIGHT_CALIBRATION_SCREEN:
 		tmpOperationMode = SCStateMachine::HEIGHT_CALIBRATE_READY;
 		break;
 	default:

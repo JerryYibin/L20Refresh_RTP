@@ -15,7 +15,7 @@
 class DBAccessL20DB: public DBAccess 
 {
 private:
-    int GetLatestID(const char *);
+    int getLatestID(const string table, int* _id);
 public:
 	DBAccessL20DB();
 	virtual ~DBAccessL20DB();
@@ -34,11 +34,11 @@ public:
 	virtual int 	StoreWeldSignature(char* buffer)	override;
 	virtual int 	StoreWeldRecipe(char* buffer) 		override;
 
-	virtual void	QueryWeldResult(char *) 			override;
+	virtual void	QueryBlockWeldResult(char *) 		override;
 	virtual void 	QueryWeldSignature(char *) 			override;
 	virtual void 	QueryWeldRecipe(char *) 			override;
 	virtual void 	QueryWeldRecipeAll(char *) 			override;
-	virtual int 	UpdateWeldRecipe(int, char *) 			override;
+	virtual int 	UpdateWeldRecipe(char *) 			override;
 
 	virtual void 	DeleteOldest(const char *) 			override;
 
