@@ -5,6 +5,7 @@
 #include <msgQLib.h>
 
 extern int atoi(const char *);
+extern long long atoll(const char *);
 
 #define MSG_Q_Control "/msgQControl"  /* Public semaphore */
 #define MSG_Q_Data "/msgQData"  /* Public semaphore */
@@ -202,16 +203,17 @@ int main(int argc, char *argv[])
  *     third parameter for count
  *   b for query
  *     no third parameter for all records
- *     third parameter for ID
+ *     third parameter for m_RecipeNumber of WeldRecipeSC
  *   c for clear
  *   d for delete oldest
  *   u for update
- *     third parameter for some data
+ *     third parameter for m_RecipeNumber of WeldRecipeSC
  *
  * 2 for WELD_RESULT
  *   a for insert
  *     third parameter for count
- *   b for query latest RESULT_FOR_UI_MAX records
+ *   b for query
+ *     third parameter for ID of last in RESULT_FOR_UI_MAX
  *   c for clear
  *   d for delete oldest
  *
@@ -281,10 +283,10 @@ int main(int argc, char *argv[])
                         }
                     case 'b':
                         {
-                        int *pData = (int *)&buf.Buffer[0];
+                        WeldRecipeSC *pData = (WeldRecipeSC *)&buf.Buffer[0];
                         if(argc>=4)
                             {
-                            *pData = atoi(argv[3]);
+                            pData->m_RecipeNumber = atoi(argv[3]);
                             buf.msgID = TO_DATA_TASK_WELD_RECIPE_QUERY;
                             }
                         else
@@ -305,11 +307,11 @@ int main(int argc, char *argv[])
                         pData->m_WeldParameter.m_Amplitude = 456;
                         if(argc>=4)
                             {
-                            pData->m_WeldParameter.m_WidthSetting = atoi(argv[3]);
+                            pData->m_RecipeNumber = atoi(argv[3]);
                             }
                         else
                             {
-                            pData->m_WeldParameter.m_WidthSetting = 1;
+                            pData->m_RecipeNumber = 1;
                             }
                         buf.msgID = TO_DATA_TASK_WELD_RECIPE_UPDATE;
                         break;
@@ -346,9 +348,9 @@ int main(int argc, char *argv[])
                         }
                     case 'b':
                         {
-                        int *pData = (int *)&buf.Buffer[0];
+                        long long *pData = (long long *)&buf.Buffer[0];
                         if(argc>=4)
-                            *pData = atoi(argv[3]);
+                            *pData = atoll(argv[3]);
                         else
                             *pData = 1;
                         buf.msgID = TO_DATA_TASK_WELD_RESULT_QUERY;
@@ -372,9 +374,9 @@ int main(int argc, char *argv[])
                     {
                     case 'a':
                         {
-                        int *pData = (int *)&buf.Buffer[0];
+                        long long *pData = (long long *)&buf.Buffer[0];
                         if(argc>=4)
-                            *pData = atoi(argv[3]);
+                            *pData = atoll(argv[3]);
                         else
                             *pData = 1;
                         buf.msgID = TO_DATA_TASK_WELD_SIGN_INSERT;
@@ -384,7 +386,7 @@ int main(int argc, char *argv[])
                         {
                         int i;    
                         int count = 1;
-                        int *pData = (int *)&buf.Buffer[0];
+                        long long *pData = (long long *)&buf.Buffer[0];
                         buf.msgID = TO_DATA_TASK_WELD_SIGN_INSERT;
 
                         if(argc>=4)
@@ -402,9 +404,9 @@ int main(int argc, char *argv[])
                         }
                     case 'b':
                         {
-                        int *pData = (int *)&buf.Buffer[0];
+                        long long *pData = (long long *)&buf.Buffer[0];
                         if(argc>=4)
-                            *pData = atoi(argv[3]);
+                            *pData = atoll(argv[3]);
                         else
                             *pData = 1;
                         buf.msgID = TO_DATA_TASK_WELD_SIGN_QUERY;

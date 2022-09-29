@@ -39,7 +39,7 @@ public:
 	virtual int 	StoreWeldSignature(char* buffer)	= 0;
 	virtual int 	StoreWeldRecipe(char* buffer)		= 0;
 
-	virtual void 	QueryBlockWeldResult(char *)		= 0;
+	virtual int 	QueryBlockWeldResult(char *)		= 0;
 	virtual void 	QueryWeldSignature(char *)			= 0;
 	virtual void 	QueryWeldRecipe(char *)				= 0;
 	
