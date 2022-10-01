@@ -1,0 +1,30 @@
+how to access to file system on boot host
+
+1.
+include component INCLUDE_NET_DRV and INCLUDE_DISK_UTIL in VIP
+
+2.
+boot target
+
+3.
+show boot line
+-> version
+like:
+"cpsw(0,0)host:vxWorks h=192.168.1.1 e=192.168.1.100:ffffff00 u=target pw=vxTarget f=0x0"
+so, VxWorks is using 192.168.1.100 on cpsw0
+host should be 192.168.1.1
+
+4.
+start "FTP/TFTP Server" in menu "Project" of WorkBench on host 192.168.1.1, 
+
+5.
+in Console of "FTP/TFTP Server", open sub window "Configure FTP/TFTP Server"
+Add User with Name "target" and Password "vxTarget" from boot line
+select folder on host for "Home" 
+
+6.
+Apply and Close the window "Configure FTP/TFTP Server"
+
+7.
+in target Shell, file system on host can be access to
+-> ls "/host.host"
