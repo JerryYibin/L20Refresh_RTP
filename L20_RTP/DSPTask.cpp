@@ -72,3 +72,17 @@ void DSPTask::PDODownloadRequest()
 {
 }
 
+/**************************************************************************//**
+* \brief  - Calculate Start Frequency after each seek finished. 
+*           Start frequency = digital tune + memory offset + frequency offset
+*
+* \param  - None
+*
+* \return  - None
+*
+******************************************************************************/
+void DSPTask::CalculateStartFrequency()
+{
+	//Start frequency = digital tune + memory offset + frequency offset
+}
+

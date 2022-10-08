@@ -38,6 +38,8 @@ public:
 	static UINT16 Pressure2HEX			(UINT32 physical);
 	static UINT32 Energy2HEX			(UINT32 physical);
 	
+	static int 	  Average				(const int* data, const int size);
+	
     static int Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr);
     static int JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray);
     static int Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string& jsonStr);

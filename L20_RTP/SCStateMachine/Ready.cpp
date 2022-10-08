@@ -63,10 +63,15 @@ void Ready::Enter()
 ******************************************************************************/
 void Ready::Loop()
 {
-	if((ACStateMachine::AC_TX->ACState == ACState::AC_ALARM) || (PCStateMachine::PC_TX->PCState == PCState::PC_ALARM))
+	if(ACStateMachine::AC_TX->ACState == ACState::AC_READY)
+	{
+		if((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_START_SWITCH_PRESSED)) == BIT_MASK(ACState::STATUS_START_SWITCH_PRESSED))
+			m_Actions = SCState::JUMP;
+	}
+	else if((ACStateMachine::AC_TX->ACState == ACState::AC_ALARM) || (PCStateMachine::PC_TX->PCState == PCState::PC_ALARM))
+	{
 		m_Actions = SCState::FAIL;
-	else
-		m_Actions = SCState::JUMP;
+	}
 }
 
 /**************************************************************************//**

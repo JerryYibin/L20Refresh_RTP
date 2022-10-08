@@ -71,8 +71,7 @@ void ACPowerUp::Loop()
 	unsigned int coreStatus;
 	if(m_Timeout > HORN_MOVE_TIMEOUT)
 	{
-		coreStatus = ActuatorTask::GetCoreState();
-		ActuatorTask::SetCoreState(coreStatus | ERR_HOME_POSITION);
+		ActuatorTask::SetCoreState(ERR_HOME_POSITION);
 		return;
 	}
 

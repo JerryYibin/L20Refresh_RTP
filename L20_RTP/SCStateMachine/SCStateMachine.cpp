@@ -19,6 +19,7 @@
 #include "WaitForReadyPosition.h"
 #include "HeightCalibrate.h"
 #include "ReadyForTrigger.h"
+#include "SetWeldPressure.h"
 #include "../PCStateMachine.h"
 #include "../ACStateMachine.h"
 #include "../Logger.h"
@@ -45,7 +46,7 @@ SCStateMachine::SCStateMachine() {
 	m_IsRunning = false;
 	m_IsLoading = false;
 	/*create semaphore*/
-	m_semaphoreMutex = semBCreate(SEM_Q_FIFO, SEM_FULL);
+	m_semaphoreMutex = semMCreate(SEM_Q_FIFO);
 	initStateMap();
 	_objActionMap = new map<SCState::STATE, SCState*>();
 }
@@ -196,16 +197,19 @@ void SCStateMachine::RunStateMachine()
 		LOG("Jump Next State\n");
 		break;
 	case SCState::ALJUMPNORM:
+		m_objState->Exit();
 		m_objState->m_Actions = SCState::INIT;
 		m_StateIndex++;
 		LOG("Alarm Jump Loop\n");
 		break;
 	case SCState::ABORT:
+		m_objState->Exit();
 		m_objState->m_Actions = SCState::INIT;
 		m_StateIndex = 0;
 		LOG("Abort\n");
 		break;
 	case SCState::PUSH:
+		m_objState->Exit();
 		m_objState->m_Actions = SCState::INIT;
 		LOG("Push\n");
 		break;
@@ -283,6 +287,9 @@ int SCStateMachine::LoadStatesHandler(int operation)
 		case HEIGHT_CALIBRATE_READY:
 			SelectHeightCalibrateSequence();
 			break;
+		case BATCH_WELD:
+			SelectWeldSequence();
+			break;
 		default:
 			break;
 		}
@@ -310,14 +317,14 @@ void SCStateMachine::SelectWeldSequence(void)
 
 	m_objState = new Ready();
 	_objStateList->push_back(m_objState);
-
-	m_objState = new StartSwitch();
-	_objStateList->push_back(m_objState);
 	
 	m_objState = new SeekSonicOn();
 	_objStateList->push_back(m_objState);
 
 	m_objState = new WaitForTrigger();
+	_objStateList->push_back(m_objState);
+	
+	m_objState = new SetWeldPressure();
 	_objStateList->push_back(m_objState);
 
 	m_objState = new WeldSonicOn();

@@ -292,17 +292,20 @@ void UserInterface::responseSystemInfo()
 	char macAddr[20]={0x00};
 
 	
-	sprintf(CommonProperty::SystemInfo.version_SC,"%d.%d.%d",FWVersion::Get(FW_VERSION_SC, VERSION_MAJOR), 
+	sprintf(CommonProperty::SystemInfo.version_SC,"%d.%d.%d.%d",FWVersion::Get(FW_VERSION_SC, VERSION_MAJOR), 
 											FWVersion::Get(FW_VERSION_SC, VERSION_MINOR),
-											FWVersion::Get(FW_VERSION_SC, VERSION_BUILD));
+											FWVersion::Get(FW_VERSION_SC, VERSION_BUILD),
+											FWVersion::Get(FW_VERSION_SC, VERSION_AUTOS));
 
-	sprintf(CommonProperty::SystemInfo.version_DB,"%d.%d.%d",FWVersion::Get(FW_VERSION_PC, VERSION_MAJOR),
+	sprintf(CommonProperty::SystemInfo.version_DB,"%d.%d.%d.%d",FWVersion::Get(FW_VERSION_PC, VERSION_MAJOR),
 											FWVersion::Get(FW_VERSION_PC, VERSION_MINOR),
-											FWVersion::Get(FW_VERSION_PC, VERSION_BUILD));
+											FWVersion::Get(FW_VERSION_PC, VERSION_BUILD),
+											FWVersion::Get(FW_VERSION_PC, VERSION_AUTOS));
 
-	sprintf(CommonProperty::SystemInfo.version_HMI,"%d.%d.%d",FWVersion::Get(FW_VERSION_AC, VERSION_MAJOR),
+	sprintf(CommonProperty::SystemInfo.version_HMI,"%d.%d.%d.%d",FWVersion::Get(FW_VERSION_AC, VERSION_MAJOR),
 											FWVersion::Get(FW_VERSION_AC, VERSION_MINOR),
-											FWVersion::Get(FW_VERSION_AC, VERSION_BUILD));
+											FWVersion::Get(FW_VERSION_AC, VERSION_BUILD),
+											FWVersion::Get(FW_VERSION_AC, VERSION_AUTOS));
 	
 	snprintf(macAddr, sizeof(macAddr), "%02X:%02X:%02X:%02X:%02X:%02X",
 			macaddr[0],
@@ -314,7 +317,7 @@ void UserInterface::responseSystemInfo()
 
 	sprintf(CommonProperty::SystemInfo.psMacID, "%s", macAddr);
 	sprintf(CommonProperty::SystemInfo.psIP, "%s", "127.0.0.1");
-	sprintf(CommonProperty::SystemInfo.modelName, "%s", "L20_Refresh");
+	sprintf(CommonProperty::SystemInfo.modelName, "%s", "L20 Refresh");
 	
 	memset(CommonProperty::SystemInfo.dateTime, 0, SYSINFO_SIZE * 2);
 	getDateAndTime(CommonProperty::SystemInfo.dateTime);

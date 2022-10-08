@@ -22,6 +22,7 @@ public:
 	virtual				~AUPSTask					();
 	virtual void		PDOUploadRequest			() override;
 	virtual void		PDODownloadRequest			() override;
+	virtual void		CalculateStartFrequency		() override;
 };
 
 #endif /* AUPSTASK_H_ */

@@ -45,7 +45,7 @@ private:
 	int						m_OperationMode;
 	static WorkFlow*		_WorkFlowObj;				
 private:
-	void			updateOperationMode				(char*);
+	void			updateWorkFlow					(char*);
 	void 			initHeightCalibrateProcess		(void);
 	void			triggerHeightCalibrateProcess 	(unsigned int pressure);
 	void			responseStateMachineProcess		(void);

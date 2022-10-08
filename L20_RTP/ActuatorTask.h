@@ -22,8 +22,9 @@ public:
 		TO_ACT_TASK_PRESSURE_SET = 0,
 	};
 	ActuatorTask();
-	virtual				~ActuatorTask();
-	
+	virtual					~ActuatorTask();
+	void					StartSwitchDebounce					();
+	bool					GetStartSwitch						();
 	void 					ProcessTaskMessage					(MESSAGE& message) override;
 	
 	virtual void			PDOUploadRequest 					() = 0;
@@ -34,6 +35,7 @@ public:
 	
 	static unsigned int		GetCoreState						();
 	static void				SetCoreState						(unsigned int coreState);
+	static void				ClearCoreState						(unsigned int coreState);
 	
 	static ActuatorTask*	GetInstance							();	
 	
@@ -45,7 +47,9 @@ protected:
 	
 	static unsigned int CoreState;
 	static ActuatorTask* _ACObj;
-	
+	static UINT32		Tick_1ms;
+private:
+	UINT32			m_DebounceCount;
 };
 
 #endif /* ACTUATORTASK_H_ */

@@ -83,8 +83,7 @@ void ACStrokeDown::Loop()
 
 	if(m_Timeout > HORN_MOVE_TIMEOUT)
 	{
-		unsigned int coreStatus = ActuatorTask::GetCoreState();
-		ActuatorTask::SetCoreState(coreStatus | ERR_HEIGHT_SYSTEM);
+		ActuatorTask::SetCoreState(ERR_HEIGHT_SYSTEM);
 		return;
 	}
 	

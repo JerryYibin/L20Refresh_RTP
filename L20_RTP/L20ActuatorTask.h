@@ -15,12 +15,12 @@
 #include "CommunicationInterfaceCAN.h"
 #include "ACStateMachine.h"
 #define MIN_DOWN_SPEED	100 //0.5mm/s
+#define START_SWITCH_DEBOUNCE	250 //250ms
 class L20ActuatorTask: public ActuatorTask 
 {
 private:
 	static CommunicationInterface_CAN* 				_ObjDCan;
 	static ACStateMachine::RxPDO_AC					RXBackup;
-	static UINT32									Tick_1ms;
 	UINT32											MaxSpeed;
 	UINT32 											MinMoveCount;
 	INT32											OldPosition;
@@ -42,6 +42,7 @@ private:
 	bool		 		MovingCheckProcess			();
 	unsigned int		WeightedAverageSpeed		(unsigned int EncoderPosition);
 	void				InitMovingProcess			();
+	void 				ScanInputs					();
 };
 
 #endif /* L20ACTUATORTASK_H_ */

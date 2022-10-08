@@ -87,6 +87,32 @@ UINT32 Utility::Energy2HEX(UINT32 physical)
 }
 
 /**************************************************************************//**
+* \brief   - The data average calculation.	                            
+*
+* \param   - data is the source, data size
+*
+* \return  - If there is not any issue during data calculating, it will be return average value; else it will return ERROR.
+*
+******************************************************************************/
+int Utility::Average(const int* data, const int size)
+{
+	unsigned int sum = 0;
+	int iResult = 0;
+	if(data == nullptr)
+		return 0;
+	if(size == 0)
+		return 0;
+	
+	for(int i = 0; i < size; i++)
+	{
+		sum += *data;
+		data++;
+	}
+	iResult = sum / size;
+	return iResult;
+}
+
+/**************************************************************************//**
 * \brief   - The struct2Json shall be overload function for WeldStepValueSetting.
 * 			 The format of JSON shall be 
 * 			 {"Order1": [ModeValue1, Amplitude1], 
@@ -149,10 +175,10 @@ int Utility::JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray)
     int index = 0;
 
     if(_ptrArray == nullptr)
-        {
+	{
         printf("invalid _ptrArray\n");
     	return ERROR;
-        }
+	}
 
     all = json_loads(jsonStr.c_str(), 0, NULL);
     if(all == NULL)
@@ -198,7 +224,7 @@ int Utility::JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray)
 int Utility::Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string& jsonStr)
 {
     char *result;
-    if((_ptrVector->size()==0)||(_ptrVector->size()>HMI_SIGNA_POINT_MAX))
+    if((_ptrVector->size() == 0) || (_ptrVector->size() > HMI_SIGNA_POINT_MAX))
 	{
         return ERROR;
 	}

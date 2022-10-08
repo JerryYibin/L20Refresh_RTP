@@ -23,22 +23,11 @@
 using namespace std;
 class WeldSonicOn: public SCState 
 {
-	public:
-	enum WELD_STEP
-	{
-		SET_WPRESSURE,
-		RUN_SONICS,
-		RESULT_UPDATE,
-		EXTEND_SAMPLE,
-		RESULT_ANALYSIS,
-
-	};
 private:
 	unsigned int 		m_WeldTime;
 	unsigned int		m_PeakPower;
 	unsigned long 		m_EnergyAccumulator;
 	unsigned long 		m_EnergyTarget;
-	WELD_STEP 			m_WeldStep;
 	static unsigned int PwrBuffer[PWR_SIZE];
 	static unsigned int PwrIndex;
 public:
@@ -52,10 +41,10 @@ public:
 private:
 	void 			CaptureWeldData		();
 	void 			ClearWeldData		();
-	void 			InitPowerBuffer		(void);
 	unsigned int 	GetFilteredPower	(void);
 	void 			CoolAirControl		(unsigned int delay, unsigned duration);
 	void 			SendMsgToUIMsgQ		();
+	void			SendMsgToCtrlMsgQ	();
 };
 
 #endif /* WELDSONICON_H_ */

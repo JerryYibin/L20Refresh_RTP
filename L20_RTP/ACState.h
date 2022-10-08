@@ -29,6 +29,14 @@ extern "C"
 #define ERR_STARTSWITCH_LOST	BIT(6)
 //#define ERR_HEIGHT_SENSOR	BIT(6)
 
+// ACInputs bits of TxPDO_AC
+#define SS1MASK					BIT(1)
+#define SS2MASK					BIT(2)
+#define GRDDETMASK				BIT(3)
+#define ULSMASK					BIT(4)
+#define TRSMASK					BIT(5)
+#define BOTHSTARTSWITCHMASK		(BIT(1) | BIT(2))
+
 #define HORN_MOVE_TIMEOUT			2000 
 class ACState 
 {

@@ -16,7 +16,6 @@
 //#include "ACState.h"
 CommunicationInterface_CAN* L20ActuatorTask::_ObjDCan 	= nullptr;
 ACStateMachine::RxPDO_AC L20ActuatorTask::RXBackup;
-UINT32 L20ActuatorTask::Tick_1ms 						= 0;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -55,10 +54,13 @@ L20ActuatorTask::~L20ActuatorTask() {
 ******************************************************************************/
 void L20ActuatorTask::PDOUploadRequest()
 {
-	unsigned int status = GetCoreState();
 	int iResult = OK;
 	CommunicationInterface_CAN::TX_MESSAGE tmpPressure;
-	if(RXBackup.TargetPressure != ACStateMachine::AC_RX->TargetPressure)
+	//TODO Test level one board only
+	if((Tick_1ms & 1000) == 0)
+		return;
+	else
+//	if(RXBackup.TargetPressure != ACStateMachine::AC_RX->TargetPressure)
 	{
 		tmpPressure.DAC_Pressure = Utility::Pressure2HEX(ACStateMachine::AC_RX->TargetPressure);
 #if INCLUDE_TI_AM5708_JN
@@ -70,16 +72,10 @@ void L20ActuatorTask::PDOUploadRequest()
 		iResult = OK;
 #endif
 		if(iResult == ERROR)	
-		{
-			status |= ERR_PRESSURE_SET;
-			SetCoreState(status);
-		}
+			SetCoreState(ERR_PRESSURE_SET);
 		else
-		{
-			status &= ~ERR_PRESSURE_SET;
-			SetCoreState(status);
-		}
-		RXBackup.TargetPressure = ACStateMachine::AC_RX->TargetPressure;
+			ClearCoreState(ERR_PRESSURE_SET);
+//		RXBackup.TargetPressure = ACStateMachine::AC_RX->TargetPressure;
 	}
 }
 
@@ -97,7 +93,6 @@ void L20ActuatorTask::PDODownloadRequest()
 {
 	ACStateMachine::AC_TX->ActualHeight = HeightEncoder::GetInstance()->GetActualHeight(ACStateMachine::AC_RX->TargetPressure);
 	ACStateMachine::AC_TX->RawHeightCount = HeightEncoder::GetInstance()->GetPositionCount();
-	Tick_1ms++;
 	if(Tick_1ms % 5 == 0)
 	{
 		if((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_AC_MOVE_DISABLE)) == BIT_MASK(ACState::STATUS_AC_MOVE_DISABLE))
@@ -106,6 +101,8 @@ void L20ActuatorTask::PDODownloadRequest()
 			m_IsMoving = MovingCheckProcess();
 		
 	}
+	
+	ScanInputs();
 }
 
 
@@ -193,6 +190,7 @@ void L20ActuatorTask::InitMovingProcess()
 	m_IsMoving = true;
 }
 
+
 bool L20ActuatorTask::IsMoving()
 {
 	return m_IsMoving;
@@ -207,3 +205,25 @@ void L20ActuatorTask::InitHeightSystem()
 {
 	HeightEncoder::GetInstance()->SetInitCount(HEIGHT_HOME_COUNT);
 }
+
+/**************************************************************************//**
+* \brief   - Scan all the input I/O signal that is from actuator per each 1ms.
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
+void L20ActuatorTask::ScanInputs()
+{
+	if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_HIGH) 
+		ACStateMachine::AC_TX->ACInputs &= ~SS1MASK;
+	else
+		ACStateMachine::AC_TX->ACInputs |= SS1MASK;
+	
+	if(vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_HIGH)
+		ACStateMachine::AC_TX->ACInputs &= ~SS2MASK;
+	else
+		ACStateMachine::AC_TX->ACInputs |= SS2MASK;
+}
+

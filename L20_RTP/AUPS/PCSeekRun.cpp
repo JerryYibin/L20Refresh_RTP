@@ -109,6 +109,7 @@ void PCSeekRun::Exit()
 	
 	// turn off sonics
 	vxbGpioSetValue(GPIO::O_EXT_SEEK_PSI, GPIO_VALUE_LOW);
+	PowerSupplyTask::GetInstance()->CalculateStartFrequency();
 	LOG("\n PowerSupply_T: _PC_SEEK_TIMEOUT = %d\n", m_Timeout);
 }
 

@@ -102,3 +102,15 @@ void AUPSTask::PDODownloadRequest()
 	}
 }
 
+/**************************************************************************//**
+* \brief  - Calculate Start Frequency after each seek finished. 
+*
+* \param  - None
+*
+* \return  - None
+*
+******************************************************************************/
+void AUPSTask::CalculateStartFrequency()
+{
+	//TODO It seems there is nothing need to do for AUPS, because the start frequency can be saved automatically.
+}

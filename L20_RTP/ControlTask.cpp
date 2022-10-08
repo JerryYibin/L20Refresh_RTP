@@ -23,6 +23,7 @@ The SC state machine shall run the generic work flow.
 #include "ACStateMachine.h"
 #include "HeightCalibrateWorkFlow.h"
 #include "UserInterface.h"
+#include "DataTask.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -69,7 +70,7 @@ ControlTask::~ControlTask() {
 * \return  - None.
 *
 ******************************************************************************/
-void ControlTask::updateOperationMode(char* buff)
+void ControlTask::updateWorkFlow(char* buff)
 {
 	int tmpOperationMode = SCStateMachine::NO_OPERATION;
 	unsigned int screenIndex;
@@ -77,6 +78,8 @@ void ControlTask::updateOperationMode(char* buff)
 	switch(screenIndex)
 	{
 	case DASHBORD_SCREEN:
+		tmpOperationMode = SCStateMachine::BATCH_WELD;
+		break;
 	case SETUP_SCREEN:
 		tmpOperationMode = SCStateMachine::WELD;
 		break;
@@ -90,7 +93,7 @@ void ControlTask::updateOperationMode(char* buff)
 
 	if(SCStateMachine::getInstance()->GetStateMachineState() == false)
 		m_OperationMode = SCStateMachine::NO_OPERATION;
-	if((tmpOperationMode > SCStateMachine::NO_OPERATION) && (tmpOperationMode < SCStateMachine::END_OPERATION))
+	else if((tmpOperationMode > SCStateMachine::NO_OPERATION) && (tmpOperationMode < SCStateMachine::END_OPERATION))
 	{
 		if(m_OperationMode != tmpOperationMode)
 		{
@@ -109,8 +112,15 @@ void ControlTask::updateOperationMode(char* buff)
 					break;
 				}
 			}
+			else
+			{
+				//TODO If the result is ERROR that means the current Operation Mode and Work Flow is not able to be changed through the screen change.
+				//TODO The control task to send the message to UI task and UI task will notify HMI then.
+			}
 		}
 	}
+	else
+		LOGERR((char *)"CTRL_T : ----------tmpOperationMode------------- : %d",tmpOperationMode, 0, 0);
 }
 
 /**************************************************************************//**
@@ -144,6 +154,9 @@ void ControlTask::responseStateMachineProcess()
 				}
 				SendToMsgQ(message, UI_MSG_Q_ID);
 				break;
+			case SCStateMachine::BATCH_WELD:
+				//TODO reserved port
+				break;
 			default:
 				break;
 			}
@@ -156,6 +169,12 @@ void ControlTask::responseStateMachineProcess()
 		{
 			
 		}
+	}
+	else
+	{
+		//TODO Only welding results are inserted into the database test, so that some important information can be inserted into the database through code
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_INSERT;
+		SendToMsgQ(message,DATA_MSG_Q_ID_CTRL);
 	}
 }
 
@@ -173,7 +192,7 @@ void ControlTask::ProcessTaskMessage(MESSAGE& message)
 	switch(message.msgID)
 	{
 	case TO_CTRL_OPERATE_MODE_SET:
-		updateOperationMode(message.Buffer);
+		updateWorkFlow(message.Buffer);
 		break;
 	case TO_CTRL_TRIGGER_HEIGHT_CALIBRATE:
 		if(_WorkFlowObj != nullptr)

@@ -16,6 +16,8 @@
 #include "../ACStateMachine.h"
 #include "../UserInterface.h"
 #include "../WeldResultSignature.h"
+#include "../ControlTask.h"
+#include "../Utility.h"
 
 unsigned int WeldSonicOn::PwrBuffer[PWR_SIZE] = {0};
 unsigned int WeldSonicOn::PwrIndex = 0;
@@ -61,7 +63,8 @@ WeldSonicOn::~WeldSonicOn() {
 void WeldSonicOn::Enter()
 {
 	PCStateMachine::PC_RX->MasterEvents &= ~ BIT_MASK(PCState::CTRL_PC_SONIC_DISABLE);
-	InitPowerBuffer();
+	memset(PwrBuffer, 0, sizeof(PwrBuffer));
+	PwrIndex = 0;
 	m_WeldTime = 0;
 	m_PeakPower = 0;
 	m_EnergyAccumulator = 0;
@@ -69,8 +72,6 @@ void WeldSonicOn::Enter()
 	m_EnergyTarget = Utility::Energy2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergySetting);
 	CommonProperty::WeldSignatureVector.clear();
 	ClearWeldData();
-	//TODO still need to add hardware signals output handler 
-	
 	CommonProperty::WeldResult.PreHeight = ACStateMachine::AC_TX->ActualHeight;
 	 
 	CoolAirControl(0, 0);
@@ -90,16 +91,8 @@ void WeldSonicOn::Enter()
 //		}
 //	}
 
-	if (CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure != CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure)
-	{
-		ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
-		m_WeldStep = WeldSonicOn::SET_WPRESSURE;
-	}
-	else
-	{
-		PCStateMachine::PC_RX->MasterState = SCState::WELD_SONIC_ON;
-		m_WeldStep = WeldSonicOn::RUN_SONICS;
-	}
+
+	PCStateMachine::PC_RX->MasterState = SCState::WELD_SONIC_ON;
 }
 
 /**************************************************************************//**
@@ -116,97 +109,142 @@ void WeldSonicOn::Loop()
 	bool ErrorOn = false;
 	unsigned int tmpHeight = 0;
 	WELD_SIGNATURE tmpWeldSignature;
-	switch (m_WeldStep)
+
+	m_WeldTime += 1;
+	tmpWeldSignature.Power = GetFilteredPower();
+	if (tmpWeldSignature.Power > m_PeakPower)
+		m_PeakPower = tmpWeldSignature.Power;
+	m_EnergyAccumulator += tmpWeldSignature.Power;
+		
+	if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
 	{
-	case WeldSonicOn::SET_WPRESSURE:
-		if (m_Timeout < DELAY500MSEC)
+		CommonProperty::WeldResult.ALARMS.AlarmFlags.Overload = 1;
+		m_Actions = SCState::FAIL;
+	}
+
+	tmpWeldSignature.Height = ACStateMachine::AC_TX->ActualHeight;
+	tmpWeldSignature.Frquency = PCStateMachine::PC_TX->Frequency;
+	if (CommonProperty::WeldSignatureVector.size() < ABSMAXTIME)
+	{
+		CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
+	}
+		
+	if (m_WeldTime > ABSMAXTIME)
+	{
+		m_Actions = SCState::JUMP;
+	}
+	else
+	{
+		switch (CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldMode)
 		{
-			if (CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_PreBurst == 0)
+		case ENERGY_MODE:
+			if((m_EnergyAccumulator > m_EnergyTarget) || (m_WeldTime > ABSMAXTIME))
+				m_Actions = SCState::JUMP;
+			break;
+		case TIME_MODE:
+			if (m_WeldTime > CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin)
 			{
-				if (m_Timeout % 5 == 0)
-				{
-					if (DefeatWeldAbortHandler() == true)
-						m_Actions = SCState::ABORT;
-				}
+				m_Actions = SCState::JUMP;
 			}
-		}
-		else
-		{
+			break;
+		case HEIGHT_MODE:
 
-			PCStateMachine::PC_RX->MasterState = SCState::WELD_SONIC_ON;
-			m_WeldStep = WeldSonicOn::RUN_SONICS;
-			cout << m_StepIndex << ": " << "Weld Sonics Loop - Set Weld Pressure" << endl;
+			break;
+		case ENERGY_HEIGHT_MODE:
+			break;
+		default:
+			if ((m_EnergyAccumulator > CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergySetting) || (m_WeldTime > ABSMAXTIME))
+				m_Actions = SCState::JUMP;
+			break;
 		}
-		break;
-	case WeldSonicOn::RUN_SONICS:
-		m_WeldTime += 1;
-		tmpWeldSignature.Power = GetFilteredPower();
-		if (tmpWeldSignature.Power > m_PeakPower)
-			m_PeakPower = tmpWeldSignature.Power;
-		m_EnergyAccumulator += tmpWeldSignature.Power;
-		//still need to add output handler.
-		/* Inline check for overload but process after weld release */
-		
-		if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
-		{
-			CommonProperty::WeldResult.TotalEnergy = Utility::HEX2Energy(m_EnergyAccumulator);
-			CommonProperty::WeldResult.WeldTime = m_WeldTime;
-			CommonProperty::WeldResult.PostHeight = ACStateMachine::AC_TX->ActualHeight;
-			CommonProperty::WeldResult.TriggerPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
-			CommonProperty::WeldResult.WeldPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
-			CommonProperty::WeldResult.Amplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
-			CommonProperty::WeldResult.PeakPower = Utility::HEX2Power(m_PeakPower);
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.Overload = 1;
-			m_Actions = SCState::FAIL;
-		}
+	}
 
-		tmpWeldSignature.Height = ACStateMachine::AC_TX->ActualHeight;
-		tmpWeldSignature.Frquency = PCStateMachine::PC_TX->Frequency;
-		if (CommonProperty::WeldSignatureVector.size() < (GRAPHDATASIZE - 5))
-		{
-			CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
-		}
-		
-		if (m_WeldTime > ABSMAXTIME)
-		{
-			m_WeldStep = WeldSonicOn::RESULT_UPDATE;
-		}
-		else
-		{
-			switch (CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldMode)
-			{
-			case ENERGY_MODE:
-				if((m_EnergyAccumulator > m_EnergyTarget) || (m_WeldTime > ABSMAXTIME))
-					m_WeldStep = WeldSonicOn::RESULT_UPDATE;
-				break;
-			case TIME_MODE:
-				if (m_WeldTime > CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin)
-				{
-					m_WeldStep = WeldSonicOn::RESULT_UPDATE;
-				}
-				break;
-			case HEIGHT_MODE:
+
+		//TODO need to move following code to the control task.
+//		CommonProperty::WeldResult.CycleCounter += 1;
+//		CommonProperty::SystemInfo.psLifeCounter += 1;
+//		if (SysConfig.m_SystemInfo.HeightEncoder == true)
+//		{
+//			if((CommonProperty::m_WeldResults.Get(WeldResults::POST_HEIGHT) < CommonProperty::m_RecpeSC.m_ActiveRecipe.m_QualityWindowSetting.m_HeightMin) && 
+//					(CommonProperty::m_RecpeSC.m_ActiveRecipe.m_QualityWindowSetting.m_HeightMin != 0))
+//			{
+//				CommonProperty::m_WeldResults.SetAlarm(WeldResults::ALARM_HEIGHT_MIN);
+//				CommonProperty::m_WeldResults.ResetAlarm(WeldResults::ALARM_HEIGHT_MAX);
+//				ErrorOn = true;
+//			}
+//			else if((CommonProperty::m_WeldResults.Get(WeldResults::POST_HEIGHT) > CommonProperty::m_RecpeSC.m_ActiveRecipe.m_QualityWindowSetting.m_HeightMax))
+//			{
+//				CommonProperty::m_WeldResults.ResetAlarm(WeldResults::ALARM_HEIGHT_MIN);
+//				CommonProperty::m_WeldResults.SetAlarm(WeldResults::ALARM_HEIGHT_MAX);
+//				ErrorOn = true;
+//			}
+//		}
+//
+//		if(CommonProperty::WeldResult.WeldTime < CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin)
+//		{
+//			CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMin = 1;
+//			CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMax = 0;
+//			ErrorOn = true;
+//		}
+//		else if(CommonProperty::WeldResult.WeldTime > CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMax)
+//		{
+//			CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMin = 0;
+//			CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMax = 1;
+//			ErrorOn = true;
+//		}
+//
+//		if(CommonProperty::WeldResult.PeakPower < CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMin)
+//		{
+//			CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMin = 1;
+//			CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMax = 0;
+//			ErrorOn = true;
+//		}
+//		else if(CommonProperty::WeldResult.PeakPower > CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMax)
+//		{
+//			CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMin = 0;
+//			CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMax = 1;
+//			ErrorOn = true;
+//		}
+
+		///* Handle the maintenance counters */
+		//TODO Handle the maintenance counters and need to consider if the following code can be moved to the control task
+		//MaintCount[TIPCOUNT] += WD.WeldData.Energy;
+		//MaintCount[ANVILCOUNT] += WD.WeldData.Energy;
+		//MaintCount[GATHERCOUNT] += WD.WeldData.Energy;
+		//MaintCount[GUIDECOUNT] += WD.WeldData.Energy;
+		//MaintCount[HORNCOUNT]++;
+		//MaintCount[CONVERTERCOUNT]++;
+		//MaintCount[GENERATORCOUNT]++;
+		//MaintCount[ACTUATORCOUNT]++;
+//		if (ErrorOn == false)
+//		{
+//			m_Actions = SCState::JUMP;
+//		}
+//		else
+//			m_Actions = SCState::FAIL;
+
+}
+
+/**************************************************************************//**
+*
+* \brief   - Weld Sonic On Exit.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void WeldSonicOn::Exit()
+{
+	PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
+	CommonProperty::WeldResult.TotalEnergy = Utility::HEX2Energy(m_EnergyAccumulator);
+	CommonProperty::WeldResult.WeldTime = m_WeldTime;
+	CommonProperty::WeldResult.PostHeight = ACStateMachine::AC_TX->ActualHeight;
+	CommonProperty::WeldResult.TriggerPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
+	CommonProperty::WeldResult.WeldPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
+	CommonProperty::WeldResult.Amplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
+	CommonProperty::WeldResult.PeakPower = Utility::HEX2Power(m_PeakPower);
 	
-				break;
-			case ENERGY_HEIGHT_MODE:
-				break;
-			default:
-				if ((m_EnergyAccumulator > CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergySetting) || (m_WeldTime > ABSMAXTIME))
-					m_WeldStep = WeldSonicOn::RESULT_UPDATE;
-				break;
-			}
-		}
-		break;
-	case WeldSonicOn::RESULT_UPDATE:
-		PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
-		CommonProperty::WeldResult.TotalEnergy = Utility::HEX2Energy(m_EnergyAccumulator);
-		CommonProperty::WeldResult.WeldTime = m_WeldTime;
-		CommonProperty::WeldResult.PostHeight = ACStateMachine::AC_TX->ActualHeight;
-		CommonProperty::WeldResult.TriggerPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
-		CommonProperty::WeldResult.WeldPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
-		CommonProperty::WeldResult.Amplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
-		CommonProperty::WeldResult.PeakPower = Utility::HEX2Power(m_PeakPower);
-		
 //		if (SysConfig.m_SystemInfo.CoolingType == WelderSystem::SECOND_PER_100JOULE)
 //		{
 //			if (WeldData.m_WeldResult.Energy < JOULE500)
@@ -224,115 +262,11 @@ void WeldSonicOn::Loop()
 //		}
 //		else
 //		{
-			CoolAirControl(0, 0);
+		CoolAirControl(0, 0);
 //		}
-		LOG("m_StepIndex: Weld Sonics Loop - Result Update! Weld Time = %d Timeout = %d\n", m_WeldTime, m_Timeout);
-		m_Timeout = 0;
-		m_WeldStep = WeldSonicOn::EXTEND_SAMPLE;
-		break;
-	case WeldSonicOn::EXTEND_SAMPLE:
-		if (m_Timeout < 5)
-		{
-			tmpWeldSignature.Power = GetFilteredPower();
-			if (tmpWeldSignature.Power > m_PeakPower)
-				m_PeakPower = tmpWeldSignature.Power;
-			tmpWeldSignature.Height = ACStateMachine::AC_TX->ActualHeight;
-			tmpWeldSignature.Frquency = PCStateMachine::PC_TX->Frequency;
-			if (CommonProperty::WeldSignatureVector.size() < (GRAPHDATASIZE - 5))
-			{
-				CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
-			}
-		}
-		else
-		{
-			CommonProperty::WeldResult.PeakPower = Utility::HEX2Power(m_PeakPower);
-			m_WeldStep = WeldSonicOn::RESULT_ANALYSIS;
-		}
-		break;
-	case WeldSonicOn::RESULT_ANALYSIS:
-		//TODO need to move following code to the control task.
-		CommonProperty::WeldResult.CycleCounter += 1;
-		CommonProperty::SystemInfo.psLifeCounter += 1;
-//		if (SysConfig.m_SystemInfo.HeightEncoder == true)
-//		{
-//			if((CommonProperty::m_WeldResults.Get(WeldResults::POST_HEIGHT) < CommonProperty::m_RecpeSC.m_ActiveRecipe.m_QualityWindowSetting.m_HeightMin) && 
-//					(CommonProperty::m_RecpeSC.m_ActiveRecipe.m_QualityWindowSetting.m_HeightMin != 0))
-//			{
-//				CommonProperty::m_WeldResults.SetAlarm(WeldResults::ALARM_HEIGHT_MIN);
-//				CommonProperty::m_WeldResults.ResetAlarm(WeldResults::ALARM_HEIGHT_MAX);
-//				ErrorOn = true;
-//			}
-//			else if((CommonProperty::m_WeldResults.Get(WeldResults::POST_HEIGHT) > CommonProperty::m_RecpeSC.m_ActiveRecipe.m_QualityWindowSetting.m_HeightMax))
-//			{
-//				CommonProperty::m_WeldResults.ResetAlarm(WeldResults::ALARM_HEIGHT_MIN);
-//				CommonProperty::m_WeldResults.SetAlarm(WeldResults::ALARM_HEIGHT_MAX);
-//				ErrorOn = true;
-//			}
-//		}
-
-		if(CommonProperty::WeldResult.WeldTime < CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin)
-		{
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMin = 1;
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMax = 0;
-			ErrorOn = true;
-		}
-		else if(CommonProperty::WeldResult.WeldTime > CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMax)
-		{
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMin = 0;
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMax = 1;
-			ErrorOn = true;
-		}
-
-		if(CommonProperty::WeldResult.PeakPower < CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMin)
-		{
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMin = 1;
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMax = 0;
-			ErrorOn = true;
-		}
-		else if(CommonProperty::WeldResult.PeakPower > CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMax)
-		{
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMin = 0;
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMax = 1;
-			ErrorOn = true;
-		}
-
-		///* Handle the maintenance counters */
-		//TODO Handle the maintenance counters and need to consider if the following code can be moved to the control task
-		//MaintCount[TIPCOUNT] += WD.WeldData.Energy;
-		//MaintCount[ANVILCOUNT] += WD.WeldData.Energy;
-		//MaintCount[GATHERCOUNT] += WD.WeldData.Energy;
-		//MaintCount[GUIDECOUNT] += WD.WeldData.Energy;
-		//MaintCount[HORNCOUNT]++;
-		//MaintCount[CONVERTERCOUNT]++;
-		//MaintCount[GENERATORCOUNT]++;
-		//MaintCount[ACTUATORCOUNT]++;
-		if (ErrorOn == false)
-		{
-			m_Actions = SCState::JUMP;
-		}
-		else
-			m_Actions = SCState::FAIL;
-		SendMsgToUIMsgQ();
-		break;
-	default:
-		m_Actions = SCState::JUMP;
-		break;
-	}
-	m_Timeout++;
-}
-
-/**************************************************************************//**
-*
-* \brief   - Weld Sonic On Exit.
-*
-* \param   - None.
-*
-* \return  - None.
-*
-******************************************************************************/
-void WeldSonicOn::Exit()
-{
-	
+	LOG("m_StepIndex: Weld Sonics Loop - Result Update! Weld Time = %d Timeout = %d\n", m_WeldTime, m_Timeout);
+	SendMsgToUIMsgQ();
+	SendMsgToCtrlMsgQ();
 }
 
 /**************************************************************************//**
@@ -386,23 +320,6 @@ void WeldSonicOn::ClearWeldData()
 
 /**************************************************************************//**
 * 
-* \brief   - Initialize power buffer.
-*
-* \param   - None.
-*
-* \return  - None.
-*
-******************************************************************************/
-void WeldSonicOn::InitPowerBuffer()
-{
-	/* Clear FIR buffer and return one unfiltered value */
-	for (int cnt = 0; cnt < PWR_SIZE; cnt++)
-		PwrBuffer[cnt] = 0;
-	PwrIndex = 0;
-}
-
-/**************************************************************************//**
-* 
 * \brief   - Get power average value.
 *
 * \param   - None.
@@ -412,21 +329,15 @@ void WeldSonicOn::InitPowerBuffer()
 ******************************************************************************/
 unsigned int WeldSonicOn::GetFilteredPower()
 {
-
-	unsigned int PwrSum;
 	unsigned int result;
-
 	/* Keep a running average */
 	PwrBuffer[PwrIndex] = PCStateMachine::PC_TX->Power;
 	PwrIndex++;
 	if (PwrIndex >= PWR_SIZE)
 		PwrIndex = 0;
 
-	PwrSum = 0;
-	for (int cnt = 0; cnt < PWR_SIZE; cnt++)
-		PwrSum += PwrBuffer[cnt];
-
-	result = PwrSum / PWR_SIZE;
+	result = Utility::Average((const int*)PwrBuffer, PWR_SIZE);
+	
 	return result;
 }
 
@@ -471,9 +382,26 @@ void WeldSonicOn::CoolAirControl(unsigned int delay, unsigned duration)
 * \return  - None.
 *
 ******************************************************************************/
+//TODO temporary use
 void WeldSonicOn::SendMsgToUIMsgQ()
 {
 	MESSAGE message;
 	message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
 	SendToMsgQ(message, UI_MSG_Q_ID);
+}
+
+/**************************************************************************//**
+*
+* \brief   - Send Message to Control Task MessageQueue
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void WeldSonicOn::SendMsgToCtrlMsgQ()
+{
+	MESSAGE message;
+	message.msgID = ControlTask::TO_CTRL_SC_RESPONSE;
+	SendToMsgQ(message, CTL_MSG_Q_ID);
 }

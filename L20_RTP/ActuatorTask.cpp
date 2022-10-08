@@ -13,8 +13,9 @@
 #include "L20ActuatorTask.h"
 #include "P1ActuatorTask.h"
 /* Static member variables are initialized */
-unsigned int ActuatorTask::CoreState = 0;
-ActuatorTask* ActuatorTask::_ACObj = nullptr;
+unsigned int ActuatorTask::CoreState 				= 0;
+ActuatorTask* ActuatorTask::_ACObj 					= nullptr;
+UINT32 ActuatorTask::Tick_1ms 						= 0;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -28,7 +29,7 @@ ActuatorTask::ActuatorTask()
 	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]);
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
-
+	m_DebounceCount = 0;
 }
 
 /**************************************************************************//**
@@ -96,7 +97,20 @@ unsigned int ActuatorTask::GetCoreState()
 ******************************************************************************/
 void ActuatorTask::SetCoreState(unsigned int coreState)
 {
-	CoreState = coreState;
+	CoreState |= coreState;
+}
+
+/**************************************************************************//**
+* \brief  	- Clear specific actuator core status
+*
+* \param	- uint32_t
+*
+* \return 	- None
+*
+******************************************************************************/
+void ActuatorTask::ClearCoreState(unsigned int coreState)
+{
+	CoreState &= ~coreState;
 }
 
 /**************************************************************************//**
@@ -110,6 +124,43 @@ void ActuatorTask::SetCoreState(unsigned int coreState)
 ActuatorTask* ActuatorTask::GetInstance()
 {
 	return (_ACObj != nullptr) ? _ACObj : (_ACObj = new(nothrow) L20ActuatorTask());
+}
+
+/**************************************************************************//**
+* \brief  	- Start Switch Debounce 
+*
+* \param	- None
+*
+* \return 	- None
+*
+******************************************************************************/
+void ActuatorTask::StartSwitchDebounce()
+{
+	if((ACStateMachine::AC_TX->ACInputs & BOTHSTARTSWITCHMASK) == BOTHSTARTSWITCHMASK)
+	{
+		if(m_DebounceCount < START_SWITCH_DEBOUNCE)
+			m_DebounceCount++;
+	}
+	else
+	{
+		m_DebounceCount = 0;
+	}
+}
+
+/**************************************************************************//**
+* \brief  	- Get Start Switch status
+*
+* \param	- None
+*
+* \return 	- None
+*
+******************************************************************************/
+bool ActuatorTask::GetStartSwitch()
+{
+	if(m_DebounceCount > START_SWITCH_DEBOUNCE)
+		return true;
+	else
+		return false;
 }
 
 /**************************************************************************//**
@@ -150,6 +201,8 @@ void ActuatorTask::Actuator_System_Task(void)
 				if(events & ACT_TASK_1MS_EVENT)
 				{
 					ACStateMachine::RunStateMachine();
+					ACTask->StartSwitchDebounce();
+					Tick_1ms++;
 				}
 				if(events & ACT_TASK_QEVENT)
 				{

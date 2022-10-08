@@ -97,8 +97,7 @@ void ACStartSwitch::Loop()
 		}
 		else
 		{
-			coreStatus = ActuatorTask::GetCoreState();
-			ActuatorTask::SetCoreState(coreStatus | ERR_STARTSWITCH_LOST);
+			ActuatorTask::SetCoreState(ERR_STARTSWITCH_LOST);
 			ChangeState(AC_ALARM);
 		}
 		break;

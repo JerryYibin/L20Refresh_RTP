@@ -44,7 +44,7 @@ CommunicationInterface_HMI::CommunicationInterface_HMI()
 		LOGERR((char *)"HMI Socket:-------SSL initialization allocation failed-----------", 0, 0, 0);
 	}
 	/*create semaphore*/
-	m_semaphoreMutex = semBCreate(SEM_Q_FIFO, SEM_FULL);
+	m_semaphoreMutex = semMCreate(SEM_Q_FIFO);
 }
 
 /**************************************************************************//**

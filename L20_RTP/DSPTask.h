@@ -20,6 +20,7 @@ public:
 	virtual				~DSPTask					();
 	virtual void		PDOUploadRequest			() override;
 	virtual void		PDODownloadRequest			() override;
+	virtual void		CalculateStartFrequency		() override;
 };
 
 #endif /* DSPTASK_H_ */

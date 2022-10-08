@@ -78,7 +78,8 @@ ACStateMachine::~ACStateMachine() {
 
 /**************************************************************************//**
 * 
-* \brief   - Run AC State Machine.
+* \brief   - Run AC State Machine If there is any issue happened such as ESTOP and ALARM,
+* 			 the state can be changed to ESTOP and ALARM directly in state machine.
 *
 * \param   - None.
 *
@@ -97,7 +98,13 @@ void ACStateMachine::RunStateMachine()
 		ChangeState(ACState::AC_ALARM);
 	}
 	
+	if(ActuatorTask::GetInstance()->GetStartSwitch() == false)
+		AC_TX->AC_StatusEvent &= ~BIT_MASK(ACState::STATUS_START_SWITCH_PRESSED);
+	else
+		AC_TX->AC_StatusEvent |= BIT_MASK(ACState::STATUS_START_SWITCH_PRESSED);
+	
 	CurrentStateObj->Loop();
+	
 }
 
 /**************************************************************************//**
@@ -190,4 +197,3 @@ void ACStateMachine::ChangeState(ACState::ACSTATES nextState)
 		AC_TX->ACState = nextState;
 	}
 }
-

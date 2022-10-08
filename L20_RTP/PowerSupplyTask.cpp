@@ -16,6 +16,7 @@
 #include "Utils.h"
 /* Static member variables are initialized */
 unsigned int PowerSupplyTask::CoreState = 0;
+PowerSupplyTask* PowerSupplyTask::_PCObj = nullptr;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -97,6 +98,19 @@ void PowerSupplyTask::SetCoreState(unsigned int coreState)
 }
 
 /**************************************************************************//**
+* \brief  	- Get specific powersupply object following system type
+*
+* \param	- None
+*
+* \return 	- ActuatorTask object
+*
+******************************************************************************/
+PowerSupplyTask* PowerSupplyTask::GetInstance()
+{
+	return (_PCObj != nullptr) ? _PCObj : (_PCObj = new(nothrow) AUPSTask());
+}
+
+/**************************************************************************//**
 * \brief  - Power task entry point and constructor. Handles the
 * 			process/system data from/to the SM and incoming messages.
 * 			The code will instantiate the related child power task following system type,
@@ -112,7 +126,7 @@ void PowerSupplyTask::PowerSupply_Task(void)
 	MESSAGE		ProcessBuffer;	
 	UINT32		events;
 
-	PowerSupplyTask *PSTask = new(nothrow) AUPSTask();
+	PowerSupplyTask *PSTask = PowerSupplyTask::GetInstance();
 	if(nullptr != PSTask)
 	{
 		while(PSTask->bIsTaskRunStatus())

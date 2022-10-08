@@ -32,7 +32,7 @@ CommunicationInterface_CAN::CommunicationInterface_CAN()
 		LOGERR((char *)"DCan Socket:-------DCan initialization allocation failed-----------", 0, 0, 0);
 	}
 	/*create semaphore*/
-	m_semaphoreMutex = semBCreate(SEM_Q_FIFO, SEM_FULL);
+	m_semaphoreMutex = semMCreate(SEM_Q_FIFO);
 }
 
 CommunicationInterface_CAN::~CommunicationInterface_CAN() 

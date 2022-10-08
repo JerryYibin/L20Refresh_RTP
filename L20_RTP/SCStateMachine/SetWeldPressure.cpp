@@ -1,34 +1,42 @@
 /************************************************************************** 
 
-      Copyright (c) Branson Ultrasonics Corporation, 1996-2021
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
  
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
- ---------------------------- MODULE DESCRIPTION ----------------------------   
- SC PreReady state
+ ---------------------------- MODULE DESCRIPTION ----------------------------  
+ 
+ To set Weld Pressure before the sonics on. 
+ As we know there is the special case when the trigger pressure is not equal to weld pressure.
+ The trigger pressure can be set at the pre-ready state. 
+ There is the short response time on air regulator about 200ms, 
+ we can set trigger pressure in the pre-ready state and take the horn down state to cover this response time.
+ For weld pressure setting there is not any way can cover this response time before sonics on 
+ so we have to generate a new state to handle with the response time when weld pressure setting.   
+ 
 ***************************************************************************/
 
-#include "PreReady.h"
-#include "../HeightEncoder.h"
+#include "SetWeldPressure.h"
 #include "../ACStateMachine.h"
-#include "../PCStateMachine.h"
-
 /**************************************************************************//**
-* \brief   - Constructor - 
+*
+* \brief   - Constructor.
 *
 * \param   - None.
 *
-* \return  - None
+* \return  - None.
 *
 ******************************************************************************/
-PreReady::PreReady() {
+SetWeldPressure::SetWeldPressure() {
 	m_Actions = SCState::INIT;
-	m_State = SCState::PRE_READY;
+	m_State = SCState::WELD_PRESSURE_SET;
+	m_Timeout = 0;
+
 }
 
 /**************************************************************************//**
-* 
+*
 * \brief   - Destructor.
 *
 * \param   - None.
@@ -36,81 +44,67 @@ PreReady::PreReady() {
 * \return  - None.
 *
 ******************************************************************************/
-PreReady::~PreReady() {
+SetWeldPressure::~SetWeldPressure() {
 	m_Actions = SCState::INIT;
-	m_State = SCState::PRE_READY;
 }
 
 /**************************************************************************//**
-* 
-* \brief   - PreReady Enter.
+*
+* \brief   - SetWeldPressure Enter.
 *
 * \param   - None.
 *
 * \return  - None.
 *
 ******************************************************************************/
-void PreReady::Enter()
+void SetWeldPressure::Enter()
 {
-	ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
-	PCStateMachine::PC_RX->TargetAmplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
-//	LOG("GetInitCount = %d\n", HeightEncoder::GetInitCount());
-//	LOG("GetMaxCount = %d\n", HeightEncoder::GetMaxCount());
-	LOG("GetPositionCount = %d\n", HeightEncoder::GetInstance()->GetPositionCount());
-//	LOG("GetDirection = %d\n", HeightEncoder::GetDirection());
+	if (ACStateMachine::AC_RX->TargetPressure == CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure)
+		m_Actions = SCState::JUMP;
+	else
+		ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
 }
 
 /**************************************************************************//**
-* 
-* \brief   - PreReady Loop.
+*
+* \brief   - SetWeldPressure Loop.
 *
 * \param   - None.
 *
 * \return  - None.
 *
 ******************************************************************************/
-void PreReady::Loop()
+void SetWeldPressure::Loop()
 {
-	if(ACStateMachine::AC_TX->ACState == ACState::AC_READY)
-	{
-		if((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_START_SWITCH_PRESSED)) == 0)
-			m_Actions = SCState::JUMP;
-	}
-	else if(ACStateMachine::AC_TX->ACState == ACState::AC_ALARM)
-	{
-		//TODO Record Database alarm table
-		//TODO In reply to Code Review Issue 13, there is the work item 8373 for the CommonProperty clean up.
-		CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
-		m_Actions = SCState::FAIL;
-	}
+	if (m_Timeout < DELAY200MSEC)
+		m_Timeout++;
+	else
+		m_Actions = SCState::JUMP;
 }
 
 /**************************************************************************//**
-* 
-* \brief   - PreReady Exit.
+*
+* \brief   - SetWeldPressure Exit.
 *
 * \param   - None.
 *
 * \return  - None.
 *
 ******************************************************************************/
-void PreReady::Exit()
+void SetWeldPressure::Exit()
 {
-	
 }
 
 /**************************************************************************//**
-* 
-* \brief   - PreReady Fail.
+*
+* \brief   - SetWeldPressure Fail.
 *
 * \param   - None.
 *
 * \return  - None.
 *
 ******************************************************************************/
-void PreReady::Fail()
+void SetWeldPressure::Fail()
 {
-	if (ProcessAlarmHandler() == true)
-		m_Actions = SCState::ABORT;
-	LOG("Pre-Ready Alarm process!\n");
 }
+

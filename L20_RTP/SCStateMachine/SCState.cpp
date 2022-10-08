@@ -67,8 +67,6 @@ void SCState::abortWeld(void)
 	vxbGpioSetValue(GPIO::O_SAFETY, GPIO_VALUE_LOW);
 	vxbGpioSetValue(GPIO::O_OUT0, GPIO_VALUE_LOW);
 	vxbGpioSetValue(GPIO::O_OUT1, GPIO_VALUE_LOW);
-	
-	//SetPressure(ActivePreset.m_WeldParam.TPressure);
 }
 
 /**************************************************************************//**

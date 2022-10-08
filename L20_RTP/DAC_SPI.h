@@ -60,6 +60,7 @@ private:
 	static SPI_HARDWARE 	m_Descriptor;
 	static SPI_TRANSFER 	m_Transfer;
 	static DAC			 	m_Register;
+	static SEM_ID 			m_semaphoreMutex;	/* ID of mutex semaphore*/
 private:
 	static int setDACValue(const int channel, const unsigned short data);
 public:
@@ -70,6 +71,7 @@ public:
 	static int SetTunePoint			(const unsigned short data);
 	static int SetFrequencyOffset	(const unsigned short data);
 	static int SetPressure			(const unsigned short data);
+	static int ReleaseDACConverter	();
 	
 };
 
