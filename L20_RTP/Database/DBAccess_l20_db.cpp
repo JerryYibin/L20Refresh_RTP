@@ -24,6 +24,9 @@ extern "C"
 #ifdef RTC_MEASURE
 #include <timerDev.h>
 #endif
+
+extern long long atoll(const char *);
+
 /******************************************************************************
 * \brief - Constructor.
 *
@@ -189,12 +192,12 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
     static int count=0;
     LOG("#WeldResult(num %d): result %d\n", count++,nErrCode);
 #endif
-    int id = ERROR;
+    long long id = ERROR;
 	if(nErrCode == 0)
 	{
-        getLatestID(TABLE_WELD_RESULT, &id);
+        getLatestID64(TABLE_WELD_RESULT, &id);
 #ifdef UNITTEST_DATABASE
-        LOG("# store WeldResult to ID %d\n",id);
+        LOG("# store WeldResult to ID %lld\n", id);
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -245,7 +248,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
             "insert into " + string(TABLE_WELD_SIGNATURE) +
             " (WeldResultID, WeldGraph) " +
             "values ("+
-            std::to_string(*(int *)buffer)+",'"+//WeldResultID
+            std::to_string(*(long long *)buffer)+",'"+//WeldResultID
             jsonStr+"');";//WeldGraph
 
         jsonStr.shrink_to_fit();
@@ -255,12 +258,12 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
         LOG("#WeldSignature(num %d): result %d\n", count++,nErrCode);
 #endif
 	}
-    int id = ERROR;
+    long long id = ERROR;
 	if(nErrCode == 0)
 	{
-		getLatestID(TABLE_WELD_SIGNATURE, &id);
+		getLatestID64(TABLE_WELD_SIGNATURE, &id);
 #ifdef UNITTEST_DATABASE
-        LOG("# store WeldSignature to ID %d\n", id);
+        LOG("# store WeldSignature to ID %lld\n", id);
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_SIGNAT_LIMIT)
 		{
@@ -368,44 +371,107 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
-//TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryBlockWeldResult(char *buffer)
+int DBAccessL20DB::QueryBlockWeldResult(char *buffer)
 {
-    int id = ERROR;
-    memcpy(&id, buffer, sizeof(int));
-    for(int count = 0; count < RESULT_FOR_UI_MAX; count++)
+    int count;
+    string str;
+	long long id = *(long long *)buffer;
+    for(count = 0; count < RESULT_FOR_UI_MAX; count++, id--)
     {
-        string strQuery =
-            "select * from "+string(TABLE_WELD_RESULT)+
-            " where ID = "+std::to_string(id--)+";";
-        string str = ExecuteQuery(strQuery);
+        str = ExecuteQuery(
+                    string("select ")+"RecipeID"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
 		if(str.empty())
 		{
             break;
         }
         else
 		{
-#ifdef UNITTEST_DATABASE
-            LOG("QueryWeldResult:\n%s\n", str.c_str());
+            CommonProperty::WeldResultForUI[count].RecipeNum = atoi(str.c_str());//RecipeID
 
-            //todo 
-            CommonProperty::WeldResultForUI[count].RecipeNum = 1;//RecipeID
-            CommonProperty::WeldResultForUI[count].PartID[0] = 0;//PartID
-            CommonProperty::WeldResultForUI[count].RecipeNum = 1;//RecipeID
-            CommonProperty::WeldResultForUI[count].TotalEnergy = 1;//WeldEnergy
-            CommonProperty::WeldResultForUI[count].TriggerPressure = 1;//TriggerPressure
-            CommonProperty::WeldResultForUI[count].WeldPressure = 1;//WeldPressure
-            CommonProperty::WeldResultForUI[count].Amplitude = 1;//WeldAmplitude
-            CommonProperty::WeldResultForUI[count].WeldTime = 1;//WeldTime
-            CommonProperty::WeldResultForUI[count].PeakPower = 1;//WeldPeakPower
-            CommonProperty::WeldResultForUI[count].PreHeight = 1;//TriggerHeight
-            CommonProperty::WeldResultForUI[count].PostHeight = 1;//WeldHeight
-            CommonProperty::WeldResultForUI[count].ALARMS.ALARMflags = 1;//AlarmFlag
-            CommonProperty::WeldResultForUI[count].CycleCounter = 1;//CycleCounter
+            str = ExecuteQuery(
+                    string("select ")+"PartID"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            strncpy(CommonProperty::WeldResultForUI[count].PartID, str.c_str(), BARCODE_DATA_SIZE);//PartID
+
+            str = ExecuteQuery(
+                    string("select ")+"WeldEnergy"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            CommonProperty::WeldResultForUI[count].TotalEnergy = atoi(str.c_str());//WeldEnergy
+
+            str = ExecuteQuery(
+                    string("select ")+"TriggerPressure"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            CommonProperty::WeldResultForUI[count].TriggerPressure = atoi(str.c_str());//TriggerPressure
+
+            str = ExecuteQuery(
+                    string("select ")+"WeldPressure"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            CommonProperty::WeldResultForUI[count].WeldPressure = atoi(str.c_str());//WeldPressure
+
+            str = ExecuteQuery(
+                    string("select ")+"WeldAmplitude"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            CommonProperty::WeldResultForUI[count].Amplitude = atoi(str.c_str());//WeldAmplitude
+
+            str = ExecuteQuery(
+                    string("select ")+"WeldTime"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            CommonProperty::WeldResultForUI[count].WeldTime = atoi(str.c_str());//WeldTime
+
+            str = ExecuteQuery(
+                    string("select ")+"WeldPeakPower"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            CommonProperty::WeldResultForUI[count].PeakPower = atoi(str.c_str());//WeldPeakPower
+
+            str = ExecuteQuery(
+                    string("select ")+"TriggerHeight"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            CommonProperty::WeldResultForUI[count].PreHeight = atoi(str.c_str());//TriggerHeight
+
+            str = ExecuteQuery(
+                    string("select ")+"WeldHeight"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            CommonProperty::WeldResultForUI[count].PostHeight = atoi(str.c_str());//WeldHeight
+
+            str = ExecuteQuery(
+                    string("select ")+"AlarmFlag"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            CommonProperty::WeldResultForUI[count].ALARMS.ALARMflags = atoi(str.c_str());//AlarmFlag
+
+            str = ExecuteQuery(
+                    string("select ")+"CycleCounter"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+            CommonProperty::WeldResultForUI[count].CycleCounter = atoi(str.c_str());//CycleCounter
+
+            str = ExecuteQuery(
+                    string("select ")+"DateTime"+
+                    " from "+string(TABLE_WELD_RESULT)+
+                    " where ID = "+std::to_string(id)+";");
+
+#ifdef UNITTEST_DATABASE
+            LOG("ID: %lld\n", id);
+            LOG("DateTime: %s\n", str.c_str());
+            LOG("RecipeID: %d\n", CommonProperty::WeldResultForUI[count].RecipeNum);
+            LOG("PartID: %s\n", CommonProperty::WeldResultForUI[count].PartID);
+            LOG("WeldTime: %d\n", CommonProperty::WeldResultForUI[count].WeldTime);
+            LOG("\n");
 #endif
 		}
     }
-    return;
+    return count;
 }
 
 /**************************************************************************//**
@@ -423,10 +489,22 @@ void DBAccessL20DB::QueryWeldSignature(char *buffer)
         "select "+string(COLUMN_GRAPHDATA)+
         " from "+string(TABLE_WELD_SIGNATURE)+
         " where WeldResultID="+
-        std::to_string(*(int *)buffer)+";";
+        std::to_string(*(long long *)buffer)+";";
     string str = ExecuteQuery(strQuery);
     vector<WELD_SIGNATURE> WeldSignVector;
     Utility::JSON2Vector(str, &WeldSignVector);
+#ifdef UNITTEST_DATABASE
+    for(int i=0;i<WeldSignVector.size();i++)
+        {
+        LOG("\tOrder(%d): Frquency %d, Power %d, Height %d, Amplitude %d\n",
+            i,
+            WeldSignVector[i].Frquency,
+            WeldSignVector[i].Power,
+            WeldSignVector[i].Height,
+            WeldSignVector[i].Amplitude);
+        }
+#endif
+
     return;
 }
 
@@ -468,7 +546,7 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
     string strQuery =
         "select * from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
-        std::to_string(pRecipe->m_RecipeID)+";";
+        std::to_string(pRecipe->m_RecipeNumber)+";";
     string str = ExecuteQuery(strQuery);
 #ifdef UNITTEST_DATABASE
     if(str.size()>0)
@@ -478,7 +556,7 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
     strQuery =
         "select EnergyToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
-        std::to_string(pRecipe->m_RecipeID)+";";
+        std::to_string(pRecipe->m_RecipeNumber)+";";
     str = ExecuteQuery(strQuery);
     WeldStepValueSetting energy[STEP_MAX];
     Utility::JSON2Struct(str, &energy[0]);
@@ -494,7 +572,7 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
     strQuery =
         "select TimeToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
-        std::to_string(pRecipe->m_RecipeID)+";";
+        std::to_string(pRecipe->m_RecipeNumber)+";";
     str = ExecuteQuery(strQuery);
     WeldStepValueSetting timeStep[STEP_MAX];
     Utility::JSON2Struct(str, &timeStep[0]);
@@ -510,7 +588,7 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
     strQuery =
         "select PowerToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
-        std::to_string(pRecipe->m_RecipeID)+";";
+        std::to_string(pRecipe->m_RecipeNumber)+";";
     str = ExecuteQuery(strQuery);
     WeldStepValueSetting power[STEP_MAX];
     Utility::JSON2Struct(str, &power[0]);
@@ -580,7 +658,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
         "', RecipeName='" 			+ pRecipe->m_RecipeName+//RecipeName
         "', DateTime='" 			+ timeBuf+//DateTime
         "', PresetPicPath='" 		+ pRecipe->m_RecipePicPath+//PresetPicPath
-        "' where ID=" 				+ std::to_string(pRecipe->m_RecipeID)+";";
+        "' where ID=" 				+ std::to_string(pRecipe->m_RecipeNumber)+";";
         jsonStrEnergy.shrink_to_fit();
         jsonStrTime.shrink_to_fit();
         jsonStrPower.shrink_to_fit();
@@ -636,6 +714,32 @@ int DBAccessL20DB::getLatestID(const string table, int* _id)
     string str = ExecuteQuery(strQuery, &errorCode);
     if(errorCode == SQLITE_OK)
     	*_id = atoi(str.c_str());
+    return errorCode;
+}
+
+/**************************************************************************//**
+* \brief   - Latest ID getting for the specific table.
+*
+* \param   - table name, _id pointer
+*
+* \return  - If there is not any error happened while querying, it will return SQLITE_OK; 
+* 			 else return ERROR or database status.
+*
+******************************************************************************/
+int DBAccessL20DB::getLatestID64(const string table, long long* _id)
+{
+	int errorCode = SQLITE_OK;
+	if(table.empty() == true)
+		return ERROR;
+	if(_id == nullptr)
+		return ERROR;
+    string strQuery =
+        "select seq from sqlite_sequence where name='" +
+        table +
+        "';";
+    string str = ExecuteQuery(strQuery, &errorCode);
+    if(errorCode == SQLITE_OK)
+    	*_id = atoll(str.c_str());
     return errorCode;
 }
 

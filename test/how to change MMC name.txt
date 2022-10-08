@@ -1,0 +1,39 @@
+Q1.
+how to change the name of MMC device to "/mmc1" from "/mmc1a"
+
+Q2.
+how to merge partitions "/mmc1a" and "/mmc1b" into one partition "/mmc1"
+
+1.
+in Shell, check the name of MMC
+-> devs
+drv refs name
+ 12 [ 3] /host.host
+ 13 [ 3] /mmc1a
+  6 [ 3] /sd0a
+  1 [ 5] /ttyS0
+value = 0 = 0x0
+
+2.
+open it
+-> fd = open("/mmc1a", 0, 0)
+
+3.
+eject it as ramfs
+-> ioctl(fd, 0xbd000003, 2)
+-> close fd
+
+4.
+check the name of MMC
+-> devs
+drv refs name
+ 12 [ 3] /host.host
+ 13 [ 3] /mmc1
+  6 [ 3] /sd0a
+  1 [ 5] /ttyS0
+value = 0 = 0x0
+
+5.
+format it
+-> hrfsFormat "/mmc1"
+
