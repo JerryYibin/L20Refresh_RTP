@@ -188,16 +188,13 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 		std::to_string(pData->CycleCounter)+");";//CycleCounter
 
 	int nErrCode = SingleTransaction(strStore);
-#ifdef UNITTEST_DATABASE
-    static int count=0;
-    LOG("#WeldResult(num %d): result %d\n", count++,nErrCode);
-#endif
     long long id = ERROR;
+    getLatestID64(TABLE_WELD_RESULT, &id);
+
 	if(nErrCode == 0)
 	{
-        getLatestID64(TABLE_WELD_RESULT, &id);
 #ifdef UNITTEST_DATABASE
-        LOG("# store WeldResult to ID %lld\n", id);
+        LOG("# store WeldResult to ID %llu\n", id);
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -206,7 +203,7 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 	}
 	else
 	{
-		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %llu\n", nErrCode, id, 0);
 	}
 	return nErrCode;
 }
@@ -253,17 +250,14 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 
         jsonStr.shrink_to_fit();
     	nErrCode = SingleTransaction(strStore);
-#ifdef UNITTEST_DATABASE
-        static int count=0;
-        LOG("#WeldSignature(num %d): result %d\n", count++,nErrCode);
-#endif
 	}
     long long id = ERROR;
+	getLatestID64(TABLE_WELD_SIGNATURE, &id);
+
 	if(nErrCode == 0)
 	{
-		getLatestID64(TABLE_WELD_SIGNATURE, &id);
 #ifdef UNITTEST_DATABASE
-        LOG("# store WeldSignature to ID %lld\n", id);
+        LOG("# store WeldSignature to ID %llu\n", id);
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_SIGNAT_LIMIT)
 		{
@@ -271,7 +265,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 		}
 	}
 	else
-		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %llu\n", nErrCode, id, 0);
 	return nErrCode;
 }
 
@@ -288,7 +282,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
     int id = ERROR;
     getLatestID(TABLE_WELD_RECIPE, &id);
 #ifdef UNITTEST_DATABASE
-    LOG("#WeldRecipe ID: %d ", id);
+    LOG("# already %d WeldRecipe existing, try to insert new one\n", id);
 #endif
     if(id >= DB_RECORDS_STORAGE_WELD_RECIPE_LIMIT)
 	{
@@ -354,10 +348,6 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
         jsonStrPower.shrink_to_fit();
 
 	int nErrCode = SingleTransaction(strStore);
-#ifdef UNITTEST_DATABASE
-    static int count=0;
-    LOG("#WeldRecipe(num %d): result %d\n", count++, nErrCode);
-#endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
@@ -462,7 +452,7 @@ int DBAccessL20DB::QueryBlockWeldResult(char *buffer)
                     " where ID = "+std::to_string(id)+";");
 
 #ifdef UNITTEST_DATABASE
-            LOG("ID: %lld\n", id);
+            LOG("ID: %llu\n", id);
             LOG("DateTime: %s\n", str.c_str());
             LOG("RecipeID: %d\n", CommonProperty::WeldResultForUI[count].RecipeNum);
             LOG("PartID: %s\n", CommonProperty::WeldResultForUI[count].PartID);
@@ -558,48 +548,57 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
         " where ID="+
         std::to_string(pRecipe->m_RecipeNumber)+";";
     str = ExecuteQuery(strQuery);
-    WeldStepValueSetting energy[STEP_MAX];
-    Utility::JSON2Struct(str, &energy[0]);
-#ifdef UNITTEST_DATABASE
-    LOG("\nEnergyToStep\n");
-    for(int i=0; i<STEP_MAX; i++)
+    if(str.empty()!=true)
         {
-        LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-            i, energy[i].m_StepValue, energy[i].m_AmplitudeValue);
-        }
+        WeldStepValueSetting energy[STEP_MAX];
+        Utility::JSON2Struct(str, &energy[0]);
+#ifdef UNITTEST_DATABASE
+        LOG("\nEnergyToStep\n");
+        for(int i=0; i<STEP_MAX; i++)
+            {
+            LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
+                i, energy[i].m_StepValue, energy[i].m_AmplitudeValue);
+            }
 #endif
+        }
 
     strQuery =
         "select TimeToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
         std::to_string(pRecipe->m_RecipeNumber)+";";
     str = ExecuteQuery(strQuery);
-    WeldStepValueSetting timeStep[STEP_MAX];
-    Utility::JSON2Struct(str, &timeStep[0]);
-#ifdef UNITTEST_DATABASE
-    LOG("\nTimeToStep\n");
-    for(int i=0; i<STEP_MAX; i++)
+    if(str.empty()!=true)
         {
-        LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-            i, timeStep[i].m_StepValue, timeStep[i].m_AmplitudeValue);
-        }
+        WeldStepValueSetting timeStep[STEP_MAX];
+        Utility::JSON2Struct(str, &timeStep[0]);
+#ifdef UNITTEST_DATABASE
+        LOG("\nTimeToStep\n");
+        for(int i=0; i<STEP_MAX; i++)
+            {
+            LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
+                i, timeStep[i].m_StepValue, timeStep[i].m_AmplitudeValue);
+            }
 #endif
+        }
 
     strQuery =
         "select PowerToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
         std::to_string(pRecipe->m_RecipeNumber)+";";
     str = ExecuteQuery(strQuery);
-    WeldStepValueSetting power[STEP_MAX];
-    Utility::JSON2Struct(str, &power[0]);
-#ifdef UNITTEST_DATABASE
-    LOG("\nPowerToStep\n");
-    for(int i=0; i<STEP_MAX; i++)
+    if(str.empty()!=true)
         {
-        LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-            i, power[i].m_StepValue, power[i].m_AmplitudeValue);
-        }
+        WeldStepValueSetting power[STEP_MAX];
+        Utility::JSON2Struct(str, &power[0]);
+#ifdef UNITTEST_DATABASE
+        LOG("\nPowerToStep\n");
+        for(int i=0; i<STEP_MAX; i++)
+            {
+            LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
+                i, power[i].m_StepValue, power[i].m_AmplitudeValue);
+            }
 #endif
+        }
     return;
 }
 
