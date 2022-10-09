@@ -12,6 +12,7 @@ VIP project should include following components
   INCLUDE_POSIX_SHM
   INCLUDE_POSIX_PTHREAD_SCHEDULER
   INCLUDE_POSIX_ADVISORY_FILE_LOCKING
+  INCLUDE_HRFS_FORMAT
 if using DosFS, the value of component DOSFS_COMPAT_NT should be set to TRUE
 
 3.
