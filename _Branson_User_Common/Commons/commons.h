@@ -28,6 +28,7 @@ database directory and alarm index.
 #define INCLUDE_TI_AM5708_JN 0
 //MMC2/eMMC Storage
 #define MMC_EMMC_DEV_NAME	"/mmc1"
+#define L20_MMC_EMMC_DEV_NAME	"/mmc1a"		//TODO This #define is just for temporary use
 
 #define PATH_SEPARATOR		"/"
 //Database file names
@@ -35,22 +36,15 @@ database directory and alarm index.
 #define P1_BASE_DB_FILE_NAME	"sample_p1_base.db"
 #define L20_DB_FILE_NAME		"sample_l20_base.db"
 
-#define COMMON_DB_FILE_PATH_EMMC		MMC_EMMC_DEV_NAME PATH_SEPARATOR COMMON_DB_FILE_NAME
-#define P1_BASE_DB_FILE_PATH_EMMC		MMC_EMMC_DEV_NAME PATH_SEPARATOR P1_BASE_DB_FILE_NAME
-#define L20_DB_FILE_PATH_EMMC			MMC_EMMC_DEV_NAME PATH_SEPARATOR L20_DB_FILE_NAME
+#define COMMON_DB_FILE_PATH_EMMC		L20_MMC_EMMC_DEV_NAME PATH_SEPARATOR COMMON_DB_FILE_NAME
+#define P1_BASE_DB_FILE_PATH_EMMC		L20_MMC_EMMC_DEV_NAME PATH_SEPARATOR P1_BASE_DB_FILE_NAME
+#define L20_DB_FILE_PATH_EMMC			L20_MMC_EMMC_DEV_NAME PATH_SEPARATOR L20_DB_FILE_NAME
 
 #define MIN_TRIGGER_FORCE 3  // Newtons
 
 #define HMI_SOCKET_PORT   1600
 #define AC_SOCKET_PORT    1601
 
-// ACInputs bits of TxPDO_AC
-#define SS1MASK 					0x01
-#define SS2MASK 					0x02
-#define GRDDETMASK 					0x04 
-#define ULSMASK 					0x08
-#define TRSMASK 					0x10 
-#define BOTHSTARTSWITCHMASK 		0x03  	
 
 /*
  * defines event bits in the master events byte in the PC RX PDO

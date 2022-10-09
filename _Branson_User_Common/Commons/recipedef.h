@@ -66,7 +66,7 @@ struct AdvancedWeldSetting
 
 struct WeldStepValueSetting
 {
-	int m_Order;
+	int m_Order;		  //It is the index of step, if the index is -1 the current step is not available. 
 	int m_StepValue;      //step_energy_value/step_time_value/step_power_value
 	int m_AmplitudeValue;
 };
@@ -105,6 +105,7 @@ struct WeldRecipeSetting
 
 struct  WeldRecipeSC
 {
+	int					  m_RecipeID;
     int                   m_RecipeNumber;
     char                  m_RecipePicPath[PIC_PATH_LEN];
     bool                  m_IsTeachMode;
