@@ -10,6 +10,14 @@
 #include "recipedef.h"
 class Recipe {
 public:
+	enum STEPMODE_DATA_TYPE
+	{
+		ORDER = 0,
+		STEPVALUE,
+		AMPLITUDE,
+		TOTAL
+	};
+public:
 	Recipe();
 	virtual ~Recipe();
 	static void SetActiveRecipeGeneralParam(WeldParameterSetting* generalParam);

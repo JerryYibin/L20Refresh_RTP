@@ -29,7 +29,6 @@ ActuatorTask::ActuatorTask()
 	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]);
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
-	m_DebounceCount = 0;
 }
 
 /**************************************************************************//**
@@ -127,37 +126,18 @@ ActuatorTask* ActuatorTask::GetInstance()
 }
 
 /**************************************************************************//**
-* \brief  	- Start Switch Debounce 
+* \brief  	- Get Start Switch pressed status
+* 		      If there is any one of these two start switch is pressed, it will be true, else it will be false.
+* 		      If the status is true, the AC state machine will enter to AC Start Switch State to handle with Start Switch.  
 *
 * \param	- None
 *
 * \return 	- None
 *
 ******************************************************************************/
-void ActuatorTask::StartSwitchDebounce()
+bool ActuatorTask::GetStartSwitchPressed()
 {
-	if((ACStateMachine::AC_TX->ACInputs & BOTHSTARTSWITCHMASK) == BOTHSTARTSWITCHMASK)
-	{
-		if(m_DebounceCount < START_SWITCH_DEBOUNCE)
-			m_DebounceCount++;
-	}
-	else
-	{
-		m_DebounceCount = 0;
-	}
-}
-
-/**************************************************************************//**
-* \brief  	- Get Start Switch status
-*
-* \param	- None
-*
-* \return 	- None
-*
-******************************************************************************/
-bool ActuatorTask::GetStartSwitch()
-{
-	if(m_DebounceCount > START_SWITCH_DEBOUNCE)
+	if(((ACStateMachine::AC_TX->ACInputs & SS1MASK) == SS1MASK) || ((ACStateMachine::AC_TX->ACInputs & SS2MASK) == SS2MASK))
 		return true;
 	else
 		return false;
@@ -201,7 +181,6 @@ void ActuatorTask::Actuator_System_Task(void)
 				if(events & ACT_TASK_1MS_EVENT)
 				{
 					ACStateMachine::RunStateMachine();
-					ACTask->StartSwitchDebounce();
 					Tick_1ms++;
 				}
 				if(events & ACT_TASK_QEVENT)

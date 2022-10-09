@@ -23,8 +23,7 @@ public:
 	};
 	ActuatorTask();
 	virtual					~ActuatorTask();
-	void					StartSwitchDebounce					();
-	bool					GetStartSwitch						();
+	bool					GetStartSwitchPressed				();
 	void 					ProcessTaskMessage					(MESSAGE& message) override;
 	
 	virtual void			PDOUploadRequest 					() = 0;
@@ -32,6 +31,7 @@ public:
 	virtual bool			IsMoving							() = 0;
 	virtual unsigned int	GetMaxSpeed							() = 0;
 	virtual void			InitHeightSystem					() = 0;
+	virtual void 			ScanInputs							() = 0;
 	
 	static unsigned int		GetCoreState						();
 	static void				SetCoreState						(unsigned int coreState);
@@ -48,8 +48,6 @@ protected:
 	static unsigned int CoreState;
 	static ActuatorTask* _ACObj;
 	static UINT32		Tick_1ms;
-private:
-	UINT32			m_DebounceCount;
 };
 
 #endif /* ACTUATORTASK_H_ */

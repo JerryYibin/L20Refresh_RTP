@@ -16,6 +16,8 @@
 #include "DBAccess_l20_db.h"
 #include "commons.h"
 #include "../Utility.h"
+#include "../Recipe.h"
+#include <jansson.h>
 extern "C"
 {
 	#include "hwif/drv/resource/vxbRtcLib.h"
@@ -222,33 +224,33 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 
 #ifdef UNITTEST_DATABASE
     if(CommonProperty::WeldSignatureVector.size()==0)
-        {
-    	WELD_SIGNATURE tmpWeldSignature;
-    	tmpWeldSignature.Frquency = 1;
-    	tmpWeldSignature.Power = 2;
-    	tmpWeldSignature.Height = 3;
-    	tmpWeldSignature.Amplitude = 4;
-    	CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
-
-    	tmpWeldSignature.Frquency = 5;
-    	tmpWeldSignature.Power = 6;
-    	tmpWeldSignature.Height = 7;
-    	tmpWeldSignature.Amplitude = 8;
-    	CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
-        }
+    {
+		WELD_SIGNATURE tmpWeldSignature;
+		tmpWeldSignature.Frquency = 1;
+		tmpWeldSignature.Power = 2;
+		tmpWeldSignature.Height = 3;
+		tmpWeldSignature.Amplitude = 4;
+		CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
+		
+		tmpWeldSignature.Frquency = 5;
+		tmpWeldSignature.Power = 6;
+		tmpWeldSignature.Height = 7;
+		tmpWeldSignature.Amplitude = 8;
+		CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
+    }
 #endif
-    string jsonStr;
-    Utility::Vector2JSON(&CommonProperty::WeldSignatureVector, jsonStr);
-    if(jsonStr.empty() != true)
+    string str;
+    Vector2String(&CommonProperty::WeldSignatureVector, str);
+    if(str.empty() != true)
     {
     	string strStore =
             "insert into " + string(TABLE_WELD_SIGNATURE) +
             " (WeldResultID, WeldGraph) " +
             "values ("+
             std::to_string(*(long long *)buffer)+",'"+//WeldResultID
-            jsonStr+"');";//WeldGraph
+            str+"');";//WeldGraph
 
-        jsonStr.shrink_to_fit();
+        str.shrink_to_fit();
     	nErrCode = SingleTransaction(strStore);
 	}
     long long id = ERROR;
@@ -297,10 +299,15 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 	vxbRtcGet(&timeStamp);
     strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
 
-    string jsonStrEnergy, jsonStrTime, jsonStrPower;
-    Utility::Struct2JSON(pData->m_WeldParameter.m_EnergyStep, STEP_MAX, jsonStrEnergy);
-    Utility::Struct2JSON(pData->m_WeldParameter.m_TimeStep, STEP_MAX, jsonStrTime);
-    Utility::Struct2JSON(pData->m_WeldParameter.m_PowerStep, STEP_MAX, jsonStrPower);
+    vector<WeldStepValueSetting> vectorEnergy, vectorTime, vectorPower;
+    string strEnergy, strTime, strPower;
+    Array2Vector(pData->m_WeldParameter.m_EnergyStep, &vectorEnergy);
+    Array2Vector(pData->m_WeldParameter.m_TimeStep, &vectorTime);
+    Array2Vector(pData->m_WeldParameter.m_PowerStep, &vectorPower);
+    
+    Vector2String(&vectorEnergy, strEnergy);
+    Vector2String(&vectorTime, strTime);
+    Vector2String(&vectorPower, strPower);
 
 	string strStore =
         "insert into " + string(TABLE_WELD_RECIPE) +
@@ -337,15 +344,15 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
         std::to_string(pData->m_AdvancedSetting.m_DisplayedHeightOffset)+","+//WeldHeight
         std::to_string(pData->m_AdvancedSetting.m_MeasuredHeightOffset)+","+//MeasuredHeight
         std::to_string(pData->m_AdvancedSetting.m_WeldStepMode)+",'"+//StepWeldMode
-		jsonStrEnergy+"','"+//EnergyToStep
-		jsonStrTime+"','"+//TimeToStep
-		jsonStrPower+"','"+//PowerToStep
+		strEnergy+"','"+//EnergyToStep
+		strTime+"','"+//TimeToStep
+		strPower+"','"+//PowerToStep
         pData->m_RecipeName+"','"+//RecipeName
         timeBuf+"','"+//DateTime
         pData->m_RecipePicPath+"');";//PresetPicPath
-        jsonStrEnergy.shrink_to_fit();
-        jsonStrTime.shrink_to_fit();
-        jsonStrPower.shrink_to_fit();
+        strEnergy.shrink_to_fit();
+        strTime.shrink_to_fit();
+        strPower.shrink_to_fit();
 
 	int nErrCode = SingleTransaction(strStore);
 	if(nErrCode != 0)
@@ -482,17 +489,17 @@ void DBAccessL20DB::QueryWeldSignature(char *buffer)
         std::to_string(*(long long *)buffer)+";";
     string str = ExecuteQuery(strQuery);
     vector<WELD_SIGNATURE> WeldSignVector;
-    Utility::JSON2Vector(str, &WeldSignVector);
+    String2Vector(str, &WeldSignVector);
 #ifdef UNITTEST_DATABASE
     for(int i=0;i<WeldSignVector.size();i++)
-        {
-        LOG("\tOrder(%d): Frquency %d, Power %d, Height %d, Amplitude %d\n",
+	{
+    	LOG("\tOrder(%d): Frquency %d, Power %d, Height %d, Amplitude %d\n",
             i,
             WeldSignVector[i].Frquency,
             WeldSignVector[i].Power,
             WeldSignVector[i].Height,
             WeldSignVector[i].Amplitude);
-        }
+	}
 #endif
 
     return;
@@ -536,7 +543,7 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
     string strQuery =
         "select * from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
-        std::to_string(pRecipe->m_RecipeNumber)+";";
+        std::to_string(pRecipe->m_RecipeID)+";";
     string str = ExecuteQuery(strQuery);
 #ifdef UNITTEST_DATABASE
     if(str.size()>0)
@@ -546,59 +553,65 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
     strQuery =
         "select EnergyToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
-        std::to_string(pRecipe->m_RecipeNumber)+";";
+        std::to_string(pRecipe->m_RecipeID)+";";
     str = ExecuteQuery(strQuery);
     if(str.empty()!=true)
-        {
-        WeldStepValueSetting energy[STEP_MAX];
-        Utility::JSON2Struct(str, &energy[0]);
+    {
+		WeldStepValueSetting energy[STEP_MAX];
+		vector<WeldStepValueSetting> vectorEnergy;
+		String2Vector(str, &vectorEnergy);
+		Vector2Array(&vectorEnergy, energy);
 #ifdef UNITTEST_DATABASE
-        LOG("\nEnergyToStep\n");
-        for(int i=0; i<STEP_MAX; i++)
-            {
-            LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-                i, energy[i].m_StepValue, energy[i].m_AmplitudeValue);
-            }
+		LOG("\nEnergyToStep\n");
+		for(int i=0; i<STEP_MAX; i++)
+		{
+			LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
+					i, energy[i].m_StepValue, energy[i].m_AmplitudeValue);
+		}
 #endif
-        }
+	}
 
     strQuery =
         "select TimeToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
-        std::to_string(pRecipe->m_RecipeNumber)+";";
+        std::to_string(pRecipe->m_RecipeID)+";";
     str = ExecuteQuery(strQuery);
     if(str.empty()!=true)
-        {
-        WeldStepValueSetting timeStep[STEP_MAX];
-        Utility::JSON2Struct(str, &timeStep[0]);
+	{
+		WeldStepValueSetting timeStep[STEP_MAX];
+		vector<WeldStepValueSetting> vectorTime;
+		String2Vector(str, &vectorTime);
+		Vector2Array(&vectorTime, timeStep);
 #ifdef UNITTEST_DATABASE
-        LOG("\nTimeToStep\n");
-        for(int i=0; i<STEP_MAX; i++)
-            {
-            LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-                i, timeStep[i].m_StepValue, timeStep[i].m_AmplitudeValue);
-            }
-#endif
+		LOG("\nTimeToStep\n");
+		for(int i=0; i<STEP_MAX; i++)
+        {
+			LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
+					i, timeStep[i].m_StepValue, timeStep[i].m_AmplitudeValue);
         }
+#endif
+	}
 
     strQuery =
         "select PowerToStep from "+string(TABLE_WELD_RECIPE)+
         " where ID="+
-        std::to_string(pRecipe->m_RecipeNumber)+";";
+        std::to_string(pRecipe->m_RecipeID)+";";
     str = ExecuteQuery(strQuery);
     if(str.empty()!=true)
-        {
-        WeldStepValueSetting power[STEP_MAX];
-        Utility::JSON2Struct(str, &power[0]);
+	{
+		WeldStepValueSetting power[STEP_MAX];
+		vector<WeldStepValueSetting> vectorPower;
+		String2Vector(str, &vectorPower);
+		Vector2Array(&vectorPower, power);
 #ifdef UNITTEST_DATABASE
-        LOG("\nPowerToStep\n");
-        for(int i=0; i<STEP_MAX; i++)
-            {
-            LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-                i, power[i].m_StepValue, power[i].m_AmplitudeValue);
-            }
-#endif
+		LOG("\nPowerToStep\n");
+		for(int i=0; i<STEP_MAX; i++)
+        {
+			LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
+					i, power[i].m_StepValue, power[i].m_AmplitudeValue);
         }
+#endif
+	}
     return;
 }
 
@@ -619,10 +632,15 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 	vxbRtcGet(&timeStamp);
     strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
 
-    string jsonStrEnergy, jsonStrTime, jsonStrPower;
-    Utility::Struct2JSON(pRecipe->m_WeldParameter.m_EnergyStep, STEP_MAX, jsonStrEnergy);
-    Utility::Struct2JSON(pRecipe->m_WeldParameter.m_TimeStep, STEP_MAX, jsonStrTime);
-    Utility::Struct2JSON(pRecipe->m_WeldParameter.m_PowerStep, STEP_MAX, jsonStrPower);
+    string strEnergy, strTime, strPower;
+    vector<WeldStepValueSetting> vectorEnergy, vectorTime, vectorPower;
+    Array2Vector(pRecipe->m_WeldParameter.m_EnergyStep, &vectorEnergy);
+    Array2Vector(pRecipe->m_WeldParameter.m_TimeStep, &vectorTime);
+    Array2Vector(pRecipe->m_WeldParameter.m_PowerStep, &vectorPower);
+    
+    Vector2String(&vectorEnergy, strEnergy);
+    Vector2String(&vectorTime, strTime);
+    Vector2String(&vectorPower, strPower);
 
 	string strStore =
         "update " 				+ string(TABLE_WELD_RECIPE) +
@@ -651,16 +669,16 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
         ", WeldHeight=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_DisplayedHeightOffset)+//WeldHeight
         ", MeasuredHeight=" 		+ std::to_string(pRecipe->m_AdvancedSetting.m_MeasuredHeightOffset)+//MeasuredHeight
         ", StepWeldMode=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_WeldStepMode)+//StepWeldMode
-        ", EnergyToStep='" 			+ jsonStrEnergy+//EnergyToStep
-        "', TimeToStep='" 			+ jsonStrTime+//TimeToStep
-        "', PowerToStep='" 			+ jsonStrPower+//PowerToStep
+        ", EnergyToStep='" 			+ strEnergy+//EnergyToStep
+        "', TimeToStep='" 			+ strTime+//TimeToStep
+        "', PowerToStep='" 			+ strPower+//PowerToStep
         "', RecipeName='" 			+ pRecipe->m_RecipeName+//RecipeName
         "', DateTime='" 			+ timeBuf+//DateTime
         "', PresetPicPath='" 		+ pRecipe->m_RecipePicPath+//PresetPicPath
-        "' where ID=" 				+ std::to_string(pRecipe->m_RecipeNumber)+";";
-        jsonStrEnergy.shrink_to_fit();
-        jsonStrTime.shrink_to_fit();
-        jsonStrPower.shrink_to_fit();
+        "' where ID=" 				+ std::to_string(pRecipe->m_RecipeID)+";";
+        strEnergy.shrink_to_fit();
+        strTime.shrink_to_fit();
+        strPower.shrink_to_fit();
 
 	int nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
@@ -714,6 +732,495 @@ int DBAccessL20DB::getLatestID(const string table, int* _id)
     if(errorCode == SQLITE_OK)
     	*_id = atoi(str.c_str());
     return errorCode;
+}
+
+
+/**************************************************************************//**
+* \brief   - The struct2Json shall be overload function for WeldStepValueSetting.
+* 			 The format of JSON shall be 
+* 			 {"Order1": [ModeValue1, Amplitude1], 
+* 			  "Order2": [ModeValue2, Amplitude2],
+* 			  "Order3": [ModeValue3, Amplitude3]
+* 			 }                             
+*
+* \param   - WeldStepValueSetting, size and output JSONString
+*
+* \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
+*
+******************************************************************************/
+int	DBAccessL20DB::Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr)
+{
+    char *result;
+    if((_ptrArray == nullptr) || (size == 0) || (size > STEP_MAX))
+	{
+        return ERROR;
+	}
+
+    json_t *jsonArray[size];
+    for(int i = 0; i < size; i++)
+    {
+    	jsonArray[i] = json_array();
+    }
+    json_t *all  = json_object();
+
+    for(UINT32 i = 0; i < size; i++)
+	{
+        json_array_append_new(jsonArray[i], json_integer(_ptrArray[i].m_StepValue));
+        json_array_append_new(jsonArray[i],	json_integer(_ptrArray[i].m_AmplitudeValue));
+        json_object_set_new(all, std::to_string(i).c_str(), jsonArray[i]);
+	}
+    
+    result = json_dumps(all, 0);
+
+    json_delete(all);
+    jsonStr = result;
+    return OK;
+}
+
+/**************************************************************************//**
+* \brief   - The json2struct shall be overload function for WeldStepValueSetting.
+* 			 The format of JSON shall be 
+* 			 {"Order1": [ModeValue1, Amplitude1], 
+* 			  "Order2": [ModeValue2, Amplitude2],
+* 			  "Order3": [ModeValue3, Amplitude3]
+* 			 }                             
+*
+* \param   - JSONString and WeldStepValueSetting
+*
+* \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
+*
+******************************************************************************/
+int DBAccessL20DB::JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray)
+{
+    json_t *all;
+    json_t *array;
+    json_t *mem;
+    int index = 0;
+
+    if(_ptrArray == nullptr)
+	{
+        printf("invalid _ptrArray\n");
+    	return ERROR;
+	}
+
+    all = json_loads(jsonStr.c_str(), 0, NULL);
+    if(all == NULL)
+    {
+        printf("invalid json\n");
+        return ERROR;
+    }
+    
+    for(int i = 0; i < STEP_MAX; i++)
+    {
+    	array = json_object_get(all, std::to_string(i).c_str());
+    	index = 0;
+    	if(index < json_array_size(array))
+    	{
+    		mem = json_array_get(array, index);
+    		_ptrArray[i].m_StepValue = json_integer_value(mem);
+    	}
+    	index++;
+    	if(index < json_array_size(array))
+    	{
+    		mem = json_array_get(array, index);
+    		_ptrArray[i].m_AmplitudeValue = json_integer_value(mem);
+    	}
+    }
+    
+    json_delete(all);
+    return OK;
+}
+
+/**************************************************************************//**
+* \brief   - The vector2Json is the function for the data converting from vector to JSON.
+* 			 The format of JSON shall be 
+* 			 {"Order1": [Frequency1, Power1, Height1, Amplitude1], 
+* 			  "Order2": [Frequency2, Power2, Height2, Amplitude2],
+* 			  "Order3": [Frequency3, Power3, Height3, Amplitude3]
+* 			 }                             
+*
+* \param   - vector<WELD_SIGNATURE> pointer, and output JSONString
+*
+* \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
+*
+******************************************************************************/
+int DBAccessL20DB::Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string& jsonStr)
+{
+    char *result;
+    if((_ptrVector->size() == 0) || (_ptrVector->size() > HMI_SIGNA_POINT_MAX))
+	{
+        return ERROR;
+	}
+    
+    json_t *jsonArray[SIGNATURE_DATA_TYPE::TOTAL] = {nullptr};
+    for(int i = 0; i < SIGNATURE_DATA_TYPE::TOTAL; i++)
+    {
+    	jsonArray[i] = json_array();
+    }
+    json_t *all  = json_object();
+
+    for(int i = 0; i < _ptrVector->size(); i++)
+	{
+        json_array_append_new(jsonArray[i], json_integer(_ptrVector->at(i).Frquency));
+        json_array_append_new(jsonArray[i], json_integer(_ptrVector->at(i).Power));
+        json_array_append_new(jsonArray[i], json_integer(_ptrVector->at(i).Height));
+        json_array_append_new(jsonArray[i], json_integer(_ptrVector->at(i).Amplitude));
+        json_object_set_new(all, std::to_string(i).c_str(), jsonArray[i]);
+	}
+
+    result = json_dumps(all, 0);
+
+    json_delete(all);
+    jsonStr = result;
+    return OK;
+}
+
+/**************************************************************************//**
+* \brief   - The vector2String is the function for the data converting from vector to String with the specific format.
+* 			 The format of String shall be
+* 			 {"Frequency1, Power1, Height1, Amplitude1;
+* 			  "Frequency2, Power2, Height2, Amplitude2;
+* 			  "Frequency3, Power3, Height3, Amplitude3;
+* 			 }
+*
+* \param   - vector<WELD_SIGNATURE> pointer, and output String
+*
+* \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
+*
+******************************************************************************/
+int DBAccessL20DB::Vector2String(const vector<WELD_SIGNATURE>* _ptrVector, string & str)
+{
+	if ((_ptrVector->size() == 0) || (_ptrVector->size() > HMI_SIGNA_POINT_MAX))
+	{
+		return ERROR;
+	}
+	WELD_SIGNATURE tmpSignature;
+	int j = 0;
+	for (int i = 0; i < _ptrVector->size(); i++)
+	{
+		tmpSignature = _ptrVector->at(0);
+		for(int j = 0; j < TOTAL; j++)
+		{
+			switch(j)
+			{
+			case FRQUENCY:
+				str += std::to_string(tmpSignature.Frquency) + ",";
+				break;
+			case POWER:
+				str += std::to_string(tmpSignature.Power) + ",";
+				break;
+			case HEIGHT:
+				str += std::to_string(tmpSignature.Height) + ",";
+				break;
+			case AMPLITUDE:
+				str += std::to_string(tmpSignature.Amplitude) + ";";
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	return OK;
+}
+
+/**************************************************************************//**
+* \brief   - The json2Vector is the function for the data converting from JSON to vector.
+* 			 The format of JSON shall be 
+* 			 {"Order1": [Frequency1, Power1, Height1, Amplitude1], 
+* 			  "Order2": [Frequency2, Power2, Height2, Amplitude2],
+* 			  "Order3": [Frequency3, Power3, Height3, Amplitude3]
+* 			 }                             
+*
+* \param   - input JSON string output vector<WELD_SIGNATURE> pointer
+*
+* \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
+*
+******************************************************************************/
+int DBAccessL20DB::JSON2Vector(const string jsonStr, vector<WELD_SIGNATURE>* _ptrVector)
+{
+    int size = 0, index = 0;
+    json_t *all, *array, *mem;
+    WELD_SIGNATURE signature;
+
+    if(jsonStr.empty() == true)
+        return ERROR;
+    if(_ptrVector == nullptr)
+    	return ERROR;
+
+    all = json_loads(jsonStr.c_str(), 0, NULL);
+    if(all == NULL)
+	{
+        printf("invalid json\n");
+        return ERROR;
+	}
+
+    for(int i = 0; (array = json_object_get(all, std::to_string(i).c_str()))!=NULL; i++)
+    {
+    	index = 0;
+    	if(index < json_array_size(array))
+    	{
+    		mem = json_array_get(array, index);
+    		signature.Frquency = json_integer_value(mem);
+    	}
+
+    	index++;
+    	if(index < json_array_size(array))
+    	{
+    		mem = json_array_get(array, index);
+    		signature.Power = json_integer_value(mem);
+    	}
+
+    	index++;
+    	if(index < json_array_size(array))
+    	{
+    		mem = json_array_get(array, index);
+    		signature.Height = json_integer_value(mem);
+    	}
+
+    	index++;
+    	if(index < json_array_size(array))
+    	{
+    		mem = json_array_get(array, index);
+    		signature.Amplitude = json_integer_value(mem);
+    	}
+    	
+    	_ptrVector->push_back(signature);
+    }
+    
+    json_delete(all);
+    return OK;
+}
+
+/**************************************************************************//**
+* \brief   - The String2Vector is the function for the data converting from string with specific format to vector.
+* 			 The format of string shall be 
+* 			 {"Frequency1, Power1, Height1, Amplitude1; 
+* 			  "Frequency2, Power2, Height2, Amplitude2;
+* 			  "Frequency3, Power3, Height3, Amplitude3;
+* 			 }                             
+*
+* \param   - input string output vector<WELD_SIGNATURE> pointer
+*
+* \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
+*
+******************************************************************************/
+int DBAccessL20DB::String2Vector(const string str, vector<WELD_SIGNATURE>* _ptrVector)
+{
+	int iResult = ERROR;
+	WELD_SIGNATURE tmpSignature;
+
+	if (str.empty() == true)
+		return ERROR;
+	if (_ptrVector == nullptr)
+		return ERROR;
+	vector<string> tmpStringlist;
+	vector<string> tmpStringData;
+	if (Utility::StringToTokens(str, ';', tmpStringlist) == 0)
+		return ERROR;
+
+	tmpStringData.clear();
+	for (int i = 0; i < tmpStringlist.size(); i++)
+	{
+		if (Utility::StringToTokens(tmpStringlist[i], ',', tmpStringData) > 0)
+		{
+			for (int j = 0; j < tmpStringData.size(); j++)
+			{
+				switch (j)
+				{
+				case FRQUENCY:
+					tmpSignature.Frquency = std::stoi(tmpStringData[j]);
+					break;
+				case POWER:
+					tmpSignature.Power = std::stoi(tmpStringData[j]);
+					break;
+				case HEIGHT:
+					tmpSignature.Height = std::stoi(tmpStringData[j]);
+					break;
+				case AMPLITUDE:
+					tmpSignature.Amplitude = std::stoi(tmpStringData[j]);
+					break;
+				default:
+					break;
+				}
+			}
+			_ptrVector->push_back(tmpSignature);
+		}
+		else
+		{
+			iResult = ERROR;
+			break;
+		}
+	}
+
+	return OK;
+}
+
+/**************************************************************************//**
+* \brief   - The vector2String is the function for the data converting from vector to String with the specific format.
+* 			 The format of String shall be
+* 			 {"Order1, StepValue1, Amplitude1;
+* 			  "Order2, StepValue2, Amplitude2;
+* 			  "Order3, StepValue3, Amplitude3;
+* 			 }
+*
+* \param   - vector<WeldStepValueSetting> pointer, and output String
+*
+* \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
+*
+******************************************************************************/
+int DBAccessL20DB::Vector2String(const vector<WeldStepValueSetting>* _ptrVector, string& str)
+{
+	if ((_ptrVector->size() == 0) || (_ptrVector->size() > HMI_SIGNA_POINT_MAX))
+	{
+		return ERROR;
+	}
+	WeldStepValueSetting tmpStepSetting;
+	int j = 0;
+	for (int i = 0; i < _ptrVector->size(); i++)
+	{
+		tmpStepSetting = _ptrVector->at(0);
+		for(int j = 0; j < TOTAL; j++)
+		{
+			switch(j)
+			{
+			case Recipe::ORDER:
+				str += std::to_string(tmpStepSetting.m_Order) + ",";
+				break;
+			case Recipe::STEPVALUE:
+				str += std::to_string(tmpStepSetting.m_StepValue) + ",";
+				break;
+			case AMPLITUDE:
+				str += std::to_string(tmpStepSetting.m_AmplitudeValue) + ";";
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	return OK;
+}
+
+/**************************************************************************//**
+* \brief   - The String2Vector is the function for the data converting from string with specific format to vector.
+* 			 The format of string shall be 
+* 			 {"Order1, StepValue1, Amplitude1;
+* 			  "Order2, StepValue2, Amplitude2;
+* 			  "Order3, StepValue3, Amplitude3;
+* 			 }                            
+*
+* \param   - input string output vector<WELD_SIGNATURE> pointer
+*
+* \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
+*
+******************************************************************************/
+int DBAccessL20DB::String2Vector(const string str, vector<WeldStepValueSetting>* _ptrVector)
+{
+	int iResult = ERROR;
+	WeldStepValueSetting tmpStepSetting;
+
+	if (str.empty() == true)
+		return ERROR;
+	if (_ptrVector == nullptr)
+		return ERROR;
+	vector<string> tmpStringlist;
+	vector<string> tmpStringData;
+	if (Utility::StringToTokens(str, ';', tmpStringlist) == 0)
+		return ERROR;
+
+	tmpStringData.clear();
+	for (int i = 0; i < tmpStringlist.size(); i++)
+	{
+		if (Utility::StringToTokens(tmpStringlist[i], ',', tmpStringData) > 0)
+		{
+			for (int j = 0; j < tmpStringData.size(); j++)
+			{
+				switch (j)
+				{
+				case Recipe::ORDER:
+					tmpStepSetting.m_Order = std::stoi(tmpStringData[j]);
+					break;
+				case Recipe::STEPVALUE:
+					tmpStepSetting.m_StepValue = std::stoi(tmpStringData[j]);
+					break;
+				case AMPLITUDE:
+					tmpStepSetting.m_AmplitudeValue = std::stoi(tmpStringData[j]);
+					break;
+				default:
+					break;
+				}
+			}
+			_ptrVector->push_back(tmpStepSetting);
+		}
+		else
+		{
+			iResult = ERROR;
+			break;
+		}
+	}
+
+	return OK;
+}
+
+/**************************************************************************//**
+* \brief   - The Arrary2Vector is the function for the data type converting from array to vector so
+* 			 there is the common interface (vector to string) for database blob type. 
+* 			 In case of the Recipe Step mode data type changed from struct array to vector in future,
+* 			 there is not any change for database.                           
+*
+* \param   - input struct array output vector<WELD_SIGNATURE> pointer
+*
+* \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
+*
+******************************************************************************/
+int DBAccessL20DB::Array2Vector(const WeldStepValueSetting* _ptrArray, vector<WeldStepValueSetting>* _ptrvector)
+{
+	if((_ptrArray == nullptr) || (_ptrvector == nullptr))
+		return ERROR;
+	for(int i = 0; i < STEP_MAX; i++)
+	{
+		_ptrvector->push_back(*_ptrArray);
+		_ptrArray++;
+	}
+	return OK;
+}
+
+/**************************************************************************//**
+* \brief   - The Vector2Array is the function for the data type converting from vector to array so
+* 			 there is the common interface (vector to string) for database blob type. 
+* 			 In case of the Recipe Step mode data type changed from struct array to vector in future,
+* 			 there is not any change for database.                           
+*
+* \param   - input struct array output vector<WELD_SIGNATURE> pointer
+*
+* \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
+*
+******************************************************************************/
+int DBAccessL20DB::Vector2Array(const vector<WeldStepValueSetting>* _ptrvector, WeldStepValueSetting* _ptrArray)
+{
+	int iResult = OK;
+	if((_ptrArray == nullptr) || (_ptrvector == nullptr))
+		return ERROR;
+	for(int i = 0; i < _ptrvector->size(); i++)
+	{
+		if(i < STEP_MAX)
+		{
+			*_ptrArray = _ptrvector->at(i);
+		}
+		else
+		{
+			iResult = ERROR;
+			break;
+		}
+	}
+	if(_ptrvector->size() < STEP_MAX)
+	{
+		for(int i = _ptrvector->size(); i < STEP_MAX; i++)
+		{
+			_ptrArray[i].m_Order = -1;
+		}
+	}
+	return iResult;
 }
 
 /**************************************************************************//**

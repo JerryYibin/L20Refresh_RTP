@@ -12,7 +12,6 @@
 ******************************************************************************/
 ACStartSwitch::ACStartSwitch() {
 	stateType = ACState::AC_STARTSWICH;
-	m_PBState = WAIT_PRESSED;
 	m_Timeout = 0;
 }
 
@@ -42,9 +41,14 @@ ACStartSwitch::~ACStartSwitch() {
 ******************************************************************************/
 void ACStartSwitch::Enter()
 {
-	m_PBState = WAIT_PRESSED;
 	m_Timeout = 0;
-	ACStateMachine::AC_TX->AC_StatusEvent &= ~BIT_MASK(STATUS_START_SWITCH_PRESSED);
+	if((ACStateMachine::AC_TX->ACInputs & SS1MASK) == SS1MASK)
+		m_PBIndex = SS1MASK;
+	else if((ACStateMachine::AC_TX->ACInputs & SS2MASK) == SS2MASK)
+		m_PBIndex = SS2MASK;
+	else
+		m_PBIndex = 0;
+	
 }
 
 /**************************************************************************//**
@@ -59,48 +63,30 @@ void ACStartSwitch::Enter()
 void ACStartSwitch::Loop()
 {
 	unsigned int coreStatus = NO_ERROR;
-	if(ACStateMachine::AC_RX->MasterState == ACState::AC_READY)
+	if(ACStateMachine::AC_RX->MasterState != ACState::AC_READY)
 	{
-		ChangeState(ACState::AC_READY);
-		return;
+		ChangeState(AC_READY);
 	}
-	switch(m_PBState)
+	else if(m_PBIndex == 0)
 	{
-	case WAIT_PRESSED:
-		//TODO still need to add input signals checking
-		if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_LOW && vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_LOW) // food pedal should be pressed status.
-		{
-			m_PBState = HOLD_PRESSED_DEBOUNCE;
-			m_Timeout = 0;
-		}
-		break;
-	case HOLD_PRESSED_DEBOUNCE:
-		if(m_Timeout < DELAY50MSEC)
-			m_Timeout++;
-		else
-		{
-			m_Timeout = 0;
-			m_PBState = STILL_PRESSED;
-		}
-		break;
-	case STILL_PRESSED:
-		if (m_Timeout < DELAY250MSEC)
-		{
-			//TODO still need to add input signals checking
-			if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_LOW && vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_LOW)
-			{
-				ACStateMachine::AC_TX->AC_StatusEvent |= BIT_MASK(STATUS_START_SWITCH_PRESSED);
-				ChangeState(AC_READY);
-			}
-			else
-				m_Timeout++;
-		}
-		else
-		{
-			ActuatorTask::SetCoreState(ERR_STARTSWITCH_LOST);
-			ChangeState(AC_ALARM);
-		}
-		break;
+		ActuatorTask::SetCoreState(ERR_STARTSWITCH_LOST);
+	}
+	else if(m_Timeout > DELAY250MSEC)
+	{
+		ActuatorTask::SetCoreState(ERR_STARTSWITCH_LOST);
+	}
+	else if((ACStateMachine::AC_TX->ACInputs & BOTHSTARTSWITCHMASK) != m_PBIndex)
+	{
+		ActuatorTask::SetCoreState(ERR_STARTSWITCH_LOST);
+	}
+	else if((ACStateMachine::AC_TX->ACInputs & BOTHSTARTSWITCHMASK) == BOTHSTARTSWITCHMASK)
+	{
+		ACStateMachine::AC_TX->AC_StatusEvent |= BIT_MASK(STATUS_START_SWITCH_PRESSED);
+		ChangeState(AC_READY);
+	}
+	else
+	{
+		m_Timeout++;
 	}
 }
 

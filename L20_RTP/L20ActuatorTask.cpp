@@ -177,7 +177,14 @@ unsigned int L20ActuatorTask::WeightedAverageSpeed(unsigned int EncoderPosition)
 	return  _ABS(tmpSpeed);
 }
 
-
+/**************************************************************************//**
+* \brief   - Initialize all the variables that related to the horn moving checking.
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
 void L20ActuatorTask::InitMovingProcess()
 {
 	for(int i = 0; i < 4; i++)
@@ -190,17 +197,40 @@ void L20ActuatorTask::InitMovingProcess()
 	m_IsMoving = true;
 }
 
-
+/**************************************************************************//**
+* \brief   - To get the horn moving status.
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
 bool L20ActuatorTask::IsMoving()
 {
 	return m_IsMoving;
 }
 
+/**************************************************************************//**
+* \brief   - To get the horn moving Maximum speed.
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
 unsigned int L20ActuatorTask::GetMaxSpeed()
 {
 	return MaxSpeed;
 }
 
+/**************************************************************************//**
+* \brief   - To set height encoder initialized count as HEIGHT_HOME_COUNT.
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
 void L20ActuatorTask::InitHeightSystem()
 {
 	HeightEncoder::GetInstance()->SetInitCount(HEIGHT_HOME_COUNT);

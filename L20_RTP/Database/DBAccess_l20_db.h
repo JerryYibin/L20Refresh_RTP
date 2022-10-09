@@ -17,6 +17,18 @@ class DBAccessL20DB: public DBAccess
 private:
     int getLatestID(const string table, int* _id);
     int getLatestID64(const string table, long long* _id);
+    int Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr);
+    int JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray);
+    int Array2Vector(const WeldStepValueSetting* _ptrArray, vector<WeldStepValueSetting>* _ptrvector);
+    int Vector2Array(const vector<WeldStepValueSetting>* _ptrvector, WeldStepValueSetting* _ptrArray);
+    
+    int Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string& jsonStr);
+    int JSON2Vector(const string jsonStr, vector<WELD_SIGNATURE>* _ptrVector);
+    int Vector2String(const vector<WELD_SIGNATURE>* _ptrVector, string& str);
+    int String2Vector(const string str, vector<WELD_SIGNATURE>* _ptrVector);
+    int Vector2String(const vector<WeldStepValueSetting>* _ptrVector, string& str);
+    int String2Vector(const string str, vector<WeldStepValueSetting>* _ptrVector);
+    
 public:
 	DBAccessL20DB();
 	virtual ~DBAccessL20DB();

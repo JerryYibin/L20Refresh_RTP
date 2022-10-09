@@ -13,8 +13,6 @@
 #define PRESSURE_MAX	120000
 #define AMPLITUDE_MAX	72
 #include "Common.h"
-#include "recipedef.h"
-#include "WeldResultSignature.h"
 #include <vector>
 using namespace std;
 class Utility {
@@ -40,12 +38,8 @@ public:
 	
 	static int 	  Average				(const int* data, const int size);
 	
-    static int Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr);
-    static int JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray);
-    static int Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string& jsonStr);
-    static int JSON2Vector(const string jsonStr, vector<WELD_SIGNATURE>* _ptrVector);
-	
-	
+	static int    StringToTokens        (const string strData, const char delimiter, vector<string>&vTokens);
+	static int    TokensToString        (const vector<string>&vTokens, const char delimiter, string &strData);
 };
 
 #endif /* UTILITY_H_ */
