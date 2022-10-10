@@ -197,6 +197,7 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 	{
 #ifdef UNITTEST_DATABASE
         LOG("# store WeldResult to ID %llu\n", id);
+        LOG("# %s\n", strStore.c_str());
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -372,102 +373,54 @@ int DBAccessL20DB::QueryBlockWeldResult(char *buffer)
 {
     int count;
     string str;
+	vector<string> tmpStr;
 	long long id = *(long long *)buffer;
-    for(count = 0; count < RESULT_FOR_UI_MAX; count++, id--)
-    {
-        str = ExecuteQuery(
-                    string("select ")+"RecipeID"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-		if(str.empty())
-		{
-            break;
-        }
-        else
-		{
-            CommonProperty::WeldResultForUI[count].RecipeNum = atoi(str.c_str());//RecipeID
 
-            str = ExecuteQuery(
-                    string("select ")+"PartID"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            strncpy(CommonProperty::WeldResultForUI[count].PartID, str.c_str(), BARCODE_DATA_SIZE);//PartID
-
-            str = ExecuteQuery(
-                    string("select ")+"WeldEnergy"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            CommonProperty::WeldResultForUI[count].TotalEnergy = atoi(str.c_str());//WeldEnergy
-
-            str = ExecuteQuery(
-                    string("select ")+"TriggerPressure"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            CommonProperty::WeldResultForUI[count].TriggerPressure = atoi(str.c_str());//TriggerPressure
-
-            str = ExecuteQuery(
-                    string("select ")+"WeldPressure"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            CommonProperty::WeldResultForUI[count].WeldPressure = atoi(str.c_str());//WeldPressure
-
-            str = ExecuteQuery(
-                    string("select ")+"WeldAmplitude"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            CommonProperty::WeldResultForUI[count].Amplitude = atoi(str.c_str());//WeldAmplitude
-
-            str = ExecuteQuery(
-                    string("select ")+"WeldTime"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            CommonProperty::WeldResultForUI[count].WeldTime = atoi(str.c_str());//WeldTime
-
-            str = ExecuteQuery(
-                    string("select ")+"WeldPeakPower"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            CommonProperty::WeldResultForUI[count].PeakPower = atoi(str.c_str());//WeldPeakPower
-
-            str = ExecuteQuery(
-                    string("select ")+"TriggerHeight"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            CommonProperty::WeldResultForUI[count].PreHeight = atoi(str.c_str());//TriggerHeight
-
-            str = ExecuteQuery(
-                    string("select ")+"WeldHeight"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            CommonProperty::WeldResultForUI[count].PostHeight = atoi(str.c_str());//WeldHeight
-
-            str = ExecuteQuery(
-                    string("select ")+"AlarmFlag"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            CommonProperty::WeldResultForUI[count].ALARMS.ALARMflags = atoi(str.c_str());//AlarmFlag
-
-            str = ExecuteQuery(
-                    string("select ")+"CycleCounter"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-            CommonProperty::WeldResultForUI[count].CycleCounter = atoi(str.c_str());//CycleCounter
-
-            str = ExecuteQuery(
-                    string("select ")+"DateTime"+
-                    " from "+string(TABLE_WELD_RESULT)+
-                    " where ID = "+std::to_string(id)+";");
-
+    str = ExecuteQuery(
+                string("select * from ")+string(TABLE_WELD_RESULT)+
+                " where ID <= "+std::to_string(id)+" and ID > "+
+                std::to_string(id-RESULT_FOR_UI_MAX)+
+                " order by ID desc;");
 #ifdef UNITTEST_DATABASE
-            LOG("ID: %llu\n", id);
-            LOG("DateTime: %s\n", str.c_str());
-            LOG("RecipeID: %d\n", CommonProperty::WeldResultForUI[count].RecipeNum);
-            LOG("PartID: %s\n", CommonProperty::WeldResultForUI[count].PartID);
-            LOG("WeldTime: %d\n", CommonProperty::WeldResultForUI[count].WeldTime);
-            LOG("\n");
+    LOG("QueryBlockWeldResult:\n%s\n\n", str.c_str());
 #endif
-		}
-    }
+
+    Utility::StringToTokens(str, ',', tmpStr);
+	for(count = 0; count < tmpStr.size()/TABLE_RESULT_MEM; count++)
+	    {
+        strncpy(CommonProperty::WeldResultForUI[count].PartID,
+            tmpStr[count*TABLE_RESULT_MEM+1].c_str(), BARCODE_DATA_SIZE);//PartID
+        CommonProperty::WeldResultForUI[count].RecipeNum =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+3].c_str());//RecipeID
+        CommonProperty::WeldResultForUI[count].TotalEnergy =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+4].c_str());//WeldEnergy
+        CommonProperty::WeldResultForUI[count].TriggerPressure =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+5].c_str());//TriggerPressure
+        CommonProperty::WeldResultForUI[count].WeldPressure =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+6].c_str());//WeldPressure
+        CommonProperty::WeldResultForUI[count].Amplitude =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+7].c_str());//WeldAmplitude
+        CommonProperty::WeldResultForUI[count].WeldTime =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+8].c_str());//WeldTime
+        CommonProperty::WeldResultForUI[count].PeakPower =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+9].c_str());//WeldPeakPower
+        CommonProperty::WeldResultForUI[count].PreHeight =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+10].c_str());//TriggerHeight
+        CommonProperty::WeldResultForUI[count].PostHeight =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+11].c_str());//WeldHeight
+        CommonProperty::WeldResultForUI[count].ALARMS.ALARMflags =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+12].c_str());//AlarmFlag
+        CommonProperty::WeldResultForUI[count].CycleCounter =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+14].c_str());//CycleCounter
+#ifdef UNITTEST_DATABASE
+        LOG("ID: %s\n", tmpStr[count*TABLE_RESULT_MEM].c_str());
+        LOG("PartID: %s\n", CommonProperty::WeldResultForUI[count].PartID);
+        LOG("DateTime: %s\n", tmpStr[count*TABLE_RESULT_MEM+2].c_str());
+        LOG("RecipeID: %d\n", CommonProperty::WeldResultForUI[count].RecipeNum);
+        LOG("WeldTime: %d\n", CommonProperty::WeldResultForUI[count].WeldTime);
+        LOG("\n");
+#endif
+	    }
     return count;
 }
 
