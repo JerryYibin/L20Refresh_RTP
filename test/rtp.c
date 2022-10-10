@@ -151,6 +151,7 @@ typedef struct
 
 typedef struct  
     {
+	int					  m_RecipeID;
     int                   m_RecipeNumber;
     char                  m_RecipePicPath[PIC_PATH_LEN];
     BOOL                  m_IsTeachMode;
@@ -203,11 +204,11 @@ int main(int argc, char *argv[])
  *     third parameter for count
  *   b for query
  *     no third parameter for all records
- *     third parameter for m_RecipeNumber of WeldRecipeSC
+ *     third parameter for m_RecipeID of WeldRecipeSC
  *   c for clear
  *   d for delete oldest
  *   u for update
- *     third parameter for m_RecipeNumber of WeldRecipeSC
+ *     third parameter for m_RecipeID of WeldRecipeSC
  *
  * 2 for WELD_RESULT
  *   a for insert
@@ -286,7 +287,7 @@ int main(int argc, char *argv[])
                         WeldRecipeSC *pData = (WeldRecipeSC *)&buf.Buffer[0];
                         if(argc>=4)
                             {
-                            pData->m_RecipeNumber = atoi(argv[3]);
+                            pData->m_RecipeID = atoi(argv[3]);
                             buf.msgID = TO_DATA_TASK_WELD_RECIPE_QUERY;
                             }
                         else

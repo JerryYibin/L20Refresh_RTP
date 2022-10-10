@@ -566,7 +566,7 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
 		for(int i=0; i<STEP_MAX; i++)
 		{
 			LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-					i, energy[i].m_StepValue, energy[i].m_AmplitudeValue);
+					energy[i].m_Order, energy[i].m_StepValue, energy[i].m_AmplitudeValue);
 		}
 #endif
 	}
@@ -587,7 +587,7 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
 		for(int i=0; i<STEP_MAX; i++)
         {
 			LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-					i, timeStep[i].m_StepValue, timeStep[i].m_AmplitudeValue);
+					timeStep[i].m_Order, timeStep[i].m_StepValue, timeStep[i].m_AmplitudeValue);
         }
 #endif
 	}
@@ -608,7 +608,7 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
 		for(int i=0; i<STEP_MAX; i++)
         {
 			LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-					i, power[i].m_StepValue, power[i].m_AmplitudeValue);
+					power[i].m_Order, power[i].m_StepValue, power[i].m_AmplitudeValue);
         }
 #endif
 	}
@@ -1019,9 +1019,9 @@ int DBAccessL20DB::String2Vector(const string str, vector<WELD_SIGNATURE>* _ptrV
 	if (Utility::StringToTokens(str, ';', tmpStringlist) == 0)
 		return ERROR;
 
-	tmpStringData.clear();
 	for (int i = 0; i < tmpStringlist.size(); i++)
 	{
+    	tmpStringData.clear();
 		if (Utility::StringToTokens(tmpStringlist[i], ',', tmpStringData) > 0)
 		{
 			for (int j = 0; j < tmpStringData.size(); j++)
@@ -1128,9 +1128,9 @@ int DBAccessL20DB::String2Vector(const string str, vector<WeldStepValueSetting>*
 	if (Utility::StringToTokens(str, ';', tmpStringlist) == 0)
 		return ERROR;
 
-	tmpStringData.clear();
 	for (int i = 0; i < tmpStringlist.size(); i++)
 	{
+    	tmpStringData.clear();
 		if (Utility::StringToTokens(tmpStringlist[i], ',', tmpStringData) > 0)
 		{
 			for (int j = 0; j < tmpStringData.size(); j++)
@@ -1143,7 +1143,7 @@ int DBAccessL20DB::String2Vector(const string str, vector<WeldStepValueSetting>*
 				case Recipe::STEPVALUE:
 					tmpStepSetting.m_StepValue = std::stoi(tmpStringData[j]);
 					break;
-				case AMPLITUDE:
+				case Recipe::AMPLITUDE:
 					tmpStepSetting.m_AmplitudeValue = std::stoi(tmpStringData[j]);
 					break;
 				default:
@@ -1206,6 +1206,7 @@ int DBAccessL20DB::Vector2Array(const vector<WeldStepValueSetting>* _ptrvector, 
 		if(i < STEP_MAX)
 		{
 			*_ptrArray = _ptrvector->at(i);
+			_ptrArray++;
 		}
 		else
 		{
@@ -1218,6 +1219,7 @@ int DBAccessL20DB::Vector2Array(const vector<WeldStepValueSetting>* _ptrvector, 
 		for(int i = _ptrvector->size(); i < STEP_MAX; i++)
 		{
 			_ptrArray[i].m_Order = -1;
+			_ptrArray++;
 		}
 	}
 	return iResult;
