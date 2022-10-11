@@ -38,10 +38,12 @@ public:
 	virtual int 	StoreWeldResult(char* buffer)		= 0;
 	virtual int 	StoreWeldSignature(char* buffer)	= 0;
 	virtual int 	StoreWeldRecipe(char* buffer)		= 0;
+	virtual int 	StoreAlarmLog(char* buffer)	= 0;
 
 	virtual int 	QueryBlockWeldResult(char *)		= 0;
 	virtual void 	QueryWeldSignature(char *)			= 0;
 	virtual void 	QueryWeldRecipe(char *)				= 0;
+	virtual void 	QueryAlarmLog(char *)			= 0;
 	
 	virtual void 	QueryWeldRecipeAll(char *)			= 0;
 	virtual int 	UpdateWeldRecipe(char *)			= 0;

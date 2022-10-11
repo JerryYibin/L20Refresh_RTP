@@ -382,6 +382,70 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 }
 
 /**************************************************************************//**
+* \brief   - Writing AlarmLog into DB
+*
+* \param   - char *buffer - WeldResultID
+*
+* \return  - UINT8 - status of query exec
+*
+******************************************************************************/
+int DBAccessL20DB::StoreAlarmLog(char* buffer)
+{
+	string str;
+	long long id = *(long long *)buffer;
+	int nErrCode = SQLITE_ERROR;
+
+	str = ExecuteQuery(
+            "select * from "+string(TABLE_ALARM_LOG)+
+            " where WeldResultID="+std::to_string(id)+";");
+	if(str.empty()!=true)
+	{
+		LOGERR((char*) "Database_T: WeldResultID %llu already exists in table AlarmLog\n", id, 0, 0);
+    	return nErrCode;
+	}
+
+	str = ExecuteQuery(
+            "select * from "+string(TABLE_WELD_RESULT)+
+            " where ID="+std::to_string(id)+";");
+	if(str.empty()==true)
+	{
+		LOGERR((char*) "Database_T: ID %llu doesn't exist in table WeldResult\n", id, 0, 0);
+    	return nErrCode;
+	}
+
+	struct tm timeStamp;
+    char timeBuf[20];
+	vxbRtcGet(&timeStamp);
+    strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
+
+	str =
+        "insert into " + string(TABLE_ALARM_LOG) +
+        " (DateTime, AlarmType, RecipeID, WeldResultID, UserID, IsReset) " +
+        "values ('"+
+        timeBuf+"',"+//DateTime
+        std::to_string(1)+","+//AlarmType
+        std::to_string(1)+","+//RecipeID
+        std::to_string(id)+","+//WeldResultID
+        std::to_string(1)+","+//UserID
+        std::to_string(1)+");";//IsReset
+	nErrCode = SingleTransaction(str);
+
+	getLatestID64(TABLE_ALARM_LOG, &id);
+	if(nErrCode == 0)
+	{
+#ifdef UNITTEST_DATABASE
+        LOG("# store AlarmLog to ID %llu\n", id);
+#endif
+	}
+	else
+    {
+        LOG("StoreAlarmLog:\n%s\n", str.c_str());
+		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %llu\n", nErrCode, id, 0);
+    }
+	return nErrCode;
+}
+
+/**************************************************************************//**
 * \brief   - Query the latest records from table Weld Result
 *
 * \param   - char *buffer - not used
@@ -585,6 +649,29 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
         }
 #endif
 	}
+    return;
+}
+
+/**************************************************************************//**
+* \brief   - Query AlarmLog from DB
+*
+* \param   - char *buffer WeldResult ID
+*
+* \return  - UINT8 - status of query exec
+*
+******************************************************************************/
+//TODO Is it temporary code for test only, because there is not any return?
+void DBAccessL20DB::QueryAlarmLog(char *buffer)
+{
+    string str = ExecuteQuery(
+                "select * from "+string(TABLE_ALARM_LOG)+
+                " where WeldResultID="+
+                std::to_string(*(long long *)buffer)+";");
+
+#ifdef UNITTEST_DATABASE
+    if(str.size()>0)
+        LOG("QueryAlarmLog:\n%s\n", str.c_str());
+#endif
     return;
 }
 

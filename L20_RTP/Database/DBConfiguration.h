@@ -25,6 +25,7 @@
 #define TABLE_WELD_RESULT		"WeldResult"
 #define TABLE_WELD_RECIPE		"WeldRecipe"
 #define TABLE_WELD_SIGNATURE	"WeldResultSignature"
+#define TABLE_ALARM_LOG     	"AlarmLog"
 #define COLUMN_GRAPHDATA		"WeldGraph"
 #define COLUMN_GOLDEN			"Golden"
 

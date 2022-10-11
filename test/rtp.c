@@ -184,7 +184,11 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_WELD_SIGN_QUERY,
     TO_DATA_TASK_WELD_SIGN_INSERT,
     TO_DATA_TASK_WELD_SIGN_DELETE,
-    TO_DATA_TASK_WELD_SIGN_CLEAR
+    TO_DATA_TASK_WELD_SIGN_CLEAR,
+
+    TO_DATA_TASK_ALARM_LOG_QUERY,
+    TO_DATA_TASK_ALARM_LOG_INSERT,
+    TO_DATA_TASK_ALARM_LOG_CLEAR
     };
 
 int main(int argc, char *argv[])
@@ -226,6 +230,12 @@ int main(int argc, char *argv[])
  *   b for query latest RESULT_FOR_UI_MAX records
  *   c for clear
  *   d for delete oldest
+ *
+ * 4 for AlarmLog
+ *   a for insert
+ *     third parameter for WeldResultID
+ *   b for query all
+ *   c for clear
  */
     if(argc>=3)
         {
@@ -418,6 +428,39 @@ int main(int argc, char *argv[])
                         break;
                     case 'd':
                         buf.msgID = TO_DATA_TASK_WELD_SIGN_DELETE;
+                        break;
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
+            case '4':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'a':
+                        {
+                        long long *pData = (long long *)&buf.Buffer[0];
+                        if(argc>=4)
+                            *pData = atoll(argv[3]);
+                        else
+                            *pData = 1;
+                        buf.msgID = TO_DATA_TASK_ALARM_LOG_INSERT;
+                        break;
+                        }
+                    case 'b':
+                        {
+                        long long *pData = (long long *)&buf.Buffer[0];
+                        if(argc>=4)
+                            *pData = atoll(argv[3]);
+                        else
+                            *pData = 1;
+                        buf.msgID = TO_DATA_TASK_ALARM_LOG_QUERY;
+                        break;
+                        }
+                    case 'c':
+                        buf.msgID = TO_DATA_TASK_ALARM_LOG_CLEAR;
                         break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);

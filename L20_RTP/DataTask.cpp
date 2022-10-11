@@ -170,6 +170,9 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_WELD_SIGN_INSERT:
 		_ObjDBConn->StoreWeldSignature(message.Buffer);
 		break;
+	case TO_DATA_TASK_ALARM_LOG_INSERT:
+		_ObjDBConn->StoreAlarmLog(message.Buffer);
+		break;
 	case TO_DATA_TASK_WELD_RECIPE_QUERY_ALL:
         _ObjDBConn->QueryWeldRecipeAll(message.Buffer);
 		break;
@@ -184,6 +187,9 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_DATA_TASK_WELD_SIGN_QUERY:
         _ObjDBConn->QueryWeldSignature(message.Buffer);
+		break;
+	case TO_DATA_TASK_ALARM_LOG_QUERY:
+        _ObjDBConn->QueryAlarmLog(message.Buffer);
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_DELETE:
         _ObjDBConn->DeleteOldest(TABLE_WELD_RECIPE);
@@ -202,6 +208,9 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_DATA_TASK_WELD_SIGN_CLEAR:
         _ObjDBConn->DeleteAllTableRows(TABLE_WELD_SIGNATURE);
+		break;
+	case TO_DATA_TASK_ALARM_LOG_CLEAR:
+        _ObjDBConn->DeleteAllTableRows(TABLE_ALARM_LOG);
 		break;
 	default:
 		LOGERR((char *)"DataTask: --------Unknown Message ID----------- : ", message.msgID, 0, 0);
