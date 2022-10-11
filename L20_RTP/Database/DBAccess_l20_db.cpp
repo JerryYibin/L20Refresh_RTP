@@ -221,10 +221,30 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldSignature(char* buffer)
 {
+	string str;
+	long long id = *(long long *)buffer;
 	int nErrCode = SQLITE_ERROR;
 
+	str = ExecuteQuery(
+            "select * from "+string(TABLE_WELD_SIGNATURE)+
+            " where WeldResultID="+std::to_string(id)+";");
+	if(str.empty()!=true)
+	{
+		LOGERR((char*) "Database_T: WeldResultID %llu already exists in table WeldResultSignature\n", id, 0, 0);
+    	return nErrCode;
+	}
+
+	str = ExecuteQuery(
+            "select * from "+string(TABLE_WELD_RESULT)+
+            " where ID="+std::to_string(id)+";");
+	if(str.empty()==true)
+	{
+		LOGERR((char*) "Database_T: ID %llu doesn't exist in table WeldResult\n", id, 0, 0);
+    	return nErrCode;
+	}
+
 #ifdef UNITTEST_DATABASE
-    if(CommonProperty::WeldSignatureVector.size()==0)
+	if(CommonProperty::WeldSignatureVector.size()==0)
     {
 		WELD_SIGNATURE tmpWeldSignature;
 		tmpWeldSignature.Frquency = 1;
@@ -240,21 +260,21 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 		CommonProperty::WeldSignatureVector.push_back(tmpWeldSignature);
     }
 #endif
-    string str;
-    Vector2String(&CommonProperty::WeldSignatureVector, str);
-    if(str.empty() != true)
-    {
+	str.clear();
+	Vector2String(&CommonProperty::WeldSignatureVector, str);
+	if(str.empty() != true)
+	{
     	string strStore =
             "insert into " + string(TABLE_WELD_SIGNATURE) +
             " (WeldResultID, WeldGraph) " +
             "values ("+
-            std::to_string(*(long long *)buffer)+",'"+//WeldResultID
+            std::to_string(id)+",'"+//WeldResultID
             str+"');";//WeldGraph
 
         str.shrink_to_fit();
     	nErrCode = SingleTransaction(strStore);
 	}
-    long long id = ERROR;
+
 	getLatestID64(TABLE_WELD_SIGNATURE, &id);
 
 	if(nErrCode == 0)
@@ -578,7 +598,18 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 {
+    string strStore;
     WeldRecipeSC *pRecipe = (WeldRecipeSC *)buffer;
+	int nErrCode = SQLITE_ERROR;
+
+	strStore = ExecuteQuery(
+            "select * from "+string(TABLE_WELD_RECIPE)+
+            " where ID="+std::to_string(pRecipe->m_RecipeID)+";");
+	if(strStore.empty()==true)
+	{
+		LOGERR((char*) "Database_T: ID %u doesn't exist in table WeldRecipe\n", pRecipe->m_RecipeID, 0, 0);
+    	return nErrCode;
+	}
 
 	struct tm timeStamp;
     char timeBuf[20];
@@ -595,7 +626,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
     Vector2String(&vectorTime, strTime);
     Vector2String(&vectorPower, strPower);
 
-	string strStore =
+	strStore =
         "update " 				+ string(TABLE_WELD_RECIPE) +
         " set UserID=" 			+ std::to_string(0)+//userID
         ", IsValidate=" 		+ std::to_string(pRecipe->m_IsTeachMode)+//IsValidate
@@ -633,7 +664,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
         strTime.shrink_to_fit();
         strPower.shrink_to_fit();
 
-	int nErrCode = SingleTransaction(strStore);
+	nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
     LOG("# update WeldRecipe: result %d\n", nErrCode);
 #endif

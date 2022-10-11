@@ -308,11 +308,11 @@ int main(int argc, char *argv[])
                         pData->m_WeldParameter.m_Amplitude = 456;
                         if(argc>=4)
                             {
-                            pData->m_RecipeNumber = atoi(argv[3]);
+                            pData->m_RecipeID = atoi(argv[3]);
                             }
                         else
                             {
-                            pData->m_RecipeNumber = 1;
+                            pData->m_RecipeID = 1;
                             }
                         buf.msgID = TO_DATA_TASK_WELD_RECIPE_UPDATE;
                         break;
