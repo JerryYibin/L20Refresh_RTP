@@ -97,13 +97,9 @@ void ACStateMachine::RunStateMachine()
 	{
 		ChangeState(ACState::AC_ALARM);
 	}
-	if(ActuatorTask::GetInstance()->GetStartSwitchPressed() == false)
-	{
-		AC_TX->AC_StatusEvent &= ~BIT_MASK(ACState::STATUS_START_SWITCH_PRESSED);
-	}
 	else
 	{
-		ChangeState(ACState::AC_STARTSWICH);
+
 	}
 	CurrentStateObj->Loop();
 	

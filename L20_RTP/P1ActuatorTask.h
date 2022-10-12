@@ -18,11 +18,12 @@ class P1ActuatorTask: public ActuatorTask
 public:
 	P1ActuatorTask();
 	virtual ~P1ActuatorTask();
-	virtual void		PDOUploadRequest			() override;
-	virtual void		PDODownloadRequest			() override;
-	bool				IsMoving					() override;
-	unsigned int		GetMaxSpeed					() override;
-	void				InitHeightSystem			() override;
+	virtual void		 PDOUploadRequest			() override;
+	virtual void		 PDODownloadRequest			() override;
+	virtual bool		 IsMoving					() override;
+	virtual unsigned int GetMaxSpeed				() override;
+	virtual void		 InitHeightSystem			() override;
+	virtual void 		 ScanInputs					() override;
 };
 
 #endif /* P1ACTUATORTASK_H_ */

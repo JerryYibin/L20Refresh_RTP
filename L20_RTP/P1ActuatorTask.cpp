@@ -41,3 +41,8 @@ void P1ActuatorTask::InitHeightSystem()
 {
 	
 }
+
+void P1ActuatorTask::ScanInputs()
+{
+	
+}

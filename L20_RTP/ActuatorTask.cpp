@@ -29,6 +29,8 @@ ActuatorTask::ActuatorTask()
 	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]);
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
+	m_DebounceCount = 0;
+	m_PBIndex = 0;
 }
 
 /**************************************************************************//**
@@ -126,21 +128,53 @@ ActuatorTask* ActuatorTask::GetInstance()
 }
 
 /**************************************************************************//**
-* \brief  	- Get Start Switch pressed status
-* 		      If there is any one of these two start switch is pressed, it will be true, else it will be false.
-* 		      If the status is true, the AC state machine will enter to AC Start Switch State to handle with Start Switch.  
+* \brief  	- To check if PB1 has been already pressed with debounce time 50ms 
 *
 * \param	- None
 *
-* \return 	- None
+* \return 	- PB1 pressed status.
 *
 ******************************************************************************/
-bool ActuatorTask::GetStartSwitchPressed()
+bool ActuatorTask::GetPB1()
 {
-	if(((ACStateMachine::AC_TX->ACInputs & SS1MASK) == SS1MASK) || ((ACStateMachine::AC_TX->ACInputs & SS2MASK) == SS2MASK))
-		return true;
+	bool bResult = false;
+	if(m_DebounceCount == 0)
+	{
+		if((ACStateMachine::AC_TX->ACInputs & SS1MASK) == SS1MASK)
+		{
+			m_PBIndex = SS1MASK;
+			m_DebounceCount++;
+		}
+		else if((ACStateMachine::AC_TX->ACInputs & SS2MASK) == SS2MASK)
+		{
+			m_PBIndex = SS2MASK;
+			m_DebounceCount++;
+		}
+		else
+		{
+			m_PBIndex = 0;
+		}
+	}
 	else
-		return false;
+	{
+		if((ACStateMachine::AC_TX->ACInputs & BOTHSTARTSWITCHMASK) == m_PBIndex)
+		{
+			m_DebounceCount++;
+		}
+		else
+		{
+			m_DebounceCount = 0;
+		}
+	}
+	if(m_DebounceCount < DEBOUNCE_TIME)
+		bResult = false;
+	else
+	{
+		m_PBIndex = 0;
+		m_DebounceCount = 0;
+		bResult = true;
+	}
+	return bResult;
 }
 
 /**************************************************************************//**

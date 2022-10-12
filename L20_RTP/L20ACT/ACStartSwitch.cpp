@@ -13,6 +13,7 @@
 ACStartSwitch::ACStartSwitch() {
 	stateType = ACState::AC_STARTSWICH;
 	m_Timeout = 0;
+	m_PBIndex = 0;
 }
 
 /**************************************************************************//**
@@ -42,6 +43,7 @@ ACStartSwitch::~ACStartSwitch() {
 void ACStartSwitch::Enter()
 {
 	m_Timeout = 0;
+	ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(CTRL_AC_MOVE_DISABLE);
 	if((ACStateMachine::AC_TX->ACInputs & SS1MASK) == SS1MASK)
 		m_PBIndex = SS1MASK;
 	else if((ACStateMachine::AC_TX->ACInputs & SS2MASK) == SS2MASK)
@@ -63,11 +65,7 @@ void ACStartSwitch::Enter()
 void ACStartSwitch::Loop()
 {
 	unsigned int coreStatus = NO_ERROR;
-	if(ACStateMachine::AC_RX->MasterState != ACState::AC_READY)
-	{
-		ChangeState(AC_READY);
-	}
-	else if(m_PBIndex == 0)
+	if(m_PBIndex == 0)
 	{
 		ActuatorTask::SetCoreState(ERR_STARTSWITCH_LOST);
 	}

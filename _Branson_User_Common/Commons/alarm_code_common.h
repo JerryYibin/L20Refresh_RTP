@@ -16,6 +16,7 @@ code IDs.
 #ifndef ALARM_CODE_COMMON_H_
 #define ALARM_CODE_COMMON_H_
 // alarms IDs
+#include "recipedef.h"
 enum ALARM_CODE
 {
 	ALARM_NONE					= 0x000,
@@ -152,4 +153,13 @@ enum ALARM_CODE
 	ALARM_ELC_SONICS_EN 				= 0xEFA
 
 };
+
+struct UI_ALARM_LOG
+{
+	long long		WeldCount;
+	char			RecipeName[RECIPE_LEN];
+	char			DateTime[20];
+	unsigned int	AlarmType;
+};
+
 #endif

@@ -31,13 +31,13 @@ private:
 	bool											m_IsMoving;
 public:
 	L20ActuatorTask();
-	virtual				~L20ActuatorTask			();
-	virtual void		PDOUploadRequest			() override;
-	virtual void		PDODownloadRequest			() override;
-	bool				IsMoving					() override;
-	unsigned int		GetMaxSpeed					() override;
-	void				InitHeightSystem			() override;
-	void 				ScanInputs					() override;
+	virtual				 ~L20ActuatorTask			();
+	virtual void		 PDOUploadRequest			() override;
+	virtual void		 PDODownloadRequest			() override;
+	virtual bool		 IsMoving					() override;
+	virtual unsigned int GetMaxSpeed				() override;
+	virtual void		 InitHeightSystem			() override;
+	virtual void 		 ScanInputs					() override;
 private:
 	bool		 		MovingCheckProcess			();
 	unsigned int		WeightedAverageSpeed		(unsigned int EncoderPosition);

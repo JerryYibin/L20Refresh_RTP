@@ -12,7 +12,7 @@
 #define ACTUATORTASK_H_
 
 #include "SCTask.h"
-
+#define DEBOUNCE_TIME	50 //50ms
 class ActuatorTask: public SCTask 
 {
 public:
@@ -23,8 +23,8 @@ public:
 	};
 	ActuatorTask();
 	virtual					~ActuatorTask();
-	bool					GetStartSwitchPressed				();
 	void 					ProcessTaskMessage					(MESSAGE& message) override;
+	bool					GetPB1								();
 	
 	virtual void			PDOUploadRequest 					() = 0;
 	virtual void 			PDODownloadRequest					() = 0;
@@ -48,6 +48,9 @@ protected:
 	static unsigned int CoreState;
 	static ActuatorTask* _ACObj;
 	static UINT32		Tick_1ms;
+private:
+	int					m_DebounceCount;
+	unsigned int 		m_PBIndex;
 };
 
 #endif /* ACTUATORTASK_H_ */

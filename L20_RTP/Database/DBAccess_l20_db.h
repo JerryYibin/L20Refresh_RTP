@@ -46,7 +46,7 @@ public:
 	virtual int 	StoreWeldResult(char* buffer) 		override;
 	virtual int 	StoreWeldSignature(char* buffer)	override;
 	virtual int 	StoreWeldRecipe(char* buffer) 		override;
-	virtual int 	StoreAlarmLog(char* buffer)	override;
+	virtual int 	StoreAlarmLog(char* buffer)			override;
 
 	virtual int 	QueryBlockWeldResult(char *) 		override;
 	virtual void 	QueryWeldSignature(char *) 			override;

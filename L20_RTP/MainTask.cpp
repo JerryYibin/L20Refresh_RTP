@@ -27,6 +27,8 @@
 #include "PCStateMachine.h"
 #include "ActuatorTask.h"
 #include "ACStateMachine.h"
+#include "ScDgtInput.h"
+#include "ScDgtOutput.h"
 #include "SystemType.h"
 #include <sysLib.h>
 #include <sdLib.h>
@@ -91,10 +93,11 @@ MainTask::MainTask()
 	FUNC*	g_TaskFunc[NUM_OF_BL_TASK] 			= {ControlTask::Control_Task, Actuator_Process_Task, PowerSupplyTask::PowerSupply_Task, 
 													ActuatorTask::Actuator_System_Task, UserInterface::UserInterface_Task, DataTask::Data_Task, 
 													DataInterface::DataInterface_Task, Alarm_Task,
-													BarcodeReader_Task, ScDgtInput_Task, ScDgtOutput_Task, Maintenance_Task};
+													BarcodeReader_Task, ScDgtInputTask::ScDgtInput_Task, ScDgtOutputTask::ScDgtOutput_Task, Maintenance_Task};
 	
 	UINT32	g_StackSize[NUM_OF_BL_TASK]			= {CTRL_T_STACK_SIZE, ACT_PROCESS_T_STACK_SIZE, PS_T_STACK_SIZE, ACT_SYSTEM_T_STACK_SIZE, 
-													UI_T_STACK_SIZE, DATA_T_STACK_SIZE, INTERFACE_T_STACK_SIZE, ALARM_T_STACK_SIZE, BARCODE_READER_T_STACK_SIZE, DGTIN_T_STACK_SIZE, DGTOUT_T_STACK_SIZE,
+													UI_T_STACK_SIZE, DATA_T_STACK_SIZE, INTERFACE_T_STACK_SIZE, ALARM_T_STACK_SIZE, 
+													BARCODE_READER_T_STACK_SIZE, DGTIN_T_STACK_SIZE, DGTOUT_T_STACK_SIZE,
 													MAINTENANCE_T_STACK_SIZE};
 	
 	for(t_index=0; t_index < NUM_OF_BL_TASK; t_index++)
@@ -262,6 +265,17 @@ bool MainTask::CreateTasks()
 	else
 		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::CAN_SOCKET_T], tID);
 	
+	tID = taskSpawn((char*)CommonProperty::cTaskName[CommonProperty::DGTIN_T], DGTIN_T_PRIORITY, VX_FP_TASK, DGTIN_T_STACK_SIZE, (FUNCPTR)ScDgtInputTask::ScDgtInput_Task, 0,0,0,0,0,0,0,0,0,0);
+	if (tID == TASK_ID_ERROR)
+		bSuccess = false;
+	else
+		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::DGTIN_T], tID);
+	
+	tID = taskSpawn((char*)CommonProperty::cTaskName[CommonProperty::DGTOUT_T], DGTOUT_T_PRIORITY, VX_FP_TASK, DGTOUT_T_STACK_SIZE, (FUNCPTR)ScDgtOutputTask::ScDgtOutput_Task, 0,0,0,0,0,0,0,0,0,0);
+	if(tID == TASK_ID_ERROR)
+		bSuccess = false;
+	else
+		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::DGTOUT_T], tID);
 //	for(UINT32 t_index=0; t_index < NUM_OF_BL_TASK; t_index++)
 //	{
 //		if(t_index == CTRL_T)

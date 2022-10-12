@@ -397,50 +397,6 @@ void UserInterface::responseHeightCheck()
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }
 
-/**************************************************************************//**
-* 
-* \brief   - Processing the User data.
-*
-* \param   - None.
-*
-* \return  - None.
-*
-******************************************************************************/
-void UserInterface::UserInterface_Task(void)
-{
-	MESSAGE		ProcessBuffer;
-	char		MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0x00};	
-	
-	UserInterface *UI = new(nothrow) UserInterface();
-	
-	if(NULL != UI)
-	{
-//		UI->PowerOnRequest(FW_VERSION);
-//		UI->PowerOnRequest(POWER_ON_RECIPE_READ);
-//		UI->PowerOnRequest(CALIBRATION_TIME_STAMP);
-//		Counters::loadCounters();
-
-		/* UserInterface Task loop and the bIsTaskRun flag enabled when task created */
-		while(UI->bIsTaskRunStatus())
-		{
-			if(msgQReceive(UI->SELF_MSG_Q_ID, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, WAIT_FOREVER) != ERROR) 
-			{
-				UI->Decode(MsgQBuffer, ProcessBuffer);
-				UI->ProcessTaskMessage(ProcessBuffer);
-			}
-		}
-		
-		delete UI;
-	}
-	else
-	{
-		LOGERR((char *)"UI_T : ----------------Memory allocation failed----------------",0,0,0);
-	}
-	
-	UI = NULL;	
-	taskSuspend(taskIdSelf());
-}
-
 void UserInterface::updateLastWeldResult()
 {
 	m_stHeartbeat.AlarmCode = 0;
@@ -510,4 +466,49 @@ void UserInterface::updateSystemConfigData(char* messagebuf)
 	{
 		memcpy(reinterpret_cast<char*>(_SystemConfig.get()) + V_PTR_SIZE, messagebuf, _SystemConfig->Size());
 	}
+}
+
+
+/**************************************************************************//**
+* 
+* \brief   - Processing the User data.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void UserInterface::UserInterface_Task(void)
+{
+	MESSAGE		ProcessBuffer;
+	char		MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0x00};	
+	
+	UserInterface *UI = new(nothrow) UserInterface();
+	
+	if(NULL != UI)
+	{
+//		UI->PowerOnRequest(FW_VERSION);
+//		UI->PowerOnRequest(POWER_ON_RECIPE_READ);
+//		UI->PowerOnRequest(CALIBRATION_TIME_STAMP);
+//		Counters::loadCounters();
+
+		/* UserInterface Task loop and the bIsTaskRun flag enabled when task created */
+		while(UI->bIsTaskRunStatus())
+		{
+			if(msgQReceive(UI->SELF_MSG_Q_ID, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, WAIT_FOREVER) != ERROR) 
+			{
+				UI->Decode(MsgQBuffer, ProcessBuffer);
+				UI->ProcessTaskMessage(ProcessBuffer);
+			}
+		}
+		
+		delete UI;
+	}
+	else
+	{
+		LOGERR((char *)"UI_T : ----------------Memory allocation failed----------------",0,0,0);
+	}
+	
+	UI = NULL;	
+	taskSuspend(taskIdSelf());
 }

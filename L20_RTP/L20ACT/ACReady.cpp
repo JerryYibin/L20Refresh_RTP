@@ -72,10 +72,24 @@ void ACReady::Enter()
 ******************************************************************************/
 void ACReady::Loop()
 {
-	if((ACStateMachine::AC_RX->MasterState == SCState::WAIT_FOR_TRIGGER) ||
+	if(ACStateMachine::AC_RX->MasterState == SCState::PRE_READY)
+	{
+		if((ACStateMachine::AC_TX->ACInputs & BOTHSTARTSWITCHMASK) == 0)
+			ACStateMachine::AC_TX->AC_StatusEvent &= ~BIT_MASK(ACState::STATUS_START_SWITCH_PRESSED);
+	}
+	else if(ACStateMachine::AC_RX->MasterState == SCState::READY)
+	{
+		if(ActuatorTask::GetInstance()->GetPB1() == true)
+			ChangeState(ACState::AC_STARTSWICH);
+	}
+	else if((ACStateMachine::AC_RX->MasterState == SCState::WAIT_FOR_TRIGGER) ||
 			(ACStateMachine::AC_RX->MasterState == SCState::DOWN_STROKE))
 	{
 		ChangeState(AC_DOWN_STROKE);
+	}
+	else
+	{
+		
 	}
 
 }

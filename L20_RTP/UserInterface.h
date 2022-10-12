@@ -45,7 +45,7 @@ public:
 	
 	static  void UserInterface_Task			(void);
 protected:
-	virtual void ProcessTaskMessage			(MESSAGE& message);	
+	virtual void ProcessTaskMessage			(MESSAGE& message) override;	
 private:
 	//Just list out all the external Message ID, don't include itself.
 	MSG_Q_ID 	CTRL_MSG_Q_ID;
