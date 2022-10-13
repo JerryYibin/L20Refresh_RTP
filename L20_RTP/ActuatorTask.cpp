@@ -30,7 +30,7 @@ ActuatorTask::ActuatorTask()
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 	m_DebounceCount = 0;
-	m_PBIndex = 0;
+	m_PB1 = 0;
 }
 
 /**************************************************************************//**
@@ -142,22 +142,22 @@ bool ActuatorTask::GetPB1()
 	{
 		if((ACStateMachine::AC_TX->ACInputs & SS1MASK) == SS1MASK)
 		{
-			m_PBIndex = SS1MASK;
+			m_PB1 = SS1MASK;
 			m_DebounceCount++;
 		}
 		else if((ACStateMachine::AC_TX->ACInputs & SS2MASK) == SS2MASK)
 		{
-			m_PBIndex = SS2MASK;
+			m_PB1 = SS2MASK;
 			m_DebounceCount++;
 		}
 		else
 		{
-			m_PBIndex = 0;
+			m_PB1 = 0;
 		}
 	}
 	else
 	{
-		if((ACStateMachine::AC_TX->ACInputs & BOTHSTARTSWITCHMASK) == m_PBIndex)
+		if((ACStateMachine::AC_TX->ACInputs & m_PB1) == m_PB1)
 		{
 			m_DebounceCount++;
 		}
@@ -170,7 +170,7 @@ bool ActuatorTask::GetPB1()
 		bResult = false;
 	else
 	{
-		m_PBIndex = 0;
+		m_PB1 = 0;
 		m_DebounceCount = 0;
 		bResult = true;
 	}

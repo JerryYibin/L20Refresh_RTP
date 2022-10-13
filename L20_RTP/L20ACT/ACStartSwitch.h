@@ -28,7 +28,7 @@ protected:
 	virtual void		Exit();
 	
 private:
-	unsigned int 		m_PBIndex;
+	unsigned int 		m_PB1;
 };
 
 

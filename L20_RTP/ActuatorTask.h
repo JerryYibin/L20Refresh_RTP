@@ -50,7 +50,7 @@ protected:
 	static UINT32		Tick_1ms;
 private:
 	int					m_DebounceCount;
-	unsigned int 		m_PBIndex;
+	unsigned int 		m_PB1;
 };
 
 #endif /* ACTUATORTASK_H_ */
