@@ -167,20 +167,22 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         }
 #endif
 		break;
+#if 0 //table WeldResultSignature is stored with table WeldResult
 	case TO_DATA_TASK_WELD_SIGN_INSERT:
 		_ObjDBConn->StoreWeldSignature(message.Buffer);
 		break;
+#endif
+#if 0 //table AlarmLog is stored with table WeldResult
 	case TO_DATA_TASK_ALARM_LOG_INSERT:
 		_ObjDBConn->StoreAlarmLog(message.Buffer);
 		break;
+#endif
+
 	case TO_DATA_TASK_WELD_RECIPE_QUERY_ALL:
         _ObjDBConn->QueryWeldRecipeAll(message.Buffer);
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_QUERY:
         _ObjDBConn->QueryWeldRecipe(message.Buffer);
-		break;
-	case TO_DATA_TASK_WELD_RECIPE_UPDATE:
-        _ObjDBConn->UpdateWeldRecipe(message.Buffer);
 		break;
 	case TO_DATA_TASK_WELD_RESULT_QUERY:
         _ObjDBConn->QueryBlockWeldResult(message.Buffer);
@@ -191,6 +193,17 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_ALARM_LOG_QUERY:
         _ObjDBConn->QueryAlarmLog(message.Buffer);
 		break;
+	case TO_DATA_TASK_HI_CALIB_QUERY:
+        _ObjDBConn->QueryHiCalib(message.Buffer);
+		break;
+
+	case TO_DATA_TASK_WELD_RECIPE_UPDATE:
+        _ObjDBConn->UpdateWeldRecipe(message.Buffer);
+		break;
+	case TO_DATA_TASK_HI_CALIB_UPDATE:
+        _ObjDBConn->UpdateHiCalib(message.Buffer);
+		break;
+
 	case TO_DATA_TASK_WELD_RECIPE_DELETE:
         _ObjDBConn->DeleteOldest(TABLE_WELD_RECIPE);
 		break;
@@ -200,6 +213,10 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_WELD_SIGN_DELETE:
         _ObjDBConn->DeleteOldest(TABLE_WELD_SIGNATURE);
 		break;
+	case TO_DATA_TASK_ALARM_LOG_DELETE:
+        _ObjDBConn->DeleteOldest(TABLE_ALARM_LOG);
+		break;
+
 	case TO_DATA_TASK_WELD_RECIPE_CLEAR:
         _ObjDBConn->DeleteAllTableRows(TABLE_WELD_RECIPE);
 		break;

@@ -1,25 +1,30 @@
 
 1.
 to use Json, JSON_INTEGER_IS_LONG_LONG should be defined as 0, in vxworks\21.07\contrib\jansson-2.12.1\h\jansson_config.h
-then include Json in VSB project
 
 2.
+enable SQLITE/JANSSON in VSB project
 
+3.
 VIP project should include following components
   INCLUDE_SHARED_DATA
   INCLUDE_POSIX_PTHREADS
   INCLUDE_POSIX_SEM
   INCLUDE_POSIX_SHM
-  INCLUDE_POSIX_PTHREAD_SCHEDULER
-  INCLUDE_POSIX_ADVISORY_FILE_LOCKING
+  INCLUDE_SQLITE_SUPPORT
   INCLUDE_HRFS_FORMAT
 if using DosFS, the value of component DOSFS_COMPAT_NT should be set to TRUE
 
-3.
-include -ljson in RTP project
-
 4.
-add defines "-DUNITTEST_DATABASE" into RTP project
+in Paths of RTP project
+  add "-I$(RTP)/_Branson_User_Common/Commons"
+  add "-I$(RTP)/_Branson_User_Common/Utils"
+  add "-I$(VSB)/usr/3pp/develop/usr/include"
+in Libraries of RTP project
+  add "-lsqlite3 -lcrypto -lssl -lnet -ljson" 
+  add "-L $(VSB)/usr/3pp/develop/usr/lib"
+in Defines of RTP project
+  add  "-DUNITTEST_DATABASE"
 rebuild the project to "L20.vxe"
 
 5.

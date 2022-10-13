@@ -44,9 +44,12 @@ public:
 	virtual void 	QueryWeldSignature(char *)			= 0;
 	virtual void 	QueryWeldRecipe(char *)				= 0;
 	virtual void 	QueryAlarmLog(char *)			= 0;
+	virtual void 	QueryHiCalib(char *)			= 0;
 	
 	virtual void 	QueryWeldRecipeAll(char *)			= 0;
 	virtual int 	UpdateWeldRecipe(char *)			= 0;
+	virtual int 	UpdateHiCalib(char *)			= 0;
+
 
 	virtual void 	DeleteOldest(const char *)			= 0;
 	

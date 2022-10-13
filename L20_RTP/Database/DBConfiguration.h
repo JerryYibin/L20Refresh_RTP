@@ -26,6 +26,7 @@
 #define TABLE_WELD_RECIPE		"WeldRecipe"
 #define TABLE_WELD_SIGNATURE	"WeldResultSignature"
 #define TABLE_ALARM_LOG     	"AlarmLog"
+#define TABLE_HI_CALIB     		"HeightCalibration"
 #define COLUMN_GRAPHDATA		"WeldGraph"
 #define COLUMN_GOLDEN			"Golden"
 

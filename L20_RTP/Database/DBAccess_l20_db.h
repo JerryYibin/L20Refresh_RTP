@@ -52,9 +52,11 @@ public:
 	virtual void 	QueryWeldSignature(char *) 			override;
 	virtual void 	QueryWeldRecipe(char *) 			override;
 	virtual void 	QueryAlarmLog(char *) 		  	    override;
+	virtual void 	QueryHiCalib(char *) 				override;
 
 	virtual void 	QueryWeldRecipeAll(char *) 			override;
 	virtual int 	UpdateWeldRecipe(char *) 			override;
+	virtual int 	UpdateHiCalib(char *) 				override;
 
 	virtual void 	DeleteOldest(const char *) 			override;
 

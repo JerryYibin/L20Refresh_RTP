@@ -17,6 +17,8 @@
 #include "commons.h"
 #include "../Utility.h"
 #include "../Recipe.h"
+#include "../AlarmData.h"
+#include "../HeightEncoder.h"
 #include <jansson.h>
 extern "C"
 {
@@ -151,9 +153,9 @@ string DBAccessL20DB::GetWeldSignatureCSVReportHeader2()
 * \return  - UINT8 -status of query exec
 *
 ******************************************************************************/
-int DBAccessL20DB::StoreWeldResult(char* buffer)
+int DBAccessL20DB::StoreWeldResult(char *buffer)
 {
-    WELD_RESULT* pData = &CommonProperty::WeldResult;
+    WELD_RESULT *pData = &CommonProperty::WeldResult;
 
 	struct tm timeStamp;
     char timeBuf[20];
@@ -190,23 +192,41 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 		std::to_string(pData->CycleCounter)+");";//CycleCounter
 
 	int nErrCode = SingleTransaction(strStore);
-    long long id = ERROR;
-    getLatestID64(TABLE_WELD_RESULT, &id);
-
+    long long WeldResultID;
+    getLatestID64(TABLE_WELD_RESULT, &WeldResultID);
 	if(nErrCode == 0)
 	{
 #ifdef UNITTEST_DATABASE
-        LOG("# store WeldResult to ID %llu\n", id);
+        LOG("# store WeldResult to ID %llu\n", WeldResultID);
         LOG("# %s\n", strStore.c_str());
 #endif
-        if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
+        if(WeldResultID > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
         	DeleteOldest(TABLE_WELD_RESULT);
 		}
+
+#ifdef UNITTEST_DATABASE
+        ALARM_DATA *pAlarm = &AlarmDataSC::AlarmData;
+        pAlarm->AlarmType = 123;
+        pAlarm->AlarmSubType = 456;
+        pAlarm->WeldResultID = WeldResultID;
+        pAlarm->WeldRecipeID = pData->RecipeNum;
+        pAlarm->UserID = 789;
+        LOG("#try to StoreAlarmLog with WeldResultID(%llu) WeldRecipeID(%u)\n",
+                WeldResultID, pData->RecipeNum);
+#endif
+        StoreAlarmLog(nullptr);
+
+#ifdef UNITTEST_DATABASE
+        LOG("#try to StoreWeldSignature with WeldResultID(%llu)\n",
+                WeldResultID);
+#endif
+        StoreWeldSignature((char *)&WeldResultID);
 	}
 	else
 	{
-		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %llu\n", nErrCode, id, 0);
+		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %llu\n",
+                nErrCode, WeldResultID, 0);
 	}
 	return nErrCode;
 }
@@ -219,27 +239,30 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
-int DBAccessL20DB::StoreWeldSignature(char* buffer)
+int DBAccessL20DB::StoreWeldSignature(char *buffer)
 {
 	string str;
-	long long id = *(long long *)buffer;
+    long long id;
+	long long WeldResultID = *(long long *)buffer;
 	int nErrCode = SQLITE_ERROR;
 
 	str = ExecuteQuery(
             "select * from "+string(TABLE_WELD_SIGNATURE)+
-            " where WeldResultID="+std::to_string(id)+";");
+            " where WeldResultID="+std::to_string(WeldResultID)+";");
 	if(str.empty()!=true)
 	{
-		LOGERR((char*) "Database_T: WeldResultID %llu already exists in table WeldResultSignature\n", id, 0, 0);
+		LOGERR((char*) "Database_T: WeldResultID %llu already exists in table WeldResultSignature\n",
+                WeldResultID, 0, 0);
     	return nErrCode;
 	}
 
 	str = ExecuteQuery(
             "select * from "+string(TABLE_WELD_RESULT)+
-            " where ID="+std::to_string(id)+";");
+            " where ID="+std::to_string(WeldResultID)+";");
 	if(str.empty()==true)
 	{
-		LOGERR((char*) "Database_T: ID %llu doesn't exist in table WeldResult\n", id, 0, 0);
+		LOGERR((char*) "Database_T: ID %llu doesn't exist in table WeldResult\n",
+                WeldResultID, 0, 0);
     	return nErrCode;
 	}
 
@@ -268,7 +291,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
             "insert into " + string(TABLE_WELD_SIGNATURE) +
             " (WeldResultID, WeldGraph) " +
             "values ("+
-            std::to_string(id)+",'"+//WeldResultID
+            std::to_string(WeldResultID)+",'"+//WeldResultID
             str+"');";//WeldGraph
 
         str.shrink_to_fit();
@@ -300,7 +323,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
-int DBAccessL20DB::StoreWeldRecipe(char* buffer)
+int DBAccessL20DB::StoreWeldRecipe(char *buffer)
 {
     int id = ERROR;
     getLatestID(TABLE_WELD_RECIPE, &id);
@@ -314,6 +337,10 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 	}
 
     WeldRecipeSC *pData = (WeldRecipeSC *)buffer;
+#ifdef UNITTEST_DATABASE
+    if(strlen(pData->m_RecipeName)==0)
+        strncpy(pData->m_RecipeName, "hello", RECIPE_LEN);
+#endif
 
 	struct tm timeStamp;
     char timeBuf[20];
@@ -384,32 +411,35 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 /**************************************************************************//**
 * \brief   - Writing AlarmLog into DB
 *
-* \param   - char *buffer - WeldResultID
+* \param   - char *buffer - not used
 *
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
-int DBAccessL20DB::StoreAlarmLog(char* buffer)
+int DBAccessL20DB::StoreAlarmLog(char *buffer)
 {
+	long long id;
 	string str;
-	long long id = *(long long *)buffer;
 	int nErrCode = SQLITE_ERROR;
+    ALARM_DATA *pData = &AlarmDataSC::AlarmData;
 
 	str = ExecuteQuery(
             "select * from "+string(TABLE_ALARM_LOG)+
-            " where WeldResultID="+std::to_string(id)+";");
+            " where WeldResultID="+std::to_string(pData->WeldResultID)+";");
 	if(str.empty()!=true)
 	{
-		LOGERR((char*) "Database_T: WeldResultID %llu already exists in table AlarmLog\n", id, 0, 0);
+		LOGERR((char*) "Database_T: WeldResultID %llu already exists in table AlarmLog\n",
+                pData->WeldResultID, 0, 0);
     	return nErrCode;
 	}
 
 	str = ExecuteQuery(
             "select * from "+string(TABLE_WELD_RESULT)+
-            " where ID="+std::to_string(id)+";");
+            " where ID="+std::to_string(pData->WeldResultID)+";");
 	if(str.empty()==true)
 	{
-		LOGERR((char*) "Database_T: ID %llu doesn't exist in table WeldResult\n", id, 0, 0);
+		LOGERR((char*) "Database_T: ID %llu doesn't exist in table WeldResult\n",
+                pData->WeldResultID, 0, 0);
     	return nErrCode;
 	}
 
@@ -423,19 +453,24 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
         " (DateTime, AlarmType, RecipeID, WeldResultID, UserID, IsReset) " +
         "values ('"+
         timeBuf+"',"+//DateTime
-        std::to_string(1)+","+//AlarmType
-        std::to_string(1)+","+//RecipeID
-        std::to_string(id)+","+//WeldResultID
-        std::to_string(1)+","+//UserID
-        std::to_string(1)+");";//IsReset
+        std::to_string(pData->AlarmType)+","+//AlarmType
+        std::to_string(pData->WeldRecipeID)+","+//RecipeID
+        std::to_string(pData->WeldResultID)+","+//WeldResultID
+        std::to_string(pData->UserID)+","+//UserID
+        std::to_string(pData->AlarmSubType)+");";//is AlarmSubType for column IsReset?
 	nErrCode = SingleTransaction(str);
 
 	getLatestID64(TABLE_ALARM_LOG, &id);
 	if(nErrCode == 0)
 	{
 #ifdef UNITTEST_DATABASE
-        LOG("# store AlarmLog to ID %llu\n", id);
+        LOG("# store AlarmLog to ID(%llu) with WeldResultID(%llu)\n", id, pData->WeldResultID);
+        LOG("StoreAlarmLog:\n%s\n", str.c_str());
 #endif
+        if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
+		{
+            DeleteOldest(TABLE_ALARM_LOG);
+		}
 	}
 	else
     {
@@ -657,21 +692,83 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
 *
 * \param   - char *buffer WeldResult ID
 *
-* \return  - UINT8 - status of query exec
+* \return  - N/A
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
 void DBAccessL20DB::QueryAlarmLog(char *buffer)
 {
+    long long WeldResultID = *(long long *)buffer;
     string str = ExecuteQuery(
                 "select * from "+string(TABLE_ALARM_LOG)+
                 " where WeldResultID="+
-                std::to_string(*(long long *)buffer)+";");
+                std::to_string(WeldResultID)+";");
+
+    if(str.empty()!=true)
+        {
+        UI_ALARM_LOG tmpLog;
+    	vector<string> tmpStr;
+
+        Utility::StringToTokens(str, ',', tmpStr);
+        tmpLog.WeldCount = WeldResultID;//WeldResultID
+        strncpy(tmpLog.DateTime, tmpStr[1].c_str(), 20);//DateTime
+        tmpLog.AlarmType = atoi(tmpStr[2].c_str());//AlarmType
+
+        str = ExecuteQuery(
+                    "select RecipeName from "+string(TABLE_WELD_RECIPE)+
+                    " where ID="+ tmpStr[3] +";");
+        strncpy(tmpLog.RecipeName, str.c_str(), RECIPE_LEN);
 
 #ifdef UNITTEST_DATABASE
-    if(str.size()>0)
-        LOG("QueryAlarmLog:\n%s\n", str.c_str());
+        for(int i=0; i<AlarmDataSC::AlarmLog.size(); i++)
+            {
+            if(AlarmDataSC::AlarmLog[i].WeldCount == WeldResultID)
+                {
+        LOG("erase:%llu\n", WeldResultID);
+                AlarmDataSC::AlarmLog.erase(AlarmDataSC::AlarmLog.begin()+i);
+                break;
+                }
+            }
 #endif
+		AlarmDataSC::AlarmLog.push_back(tmpLog);
+
+#ifdef UNITTEST_DATABASE
+        LOG("WeldCount:%llu\n", tmpLog.WeldCount);
+        LOG("DateTime:%s\n", tmpLog.DateTime);
+        LOG("RecipeId:%d\n", atoi(tmpStr[3].c_str()));
+        LOG("RecipeName:%s\n", tmpLog.RecipeName);
+        LOG("AlarmType:%d\n", tmpLog.AlarmType);
+#endif
+        }
+    return;
+}
+
+/**************************************************************************//**
+* \brief   - Query HeightCalibration from DB
+*
+* \param   - char *buffer - not used
+*
+* \return  - N/A
+*
+******************************************************************************/
+//TODO Is it temporary code for test only, because there is not any return?
+void DBAccessL20DB::QueryHiCalib(char *buffer)
+{
+    long long WeldResultID = *(long long *)buffer;
+    string str = ExecuteQuery(
+                "select * from "+string(TABLE_HI_CALIB)+";");
+
+    if(str.empty()!=true)
+        {
+    	vector<string> tmpStr;
+        Utility::StringToTokens(str, ',', tmpStr);
+
+#ifdef UNITTEST_DATABASE
+        LOG("HeightCalibration:%s\n", str.c_str());
+        LOG("PSI:%s\n", tmpStr[0].c_str());
+        LOG("Count:%s\n", tmpStr[1].c_str());
+#endif
+        }
     return;
 }
 
@@ -754,6 +851,35 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 	nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
     LOG("# update WeldRecipe: result %d\n", nErrCode);
+#endif
+	if(nErrCode != 0)
+		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+	return nErrCode;
+}
+
+/**************************************************************************//**
+* \brief   - Update HeightCalibration to DB
+*
+* \param   - char *buffer - not used
+*
+* \return  - UINT8 - Database status
+*
+******************************************************************************/
+int DBAccessL20DB::UpdateHiCalib(char *buffer)
+{
+    string strStore;
+	int nErrCode = SQLITE_ERROR;
+
+	strStore =
+        "update " 		+ string(TABLE_HI_CALIB) +
+        " set PSI=" 	+ std::to_string(1)+//PSI
+        ", Count=" 		+ std::to_string(2)+//Count
+        +";";
+
+	nErrCode = SingleTransaction(strStore);
+#ifdef UNITTEST_DATABASE
+    LOG("# update HeightCalibration: result %d\n", nErrCode);
+    LOG("# HeightCalibration:%s\n", strStore.c_str());
 #endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);

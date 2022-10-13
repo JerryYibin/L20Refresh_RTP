@@ -63,6 +63,7 @@ enum
 	ALARM_PROCESS_LIMIT_PSA_START = 0x550,
 };
 
+#if 0 // redefinition in alarm_code_common.h
 // alarms IDs
 enum
 {
@@ -192,7 +193,7 @@ enum
 	ALARM_ELC_SONICS_EN = 0xEFA
 	
 };
-
+#endif
 typedef	enum 
 {
 	PREREADY, 

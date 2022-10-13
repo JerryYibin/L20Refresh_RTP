@@ -188,7 +188,11 @@ enum MESSAGE_IDENTIFY
 
     TO_DATA_TASK_ALARM_LOG_QUERY,
     TO_DATA_TASK_ALARM_LOG_INSERT,
-    TO_DATA_TASK_ALARM_LOG_CLEAR
+    TO_DATA_TASK_ALARM_LOG_DELETE,
+    TO_DATA_TASK_ALARM_LOG_CLEAR,
+
+    TO_DATA_TASK_HI_CALIB_QUERY,
+    TO_DATA_TASK_HI_CALIB_UPDATE
     };
 
 int main(int argc, char *argv[])
@@ -215,7 +219,7 @@ int main(int argc, char *argv[])
  *     third parameter for m_RecipeID of WeldRecipeSC
  *
  * 2 for WELD_RESULT
- *   a for insert
+ *   a for insert including table AlarmLog and WeldResultSignature
  *     third parameter for count
  *   b for query
  *     third parameter for ID of last in RESULT_FOR_UI_MAX
@@ -223,19 +227,18 @@ int main(int argc, char *argv[])
  *   d for delete oldest
  *
  * 3 for WeldResultSignature_Data
- *   a for insert
- *     third parameter for WeldResultID
- *   x for multi-insert
- *     third parameter for count
  *   b for query latest RESULT_FOR_UI_MAX records
  *   c for clear
  *   d for delete oldest
  *
  * 4 for AlarmLog
- *   a for insert
- *     third parameter for WeldResultID
- *   b for query all
+ *   b for query for WeldResult ID
  *   c for clear
+ *   d for delete oldest
+ * 5 for HeightCalibration
+ *   b for query
+ *   u for update
+ *
  */
     if(argc>=3)
         {
@@ -468,6 +471,25 @@ int main(int argc, char *argv[])
                     }
                 break;
                 }
+            case '5':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'b':
+                        {
+                        buf.msgID = TO_DATA_TASK_HI_CALIB_QUERY;
+                        break;
+                        }
+                    case 'u':
+                        buf.msgID = TO_DATA_TASK_HI_CALIB_UPDATE;
+                        break;
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
+
             default:
                 printf("invalid cmd:%s\n", argv[1]);
                 return 0;
