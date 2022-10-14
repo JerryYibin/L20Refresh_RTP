@@ -97,6 +97,8 @@ public:
 	FREQUENCY 	Frequency;
 	
 	virtual int		Size() 			= 0;
+	virtual void	Get(char *)		= 0;
+	virtual void	Set(char *)		= 0;
 	virtual void	InitialValue()	= 0;
 	static  void	CurrentTime(char*);
 	static std::shared_ptr<SYSTEMCONFIG> GetSystemConfig();
@@ -123,6 +125,8 @@ public:
 	char DateTime[TIME_SIZE];
 	
 	int  Size() 			override;
+	void Get(char *)		override;
+	void Set(char *)		override;
 	void InitialValue()		override;
 }L20_SYSTEMCONFIG;
 
@@ -133,6 +137,8 @@ public:
 	~P1_SYSTEMCONFIG();
 	
 	int  Size() 			override;
+	void Get(char *)		override;
+	void Set(char *)		override;
 	void InitialValue()		override;
 }P1_SYSTEMCONFIG;
 

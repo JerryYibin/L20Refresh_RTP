@@ -1,6 +1,6 @@
 /************************************************************************** 
 
-      Copyright (c) Branson Ultrasonics Corporation, 1996-2018
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
  
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
@@ -9,18 +9,19 @@
 ***************************************************************************/
 
 
-#ifndef SYSTEMTYPE_H_
-#define SYSTEMTYPE_H_
-
-#define V_PTR_SIZE 4
-typedef enum
+#ifndef USERPRIVILEGE_H_
+#define USERPRIVILEGE_H_
+#define PASSCODE_LEN	6
+struct USER_PRIVILEGE
 {
-	GSXP1,
-	GSXE1,
-	L20,
-	INVALID_SYSTEM
-}EN_SYSTEM_TYPE;
+	char 	Passcode[PASSCODE_LEN];
+	int		EntryScreenIndex;
+};
 
-int GetSystemType();
+struct USER_PROFILE
+{
+	int		PermissionLevel;
+	char	Passcode[PASSCODE_LEN];
+};
 
-#endif
+#endif /* USERPRIVILEGE_H_ */
