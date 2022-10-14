@@ -27,6 +27,7 @@
 #define TABLE_WELD_SIGNATURE	"WeldResultSignature"
 #define TABLE_ALARM_LOG     	"AlarmLog"
 #define TABLE_HI_CALIB     		"HeightCalibration"
+#define TABLE_DB_VERSION     	"DBVersion"
 #define COLUMN_GRAPHDATA		"WeldGraph"
 #define COLUMN_GOLDEN			"Golden"
 
