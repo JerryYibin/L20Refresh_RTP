@@ -754,21 +754,19 @@ void DBAccessL20DB::QueryAlarmLog(char *buffer)
 //TODO Is it temporary code for test only, because there is not any return?
 void DBAccessL20DB::QueryHiCalib(char *buffer)
 {
-    long long WeldResultID = *(long long *)buffer;
     string str = ExecuteQuery(
                 "select * from "+string(TABLE_HI_CALIB)+";");
 
-    if(str.empty()!=true)
-        {
-    	vector<string> tmpStr;
-        Utility::StringToTokens(str, ',', tmpStr);
+	vector<string> tmpStr;
+    Utility::StringToTokens(str, ',', tmpStr);
+
+    HeightEncoder::HeightCalibratedMap[atoi(tmpStr[0].c_str())].ZeroCount = atoi(tmpStr[1].c_str());
 
 #ifdef UNITTEST_DATABASE
-        LOG("HeightCalibration:%s\n", str.c_str());
-        LOG("PSI:%s\n", tmpStr[0].c_str());
-        LOG("Count:%s\n", tmpStr[1].c_str());
+    LOG("HeightCalibration:%s\n", str.c_str());
+    LOG("PSI:%s\n", tmpStr[0].c_str());
+    LOG("Count:%s\n", tmpStr[1].c_str());
 #endif
-        }
     return;
 }
 
@@ -860,26 +858,35 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 /**************************************************************************//**
 * \brief   - Update HeightCalibration to DB
 *
-* \param   - char *buffer - not used
+* \param   - char *buffer - PSI
 *
 * \return  - UINT8 - Database status
 *
 ******************************************************************************/
 int DBAccessL20DB::UpdateHiCalib(char *buffer)
 {
-    string strStore;
 	int nErrCode = SQLITE_ERROR;
+    int PSI = *(int *)buffer;
 
-	strStore =
-        "update " 		+ string(TABLE_HI_CALIB) +
-        " set PSI=" 	+ std::to_string(1)+//PSI
-        ", Count=" 		+ std::to_string(2)+//Count
+    if(1 != HeightEncoder::HeightCalibratedMap.count(PSI))
+        {
+#ifdef UNITTEST_DATABASE
+        HeightEncoder::HeightCalibratedMap[PSI].ZeroCount = 1234;
+        LOG("# set PSI(%d) with ZeroCount(%d)\n", PSI, 1234);
+#else
+	    return nErrCode;
+#endif
+        }
+
+	string strStore =
+        "update " 	+ string(TABLE_HI_CALIB) +
+        " set PSI=" + std::to_string(PSI)+//PSI
+        ", Count=" 	+ std::to_string(HeightEncoder::HeightCalibratedMap[PSI].ZeroCount)+//Count
         +";";
 
 	nErrCode = SingleTransaction(strStore);
 #ifdef UNITTEST_DATABASE
-    LOG("# update HeightCalibration: result %d\n", nErrCode);
-    LOG("# HeightCalibration:%s\n", strStore.c_str());
+    LOG("# %s\n", strStore.c_str());
 #endif
 	if(nErrCode != 0)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);

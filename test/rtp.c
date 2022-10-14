@@ -238,6 +238,7 @@ int main(int argc, char *argv[])
  * 5 for HeightCalibration
  *   b for query
  *   u for update
+ *     third parameter for PSI
  *
  */
     if(argc>=3)
@@ -481,7 +482,15 @@ int main(int argc, char *argv[])
                         break;
                         }
                     case 'u':
+                        {
+                        int *pData = (int *)&buf.Buffer[0];
+                        if(argc>=4)
+                            *pData = atoi(argv[3]);
+                        else
+                            *pData = 1;
                         buf.msgID = TO_DATA_TASK_HI_CALIB_UPDATE;
+                        break;
+                        }
                         break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
