@@ -192,7 +192,9 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_ALARM_LOG_CLEAR,
 
     TO_DATA_TASK_HI_CALIB_QUERY,
-    TO_DATA_TASK_HI_CALIB_UPDATE
+    TO_DATA_TASK_HI_CALIB_UPDATE,
+
+    TO_DATA_TASK_DB_VERSION_QUERY
     };
 
 int main(int argc, char *argv[])
@@ -232,13 +234,16 @@ int main(int argc, char *argv[])
  *   d for delete oldest
  *
  * 4 for AlarmLog
- *   b for query for WeldResult ID
+ *   b for query for ID
+ *     third parameter for ID of last in ALARM_LOG_MAX
  *   c for clear
  *   d for delete oldest
  * 5 for HeightCalibration
  *   b for query
  *   u for update
  *     third parameter for PSI
+ * 6 for DbVersion
+ *   b for query
  *
  */
     if(argc>=3)
@@ -498,7 +503,21 @@ int main(int argc, char *argv[])
                     }
                 break;
                 }
-
+            case '6':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'b':
+                        {
+                        buf.msgID = TO_DATA_TASK_DB_VERSION_QUERY;
+                        break;
+                        }
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
             default:
                 printf("invalid cmd:%s\n", argv[1]);
                 return 0;

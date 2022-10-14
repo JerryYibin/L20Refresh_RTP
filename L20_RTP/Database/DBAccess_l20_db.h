@@ -15,8 +15,8 @@
 class DBAccessL20DB: public DBAccess 
 {
 private:
-    int getLatestID(const string table, int* _id);
-    int getLatestID64(const string table, long long* _id);
+    int GetLatestID(const string table, int* _id);
+    int GetLatestID64(const string table, long long* _id);
     int Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr);
     int JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray);
     int Array2Vector(const WeldStepValueSetting* _ptrArray, vector<WeldStepValueSetting>* _ptrvector);
@@ -51,12 +51,13 @@ public:
 	virtual int 	QueryBlockWeldResult(char *) 		override;
 	virtual void 	QueryWeldSignature(char *) 			override;
 	virtual void 	QueryWeldRecipe(char *) 			override;
-	virtual void 	QueryAlarmLog(char *) 		  	    override;
-	virtual void 	QueryHiCalib(char *) 				override;
+	virtual int 	QueryBlockAlarmLog(char *) 		  	override;
+	virtual void 	QueryHeightCalibration(char *) 		override;
+	virtual void 	QueryDbVersion(char *) 				override;
 
 	virtual void 	QueryWeldRecipeAll(char *) 			override;
 	virtual int 	UpdateWeldRecipe(char *) 			override;
-	virtual int 	UpdateHiCalib(char *) 				override;
+	virtual int 	UpdateHeightCalibration(char *) 	override;
 
 	virtual void 	DeleteOldest(const char *) 			override;
 

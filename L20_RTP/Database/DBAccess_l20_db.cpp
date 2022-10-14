@@ -193,12 +193,11 @@ int DBAccessL20DB::StoreWeldResult(char *buffer)
 
 	int nErrCode = SingleTransaction(strStore);
     long long WeldResultID;
-    getLatestID64(TABLE_WELD_RESULT, &WeldResultID);
+    GetLatestID64(TABLE_WELD_RESULT, &WeldResultID);
 	if(nErrCode == 0)
 	{
 #ifdef UNITTEST_DATABASE
         LOG("# store WeldResult to ID %llu\n", WeldResultID);
-        LOG("# %s\n", strStore.c_str());
 #endif
         if(WeldResultID > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -212,13 +211,13 @@ int DBAccessL20DB::StoreWeldResult(char *buffer)
         pAlarm->WeldResultID = WeldResultID;
         pAlarm->WeldRecipeID = pData->RecipeNum;
         pAlarm->UserID = 789;
-        LOG("#try to StoreAlarmLog with WeldResultID(%llu) WeldRecipeID(%u)\n",
+        LOG("\n#try to StoreAlarmLog with WeldResultID(%llu) WeldRecipeID(%u)\n",
                 WeldResultID, pData->RecipeNum);
 #endif
         StoreAlarmLog(nullptr);
 
 #ifdef UNITTEST_DATABASE
-        LOG("#try to StoreWeldSignature with WeldResultID(%llu)\n",
+        LOG("\n#try to StoreWeldSignature with WeldResultID(%llu)\n",
                 WeldResultID);
 #endif
         StoreWeldSignature((char *)&WeldResultID);
@@ -298,7 +297,7 @@ int DBAccessL20DB::StoreWeldSignature(char *buffer)
     	nErrCode = SingleTransaction(strStore);
 	}
 
-	getLatestID64(TABLE_WELD_SIGNATURE, &id);
+	GetLatestID64(TABLE_WELD_SIGNATURE, &id);
 
 	if(nErrCode == 0)
 	{
@@ -326,7 +325,7 @@ int DBAccessL20DB::StoreWeldSignature(char *buffer)
 int DBAccessL20DB::StoreWeldRecipe(char *buffer)
 {
     int id = ERROR;
-    getLatestID(TABLE_WELD_RECIPE, &id);
+    GetLatestID(TABLE_WELD_RECIPE, &id);
 #ifdef UNITTEST_DATABASE
     LOG("# already %d WeldRecipe existing, try to insert new one\n", id);
 #endif
@@ -460,12 +459,11 @@ int DBAccessL20DB::StoreAlarmLog(char *buffer)
         std::to_string(pData->AlarmSubType)+");";//is AlarmSubType for column IsReset?
 	nErrCode = SingleTransaction(str);
 
-	getLatestID64(TABLE_ALARM_LOG, &id);
+	GetLatestID64(TABLE_ALARM_LOG, &id);
 	if(nErrCode == 0)
 	{
 #ifdef UNITTEST_DATABASE
         LOG("# store AlarmLog to ID(%llu) with WeldResultID(%llu)\n", id, pData->WeldResultID);
-        LOG("StoreAlarmLog:\n%s\n", str.c_str());
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -485,7 +483,7 @@ int DBAccessL20DB::StoreAlarmLog(char *buffer)
 *
 * \param   - char *buffer - not used
 *
-* \return  - UINT8 - status of query exec
+* \return  - UINT8 - count of records
 *
 ******************************************************************************/
 int DBAccessL20DB::QueryBlockWeldResult(char *buffer)
@@ -692,55 +690,62 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
 *
 * \param   - char *buffer WeldResult ID
 *
-* \return  - N/A
+* \return  - UINT8 - count of records
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryAlarmLog(char *buffer)
+int DBAccessL20DB::QueryBlockAlarmLog(char *buffer)
 {
-    long long WeldResultID = *(long long *)buffer;
+    int count;
+	vector<string> tmpStr;
+    long long id = *(long long *)buffer;
+
     string str = ExecuteQuery(
                 "select * from "+string(TABLE_ALARM_LOG)+
-                " where WeldResultID="+
-                std::to_string(WeldResultID)+";");
+                " where ID <= "+std::to_string(id)+" and ID > "+
+                std::to_string(id-ALARM_LOG_MAX)+
+                " order by ID desc;");
+    Utility::StringToTokens(str, ',', tmpStr);
 
-    if(str.empty()!=true)
+	for(count = 0; count < tmpStr.size()/TABLE_ALARMLOG_MEM; count++)
         {
         UI_ALARM_LOG tmpLog;
-    	vector<string> tmpStr;
 
-        Utility::StringToTokens(str, ',', tmpStr);
-        tmpLog.WeldCount = WeldResultID;//WeldResultID
-        strncpy(tmpLog.DateTime, tmpStr[1].c_str(), 20);//DateTime
-        tmpLog.AlarmType = atoi(tmpStr[2].c_str());//AlarmType
+        bzero(tmpLog.DateTime, 20);
+        strncpy(tmpLog.DateTime, tmpStr[count*TABLE_ALARMLOG_MEM+1].c_str(), 20);//DateTime
+        tmpLog.AlarmType = atoi(tmpStr[count*TABLE_ALARMLOG_MEM+2].c_str());//AlarmType
 
         str = ExecuteQuery(
                     "select RecipeName from "+string(TABLE_WELD_RECIPE)+
-                    " where ID="+ tmpStr[3] +";");
+                    " where ID="+ tmpStr[count*TABLE_ALARMLOG_MEM+3] +";");//RecipeID
+        bzero(tmpLog.RecipeName, RECIPE_LEN);
         strncpy(tmpLog.RecipeName, str.c_str(), RECIPE_LEN);
 
-#ifdef UNITTEST_DATABASE
+        tmpLog.WeldCount = atoll(tmpStr[count*TABLE_ALARMLOG_MEM+4].c_str());//WeldResultID
+
         for(int i=0; i<AlarmDataSC::AlarmLog.size(); i++)
             {
-            if(AlarmDataSC::AlarmLog[i].WeldCount == WeldResultID)
+            if(AlarmDataSC::AlarmLog[i].WeldCount == tmpLog.WeldCount)
                 {
-        LOG("erase:%llu\n", WeldResultID);
+#ifdef UNITTEST_DATABASE
+                LOG("erase:%llu\n", tmpLog.WeldCount);
+#endif
                 AlarmDataSC::AlarmLog.erase(AlarmDataSC::AlarmLog.begin()+i);
                 break;
                 }
             }
-#endif
 		AlarmDataSC::AlarmLog.push_back(tmpLog);
 
 #ifdef UNITTEST_DATABASE
+        LOG("ID:%s\n", tmpStr[count*TABLE_ALARMLOG_MEM].c_str());
         LOG("WeldCount:%llu\n", tmpLog.WeldCount);
-        LOG("DateTime:%s\n", tmpLog.DateTime);
-        LOG("RecipeId:%d\n", atoi(tmpStr[3].c_str()));
+        LOG("RecipeId:%d\n", atoi(tmpStr[count*TABLE_ALARMLOG_MEM+3].c_str()));
         LOG("RecipeName:%s\n", tmpLog.RecipeName);
-        LOG("AlarmType:%d\n", tmpLog.AlarmType);
+        LOG("DateTime:%s\n", tmpLog.DateTime);
+        LOG("AlarmType:%d\n\n", tmpLog.AlarmType);
 #endif
         }
-    return;
+    return count;
 }
 
 /**************************************************************************//**
@@ -752,7 +757,7 @@ void DBAccessL20DB::QueryAlarmLog(char *buffer)
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryHiCalib(char *buffer)
+void DBAccessL20DB::QueryHeightCalibration(char *buffer)
 {
     string str = ExecuteQuery(
                 "select * from "+string(TABLE_HI_CALIB)+";");
@@ -766,6 +771,32 @@ void DBAccessL20DB::QueryHiCalib(char *buffer)
     LOG("HeightCalibration:%s\n", str.c_str());
     LOG("PSI:%s\n", tmpStr[0].c_str());
     LOG("Count:%s\n", tmpStr[1].c_str());
+#endif
+    return;
+}
+
+/**************************************************************************//**
+* \brief   - Query DbVersion from DB
+*
+* \param   - char *buffer - not used
+*
+* \return  - N/A
+*
+******************************************************************************/
+//TODO Is it temporary code for test only, because there is not any return?
+void DBAccessL20DB::QueryDbVersion(char *buffer)
+{
+    string str = ExecuteQuery(
+                "select * from "+string(TABLE_DB_VERSION)+";");
+
+	vector<string> tmpStr;
+    Utility::StringToTokens(str, ',', tmpStr);
+
+#ifdef UNITTEST_DATABASE
+    LOG("QueryDbVersion:%s\n", str.c_str());
+    LOG("Major:%s\n", tmpStr[0].c_str());
+    LOG("Minor:%s\n", tmpStr[1].c_str());
+    LOG("Build:%s\n", tmpStr[2].c_str());
 #endif
     return;
 }
@@ -863,7 +894,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 * \return  - UINT8 - Database status
 *
 ******************************************************************************/
-int DBAccessL20DB::UpdateHiCalib(char *buffer)
+int DBAccessL20DB::UpdateHeightCalibration(char *buffer)
 {
 	int nErrCode = SQLITE_ERROR;
     int PSI = *(int *)buffer;
@@ -921,7 +952,7 @@ void DBAccessL20DB::DeleteOldest(const char *table)
 * 			 else return ERROR or database status.
 *
 ******************************************************************************/
-int DBAccessL20DB::getLatestID(const string table, int* _id)
+int DBAccessL20DB::GetLatestID(const string table, int* _id)
 {
 	int errorCode = SQLITE_OK;
 	if(table.empty() == true)
@@ -938,6 +969,31 @@ int DBAccessL20DB::getLatestID(const string table, int* _id)
     return errorCode;
 }
 
+/**************************************************************************//**
+* \brief   - Latest ID getting for the specific table.
+*
+* \param   - table name, _id pointer
+*
+* \return  - If there is not any error happened while querying, it will return SQLITE_OK; 
+* 			 else return ERROR or database status.
+*
+******************************************************************************/
+int DBAccessL20DB::GetLatestID64(const string table, long long* _id)
+{
+	int errorCode = SQLITE_OK;
+	if(table.empty() == true)
+		return ERROR;
+	if(_id == nullptr)
+		return ERROR;
+    string strQuery =
+        "select seq from sqlite_sequence where name='" +
+        table +
+        "';";
+    string str = ExecuteQuery(strQuery, &errorCode);
+    if(errorCode == SQLITE_OK)
+    	*_id = atoll(str.c_str());
+    return errorCode;
+}
 
 /**************************************************************************//**
 * \brief   - The struct2Json shall be overload function for WeldStepValueSetting.
@@ -1427,31 +1483,5 @@ int DBAccessL20DB::Vector2Array(const vector<WeldStepValueSetting>* _ptrvector, 
 		}
 	}
 	return iResult;
-}
-
-/**************************************************************************//**
-* \brief   - Latest ID getting for the specific table.
-*
-* \param   - table name, _id pointer
-*
-* \return  - If there is not any error happened while querying, it will return SQLITE_OK; 
-* 			 else return ERROR or database status.
-*
-******************************************************************************/
-int DBAccessL20DB::getLatestID64(const string table, long long* _id)
-{
-	int errorCode = SQLITE_OK;
-	if(table.empty() == true)
-		return ERROR;
-	if(_id == nullptr)
-		return ERROR;
-    string strQuery =
-        "select seq from sqlite_sequence where name='" +
-        table +
-        "';";
-    string str = ExecuteQuery(strQuery, &errorCode);
-    if(errorCode == SQLITE_OK)
-    	*_id = atoll(str.c_str());
-    return errorCode;
 }
 

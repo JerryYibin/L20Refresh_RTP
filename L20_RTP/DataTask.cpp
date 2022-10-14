@@ -191,17 +191,20 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->QueryWeldSignature(message.Buffer);
 		break;
 	case TO_DATA_TASK_ALARM_LOG_QUERY:
-        _ObjDBConn->QueryAlarmLog(message.Buffer);
+        _ObjDBConn->QueryBlockAlarmLog(message.Buffer);
 		break;
 	case TO_DATA_TASK_HI_CALIB_QUERY:
-        _ObjDBConn->QueryHiCalib(message.Buffer);
+        _ObjDBConn->QueryHeightCalibration(message.Buffer);
 		break;
 
 	case TO_DATA_TASK_WELD_RECIPE_UPDATE:
         _ObjDBConn->UpdateWeldRecipe(message.Buffer);
 		break;
 	case TO_DATA_TASK_HI_CALIB_UPDATE:
-        _ObjDBConn->UpdateHiCalib(message.Buffer);
+        _ObjDBConn->UpdateHeightCalibration(message.Buffer);
+		break;
+	case TO_DATA_TASK_DB_VERSION_QUERY:
+        _ObjDBConn->QueryDbVersion(message.Buffer);
 		break;
 
 	case TO_DATA_TASK_WELD_RECIPE_DELETE:
