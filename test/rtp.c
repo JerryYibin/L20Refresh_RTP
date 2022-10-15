@@ -194,7 +194,13 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_HI_CALIB_QUERY,
     TO_DATA_TASK_HI_CALIB_UPDATE,
 
-    TO_DATA_TASK_DB_VERSION_QUERY
+    TO_DATA_TASK_DB_VERSION_QUERY,
+
+    TO_DATA_TASK_USER_PROFILE_QUERY,
+    TO_DATA_TASK_USER_PROFILE_UPDATE,
+
+    TO_DATA_TASK_PRIVILEGE_CONFIG_QUERY,
+    TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE
     };
 
 int main(int argc, char *argv[])
@@ -244,6 +250,14 @@ int main(int argc, char *argv[])
  *     third parameter for PSI
  * 6 for DbVersion
  *   b for query
+ * 7 for UserProfiles
+ *   b for query
+ *     third parameter for PermissionLevel
+ *   u for update
+ * 8 for PrivilegeConfiguration
+ *   b for query
+ *     third parameter for ScreenIndex
+ *   u for update
  *
  */
     if(argc>=3)
@@ -512,6 +526,68 @@ int main(int argc, char *argv[])
                         buf.msgID = TO_DATA_TASK_DB_VERSION_QUERY;
                         break;
                         }
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
+            case '7':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'b':
+                        {
+                        int *pData = (int *)&buf.Buffer[0];
+                        if(argc>=4)
+                            *pData = atoi(argv[3]);
+                        else
+                            *pData = 1;
+                        buf.msgID = TO_DATA_TASK_USER_PROFILE_QUERY;
+                        break;
+                        }
+                    case 'u':
+                        {
+                        int *pData = (int *)&buf.Buffer[0];
+                        if(argc>=4)
+                            *pData = atoi(argv[3]);
+                        else
+                            *pData = 1;
+                        buf.msgID = TO_DATA_TASK_USER_PROFILE_UPDATE;
+                        break;
+                        }
+                        break;
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
+            case '8':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'b':
+                        {
+                        int *pData = (int *)&buf.Buffer[0];
+                        if(argc>=4)
+                            *pData = atoi(argv[3]);
+                        else
+                            *pData = 1;
+                        buf.msgID = TO_DATA_TASK_PRIVILEGE_CONFIG_QUERY;
+                        break;
+                        }
+                    case 'u':
+                        {
+                        int *pData = (int *)&buf.Buffer[0];
+                        if(argc>=4)
+                            *pData = atoi(argv[3]);
+                        else
+                            *pData = 1;
+                        buf.msgID = TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE;
+                        break;
+                        }
+                        break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;

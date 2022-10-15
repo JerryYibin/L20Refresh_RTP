@@ -19,6 +19,7 @@
 #include "../Recipe.h"
 #include "../AlarmData.h"
 #include "../HeightEncoder.h"
+#include "../UserAuthority.h"
 #include <jansson.h>
 extern "C"
 {
@@ -29,7 +30,7 @@ extern "C"
 #include <timerDev.h>
 #endif
 
-extern long long atoll(const char *);
+extern long long atoll(const char* );
 
 /******************************************************************************
 * \brief - Constructor.
@@ -82,7 +83,7 @@ int DBAccessL20DB::ConnectDB()
 * \return - the read database values are returned as comma separated values.
 *
 ******************************************************************************/
-string DBAccessL20DB::GetWeldResultCSVParameters(int nRowID,  int *pnStatus, int nRetryCounter)
+string DBAccessL20DB::GetWeldResultCSVParameters(int nRowID,  int* pnStatus, int nRetryCounter)
 {
 	return "";
 }
@@ -114,7 +115,7 @@ string DBAccessL20DB::GetWeldResultCSVReportHeader()
 * \return - the read database values are returned as comma separated values.
 *
 ******************************************************************************/
-string DBAccessL20DB::GetWeldSignatureCSVParameters(int nRowID, int &nBlobParamNumber, int *pnStatus, int nRetryCounter)
+string DBAccessL20DB::GetWeldSignatureCSVParameters(int nRowID, int &nBlobParamNumber, int* pnStatus, int nRetryCounter)
 {
 	return "";
 }
@@ -148,14 +149,14 @@ string DBAccessL20DB::GetWeldSignatureCSVReportHeader2()
 /**************************************************************************//**
 * \brief   - Writing WeldResult into DB
 *      		
-* \param   - char *buffer - not used
+* \param   - char* buffer - not used
 *
 * \return  - UINT8 -status of query exec
 *
 ******************************************************************************/
-int DBAccessL20DB::StoreWeldResult(char *buffer)
+int DBAccessL20DB::StoreWeldResult(char* buffer)
 {
-    WELD_RESULT *pData = &CommonProperty::WeldResult;
+    WELD_RESULT* pData = &CommonProperty::WeldResult;
 
 	struct tm timeStamp;
     char timeBuf[20];
@@ -205,7 +206,7 @@ int DBAccessL20DB::StoreWeldResult(char *buffer)
 		}
 
 #ifdef UNITTEST_DATABASE
-        ALARM_DATA *pAlarm = &AlarmDataSC::AlarmData;
+        ALARM_DATA* pAlarm = &AlarmDataSC::AlarmData;
         pAlarm->AlarmType = 123;
         pAlarm->AlarmSubType = 456;
         pAlarm->WeldResultID = WeldResultID;
@@ -220,7 +221,7 @@ int DBAccessL20DB::StoreWeldResult(char *buffer)
         LOG("\n#try to StoreWeldSignature with WeldResultID(%llu)\n",
                 WeldResultID);
 #endif
-        StoreWeldSignature((char *)&WeldResultID);
+        StoreWeldSignature((char* )&WeldResultID);
 	}
 	else
 	{
@@ -233,16 +234,16 @@ int DBAccessL20DB::StoreWeldResult(char *buffer)
 /**************************************************************************//**
 * \brief   - Writing WeldSignature into DB
 *
-* \param   - char *buffer - WeldResultID
+* \param   - char* buffer - WeldResultID
 *
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
-int DBAccessL20DB::StoreWeldSignature(char *buffer)
+int DBAccessL20DB::StoreWeldSignature(char* buffer)
 {
 	string str;
     long long id;
-	long long WeldResultID = *(long long *)buffer;
+	long long WeldResultID = *(long long* )buffer;
 	int nErrCode = SQLITE_ERROR;
 
 	str = ExecuteQuery(
@@ -317,12 +318,12 @@ int DBAccessL20DB::StoreWeldSignature(char *buffer)
 /**************************************************************************//**
 * \brief   - Writing Weld Recipe into DB
 *
-* \param   - char *buffer - WeldRecipeSC data
+* \param   - char* buffer - WeldRecipeSC data
 *
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
-int DBAccessL20DB::StoreWeldRecipe(char *buffer)
+int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 {
     int id = ERROR;
     GetLatestID(TABLE_WELD_RECIPE, &id);
@@ -335,7 +336,7 @@ int DBAccessL20DB::StoreWeldRecipe(char *buffer)
         return SQLITE_ERROR;
 	}
 
-    WeldRecipeSC *pData = (WeldRecipeSC *)buffer;
+    WeldRecipeSC* pData = (WeldRecipeSC* )buffer;
 #ifdef UNITTEST_DATABASE
     if(strlen(pData->m_RecipeName)==0)
         strncpy(pData->m_RecipeName, "hello", RECIPE_LEN);
@@ -410,17 +411,17 @@ int DBAccessL20DB::StoreWeldRecipe(char *buffer)
 /**************************************************************************//**
 * \brief   - Writing AlarmLog into DB
 *
-* \param   - char *buffer - not used
+* \param   - char* buffer - not used
 *
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
-int DBAccessL20DB::StoreAlarmLog(char *buffer)
+int DBAccessL20DB::StoreAlarmLog(char* buffer)
 {
 	long long id;
 	string str;
 	int nErrCode = SQLITE_ERROR;
-    ALARM_DATA *pData = &AlarmDataSC::AlarmData;
+    ALARM_DATA* pData = &AlarmDataSC::AlarmData;
 
 	str = ExecuteQuery(
             "select * from "+string(TABLE_ALARM_LOG)+
@@ -481,17 +482,17 @@ int DBAccessL20DB::StoreAlarmLog(char *buffer)
 /**************************************************************************//**
 * \brief   - Query the latest records from table Weld Result
 *
-* \param   - char *buffer - not used
+* \param   - char* buffer - not used
 *
 * \return  - UINT8 - count of records
 *
 ******************************************************************************/
-int DBAccessL20DB::QueryBlockWeldResult(char *buffer)
+int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
 {
     int count;
     string str;
 	vector<string> tmpStr;
-	long long id = *(long long *)buffer;
+	long long id = *(long long* )buffer;
 
     str = ExecuteQuery(
                 string("select * from ")+string(TABLE_WELD_RESULT)+
@@ -544,19 +545,19 @@ int DBAccessL20DB::QueryBlockWeldResult(char *buffer)
 /**************************************************************************//**
 * \brief   - Query Weld Signature from DB
 *
-* \param   - char *buffer WeldResult ID
+* \param   - char* buffer WeldResult ID
 *
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryWeldSignature(char *buffer)
+void DBAccessL20DB::QueryWeldSignature(char* buffer)
 {
     string strQuery =
         "select "+string(COLUMN_GRAPHDATA)+
         " from "+string(TABLE_WELD_SIGNATURE)+
         " where WeldResultID="+
-        std::to_string(*(long long *)buffer)+";";
+        std::to_string(*(long long* )buffer)+";";
     string str = ExecuteQuery(strQuery);
     vector<WELD_SIGNATURE> WeldSignVector;
     String2Vector(str, &WeldSignVector);
@@ -578,13 +579,13 @@ void DBAccessL20DB::QueryWeldSignature(char *buffer)
 /**************************************************************************//**
 * \brief   - Query all Weld Recipe records from DB
 *
-* \param   - char *buffer - not used
+* \param   - char* buffer - not used
 *
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryWeldRecipeAll(char *buffer)
+void DBAccessL20DB::QueryWeldRecipeAll(char* buffer)
 {
     string strQuery =
         "select * from "+string(TABLE_WELD_RECIPE)+";";
@@ -600,15 +601,15 @@ void DBAccessL20DB::QueryWeldRecipeAll(char *buffer)
 /**************************************************************************//**
 * \brief   - Query Specific Weld Recipe from DB
 *
-* \param   - char *buffer - WeldRecipe structure
+* \param   - char* buffer - WeldRecipe structure
 *
 * \return  - UINT8 - status of query exec
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryWeldRecipe(char *buffer)
+void DBAccessL20DB::QueryWeldRecipe(char* buffer)
 {
-	WeldRecipeSC *pRecipe = (WeldRecipeSC *)buffer;
+	WeldRecipeSC* pRecipe = (WeldRecipeSC* )buffer;
 	
     string strQuery =
         "select * from "+string(TABLE_WELD_RECIPE)+
@@ -688,17 +689,17 @@ void DBAccessL20DB::QueryWeldRecipe(char *buffer)
 /**************************************************************************//**
 * \brief   - Query AlarmLog from DB
 *
-* \param   - char *buffer WeldResult ID
+* \param   - char* buffer WeldResult ID
 *
 * \return  - UINT8 - count of records
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-int DBAccessL20DB::QueryBlockAlarmLog(char *buffer)
+int DBAccessL20DB::QueryBlockAlarmLog(char* buffer)
 {
     int count;
 	vector<string> tmpStr;
-    long long id = *(long long *)buffer;
+    long long id = *(long long* )buffer;
 
     string str = ExecuteQuery(
                 "select * from "+string(TABLE_ALARM_LOG)+
@@ -751,13 +752,13 @@ int DBAccessL20DB::QueryBlockAlarmLog(char *buffer)
 /**************************************************************************//**
 * \brief   - Query HeightCalibration from DB
 *
-* \param   - char *buffer - not used
+* \param   - char* buffer - not used
 *
 * \return  - N/A
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryHeightCalibration(char *buffer)
+void DBAccessL20DB::QueryHeightCalibration(char* buffer)
 {
     string str = ExecuteQuery(
                 "select * from "+string(TABLE_HI_CALIB)+";");
@@ -778,13 +779,13 @@ void DBAccessL20DB::QueryHeightCalibration(char *buffer)
 /**************************************************************************//**
 * \brief   - Query DbVersion from DB
 *
-* \param   - char *buffer - not used
+* \param   - char* buffer - not used
 *
 * \return  - N/A
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryDbVersion(char *buffer)
+void DBAccessL20DB::QueryDbVersion(char* buffer)
 {
     string str = ExecuteQuery(
                 "select * from "+string(TABLE_DB_VERSION)+";");
@@ -792,6 +793,10 @@ void DBAccessL20DB::QueryDbVersion(char *buffer)
 	vector<string> tmpStr;
     Utility::StringToTokens(str, ',', tmpStr);
 
+	sprintf(CommonProperty::SystemInfo.version_DB,"%s.%s.%s",
+            tmpStr[0].c_str(),
+            tmpStr[1].c_str(),
+            tmpStr[2].c_str());
 #ifdef UNITTEST_DATABASE
     LOG("QueryDbVersion:%s\n", str.c_str());
     LOG("Major:%s\n", tmpStr[0].c_str());
@@ -802,17 +807,74 @@ void DBAccessL20DB::QueryDbVersion(char *buffer)
 }
 
 /**************************************************************************//**
+* \brief   - Query UserProfiles from DB
+*
+* \param   - char* buffer - PermissionLevel
+*
+* \return  - Password
+*
+******************************************************************************/
+string DBAccessL20DB::QueryUserProfiles(char* buffer)
+{
+    int PermissionLevel = *(int* )buffer;
+    string str = ExecuteQuery("select Password from "+string(TABLE_USER_PROFILE)+
+                " where PermissionLevel="+std::to_string(PermissionLevel)+";");
+
+#ifdef UNITTEST_DATABASE
+    LOG("QueryUserProfiles:%s\n", str.c_str());
+    if(UserAuthority::_UserProfilesSC == nullptr)
+        {
+        LOG("new UserAuthority\n");
+		new UserAuthority();
+        }
+#endif
+    UserAuthority::_UserProfilesSC->insert(pair<int, string>(PermissionLevel,str));
+    return str;
+}
+
+/**************************************************************************//**
+* \brief   - Query PrivilegeConfiguration from DB
+*
+* \param   - char* buffer - ScreenIndex
+*
+* \return  - N/A
+*
+******************************************************************************/
+string DBAccessL20DB::QueryPrivilegeConfiguration(char* buffer)
+{
+    int ScreenIndex = *(int* )buffer;
+    string str = ExecuteQuery(
+                "select PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+
+                " where ScreenIndex="+std::to_string(ScreenIndex)+";");
+    if(str.empty() == true)
+        return nullptr;
+#ifdef UNITTEST_DATABASE
+    LOG("QueryPrivilegeConfiguration:%s\n", str.c_str());
+    if(UserAuthority::_UserPrivilegesSC == nullptr)
+        {
+        LOG("new UserAuthority\n");
+		new UserAuthority();
+        }
+#endif
+
+    int PermissionLevel = atoi(str.c_str());
+    str = QueryUserProfiles((char* )&PermissionLevel);
+    UserAuthority::_UserPrivilegesSC->insert(pair<int, string>(ScreenIndex,str));
+    return str;
+}
+
+/**************************************************************************//**
 * \brief   - Update Specific Weld Recipe to DB
 *
-* \param   - char *buffer (recipe structure)
+* \param   - char* buffer (recipe structure)
 *
 * \return  - UINT8 - Database status
 *
 ******************************************************************************/
-int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
+int DBAccessL20DB::UpdateWeldRecipe(char* buffer)
 {
     string strStore;
-    WeldRecipeSC *pRecipe = (WeldRecipeSC *)buffer;
+    WeldRecipeSC* pRecipe = (WeldRecipeSC* )buffer;
 	int nErrCode = SQLITE_ERROR;
 
 	strStore = ExecuteQuery(
@@ -889,15 +951,15 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 /**************************************************************************//**
 * \brief   - Update HeightCalibration to DB
 *
-* \param   - char *buffer - PSI
+* \param   - char* buffer - PSI
 *
 * \return  - UINT8 - Database status
 *
 ******************************************************************************/
-int DBAccessL20DB::UpdateHeightCalibration(char *buffer)
+int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
 {
 	int nErrCode = SQLITE_ERROR;
-    int PSI = *(int *)buffer;
+    int PSI = *(int* )buffer;
 
     if(1 != HeightEncoder::HeightCalibratedMap.count(PSI))
         {
@@ -925,15 +987,129 @@ int DBAccessL20DB::UpdateHeightCalibration(char *buffer)
 }
 
 /**************************************************************************//**
+* \brief   - Update UserProfiles to DB
+*
+* \param   - char* buffer - PermissionLevel
+*
+* \return  - UINT8 - Database status
+*
+******************************************************************************/
+int DBAccessL20DB::UpdateUserProfiles(char* buffer)
+{
+    int PermissionLevel = *(int* )buffer;
+	int nErrCode = SQLITE_ERROR;
+
+#ifdef UNITTEST_DATABASE
+    if(UserAuthority::_UserProfilesSC == nullptr)
+        {
+        LOG("new UserAuthority\n");
+		new UserAuthority();
+        }
+#endif
+
+    if(1 != UserAuthority::_UserProfilesSC->count(PermissionLevel))
+        {
+#ifdef UNITTEST_DATABASE
+        UserAuthority::_UserProfilesSC->insert(pair<int, string>(PermissionLevel,"123456"));
+        LOG("# set PermissionLevel(%d) with Password(%s)\n", PermissionLevel, "123456");
+#else
+	    return nErrCode;
+#endif
+        }
+
+    map<int,string>::iterator st;
+    string pw;
+    for(st=UserAuthority::_UserProfilesSC->begin();st!=UserAuthority::_UserProfilesSC->end();st++)
+    {
+        if(st->first == PermissionLevel)
+            {
+            pw = st->second;
+            break;
+            }
+    }
+	string strStore =
+        "update " 	+ string(TABLE_USER_PROFILE) +
+        " set Password='" + pw+//Password
+        "' where PermissionLevel="+ std::to_string(PermissionLevel)+";";//PermissionLevel
+	nErrCode = SingleTransaction(strStore);
+#ifdef UNITTEST_DATABASE
+    LOG("# %s\n", strStore.c_str());
+#endif
+	if(nErrCode != 0)
+		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+	return nErrCode;
+}
+
+/**************************************************************************//**
+* \brief   - Update PrivilegeConfiguration to DB
+*
+* \param   - char* buffer - ScreenIndex
+*
+* \return  - UINT8 - Database status
+*
+******************************************************************************/
+int DBAccessL20DB::UpdatePrivilegeConfiguration(char* buffer)
+{
+    int ScreenIndex = *(int* )buffer;
+	int nErrCode = SQLITE_ERROR;
+
+#ifdef UNITTEST_DATABASE
+    if(UserAuthority::_UserPrivilegesSC == nullptr)
+        {
+        LOG("new UserAuthority\n");
+		new UserAuthority();
+        }
+#endif
+
+#ifdef UNITTEST_DATABASE
+    LOG("# ScreenIndex(%d)\n", ScreenIndex);
+#endif
+
+    if(1 != UserAuthority::_UserPrivilegesSC->count(ScreenIndex))
+        {
+#ifdef UNITTEST_DATABASE
+        UserAuthority::_UserPrivilegesSC->insert(pair<int, string>(ScreenIndex,"abc123"));
+        LOG("# set ScreenIndex(%d) with Password(%s)\n", ScreenIndex, "abc123");
+#else
+	    return nErrCode;
+#endif
+        }
+
+    string str = ExecuteQuery(
+                "select PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+
+                " where ScreenIndex="+std::to_string(ScreenIndex)+";");
+    if(str.empty() == true)
+        return nErrCode;
+    int PermissionLevel = atoi(str.c_str());
+#ifdef UNITTEST_DATABASE
+    LOG("# PermissionLevel(%d)\n", PermissionLevel);
+#endif
+
+    map<int,string>::iterator st;
+    string pw;
+    for(st=UserAuthority::_UserPrivilegesSC->begin();st!=UserAuthority::_UserPrivilegesSC->end();st++)
+    {
+        if(st->first == ScreenIndex)
+            {
+            pw = st->second;
+            break;
+            }
+    }
+    UserAuthority::_UserProfilesSC->insert(pair<int, string>(PermissionLevel, pw));
+	nErrCode = UpdateUserProfiles((char* )&PermissionLevel);
+	return nErrCode;
+}
+
+/**************************************************************************//**
 * \brief   - Delete table, please confirm what's the purpose of the function.
 *
-* \param   - char *table - table name
+* \param   - char* table - table name
 *
 * \return  - none
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::DeleteOldest(const char *table)
+void DBAccessL20DB::DeleteOldest(const char* table)
 {
     string strQuery =
         "delete from "+
@@ -1010,18 +1186,18 @@ int DBAccessL20DB::GetLatestID64(const string table, long long* _id)
 ******************************************************************************/
 int	DBAccessL20DB::Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr)
 {
-    char *result;
+    char* result;
     if((_ptrArray == nullptr) || (size == 0) || (size > STEP_MAX))
 	{
         return ERROR;
 	}
 
-    json_t *jsonArray[size];
+    json_t* jsonArray[size];
     for(int i = 0; i < size; i++)
     {
     	jsonArray[i] = json_array();
     }
-    json_t *all  = json_object();
+    json_t* all  = json_object();
 
     for(UINT32 i = 0; i < size; i++)
 	{
@@ -1052,9 +1228,9 @@ int	DBAccessL20DB::Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsi
 ******************************************************************************/
 int DBAccessL20DB::JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray)
 {
-    json_t *all;
-    json_t *array;
-    json_t *mem;
+    json_t* all;
+    json_t* array;
+    json_t* mem;
     int index = 0;
 
     if(_ptrArray == nullptr)
@@ -1106,18 +1282,18 @@ int DBAccessL20DB::JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrA
 ******************************************************************************/
 int DBAccessL20DB::Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string& jsonStr)
 {
-    char *result;
+    char* result;
     if((_ptrVector->size() == 0) || (_ptrVector->size() > HMI_SIGNA_POINT_MAX))
 	{
         return ERROR;
 	}
     
-    json_t *jsonArray[SIGNATURE_DATA_TYPE::TOTAL] = {nullptr};
+    json_t* jsonArray[SIGNATURE_DATA_TYPE::TOTAL] = {nullptr};
     for(int i = 0; i < SIGNATURE_DATA_TYPE::TOTAL; i++)
     {
     	jsonArray[i] = json_array();
     }
-    json_t *all  = json_object();
+    json_t* all  = json_object();
 
     for(int i = 0; i < _ptrVector->size(); i++)
 	{
@@ -1200,7 +1376,7 @@ int DBAccessL20DB::Vector2String(const vector<WELD_SIGNATURE>* _ptrVector, strin
 int DBAccessL20DB::JSON2Vector(const string jsonStr, vector<WELD_SIGNATURE>* _ptrVector)
 {
     int size = 0, index = 0;
-    json_t *all, *array, *mem;
+    json_t* all, *array, *mem;
     WELD_SIGNATURE signature;
 
     if(jsonStr.empty() == true)

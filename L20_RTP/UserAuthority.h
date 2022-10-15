@@ -17,13 +17,14 @@ using namespace std;
 class UserAuthority 
 {
 private:
+	static vector<USER_PRIVILEGE>* _UserPrivilegesUI;
+	static vector<USER_PROFILE>* _UserProfilesUI;
+public:
 	//Key is EntryScreenIndex, Value is passcode;
 	static map<int, string>* _UserPrivilegesSC;
 	//Key is PermissionLevel, Value is passcode;
 	static map<int, string>* _UserProfilesSC;
-	static vector<USER_PRIVILEGE>* _UserPrivilegesUI;
-	static vector<USER_PROFILE>* _UserProfilesUI;
-public:
+
 	UserAuthority();
 	virtual ~UserAuthority();
 	int CheckScreenAccessAuthority(const string passcode, const int entryScreenIndex);

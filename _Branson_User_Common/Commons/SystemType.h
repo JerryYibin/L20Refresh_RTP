@@ -21,6 +21,6 @@ typedef enum
 	INVALID_SYSTEM
 }EN_SYSTEM_TYPE;
 
-int GetSystemType();
+EN_SYSTEM_TYPE GetSystemType();
 
 #endif

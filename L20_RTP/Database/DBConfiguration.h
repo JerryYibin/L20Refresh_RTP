@@ -28,6 +28,8 @@
 #define TABLE_ALARM_LOG     	"AlarmLog"
 #define TABLE_HI_CALIB     		"HeightCalibration"
 #define TABLE_DB_VERSION     	"DBVersion"
+#define TABLE_USER_PROFILE     	"UserProfiles"
+#define TABLE_PRIVILEGE_CONFIG  "PrivilegeConfiguration"
 #define COLUMN_GRAPHDATA		"WeldGraph"
 #define COLUMN_GOLDEN			"Golden"
 

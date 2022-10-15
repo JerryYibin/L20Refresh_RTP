@@ -54,10 +54,14 @@ public:
 	virtual int 	QueryBlockAlarmLog(char *) 		  	override;
 	virtual void 	QueryHeightCalibration(char *) 		override;
 	virtual void 	QueryDbVersion(char *) 				override;
+	virtual string 	QueryUserProfiles(char *) 			override;
+	virtual string 	QueryPrivilegeConfiguration(char *) override;
 
 	virtual void 	QueryWeldRecipeAll(char *) 			override;
 	virtual int 	UpdateWeldRecipe(char *) 			override;
 	virtual int 	UpdateHeightCalibration(char *) 	override;
+	virtual int 	UpdateUserProfiles(char *) 			override;
+	virtual int 	UpdatePrivilegeConfiguration(char *) override;
 
 	virtual void 	DeleteOldest(const char *) 			override;
 

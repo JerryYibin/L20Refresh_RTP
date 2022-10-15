@@ -46,10 +46,14 @@ public:
 	virtual int 	QueryBlockAlarmLog(char *)		= 0;
 	virtual void 	QueryHeightCalibration(char *)		= 0;
 	virtual void 	QueryDbVersion(char *)				= 0;
+	virtual string 	QueryUserProfiles(char *)			= 0;
+	virtual string 	QueryPrivilegeConfiguration(char *)	= 0;
 
 	virtual void 	QueryWeldRecipeAll(char *)		= 0;
 	virtual int 	UpdateWeldRecipe(char *)			= 0;
 	virtual int 	UpdateHeightCalibration(char *)	= 0;
+	virtual int 	UpdateUserProfiles(char *)			= 0;
+	virtual int 	UpdatePrivilegeConfiguration(char *)	= 0;
 
 	virtual void 	DeleteOldest(const char *)			= 0;
 	

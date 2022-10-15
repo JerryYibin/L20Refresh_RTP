@@ -85,7 +85,7 @@ int DataTask::ConnectDB()
     		_ObjDBConn = new DBAccessL20DB();
         	break;
 		default:
-			LOGERR((char *)"MODEL_T : --------NO System Detected-----------", 0, 0, 0);
+			LOGERR((char* )"MODEL_T : --------NO System Detected-----------", 0, 0, 0);
 			return SQLITE_ERROR;
     	}
     	nErrCode = _ObjDBConn->ConnectDB();
@@ -129,7 +129,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 {
     if((_ObjDBConn == nullptr)&&(message.msgID != TO_DATA_TASK_OPEN_DB))
     {
-    	LOGERR((char *)"DataTask: --------Database has not been open, Message ID = --- : ", message.msgID, 0, 0);
+    	LOGERR((char* )"DataTask: --------Database has not been open, Message ID = --- : ", message.msgID, 0, 0);
         return;
     }
 
@@ -196,6 +196,15 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_HI_CALIB_QUERY:
         _ObjDBConn->QueryHeightCalibration(message.Buffer);
 		break;
+	case TO_DATA_TASK_DB_VERSION_QUERY:
+        _ObjDBConn->QueryDbVersion(message.Buffer);
+		break;
+	case TO_DATA_TASK_USER_PROFILE_QUERY:
+        _ObjDBConn->QueryUserProfiles(message.Buffer);
+		break;
+	case TO_DATA_TASK_PRIVILEGE_CONFIG_QUERY:
+        _ObjDBConn->QueryPrivilegeConfiguration(message.Buffer);
+		break;
 
 	case TO_DATA_TASK_WELD_RECIPE_UPDATE:
         _ObjDBConn->UpdateWeldRecipe(message.Buffer);
@@ -203,8 +212,11 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_HI_CALIB_UPDATE:
         _ObjDBConn->UpdateHeightCalibration(message.Buffer);
 		break;
-	case TO_DATA_TASK_DB_VERSION_QUERY:
-        _ObjDBConn->QueryDbVersion(message.Buffer);
+	case TO_DATA_TASK_USER_PROFILE_UPDATE:
+        _ObjDBConn->UpdateUserProfiles(message.Buffer);
+		break;
+	case TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE:
+        _ObjDBConn->UpdatePrivilegeConfiguration(message.Buffer);
 		break;
 
 	case TO_DATA_TASK_WELD_RECIPE_DELETE:
@@ -233,7 +245,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->DeleteAllTableRows(TABLE_ALARM_LOG);
 		break;
 	default:
-		LOGERR((char *)"DataTask: --------Unknown Message ID----------- : ", message.msgID, 0, 0);
+		LOGERR((char* )"DataTask: --------Unknown Message ID----------- : ", message.msgID, 0, 0);
 		break;
 	}
 }
@@ -255,7 +267,7 @@ void DataTask::Data_Task(void)
 	
 	char		MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0x00};	
 
-	DataTask *DBInit = new(nothrow) DataTask();
+	DataTask* DBInit = new(nothrow) DataTask();
 	if(NULL != DBInit)
 	{
 		while(DBInit->bIsTaskRunStatus())
@@ -290,7 +302,7 @@ void DataTask::Data_Task(void)
 	}
 	else
 	{
-		LOGERR((char *)"DATA_T : ----------------Memory allocation failed----------------", 0, 0, 0);
+		LOGERR((char* )"DATA_T : ----------------Memory allocation failed----------------", 0, 0, 0);
 	}
 	DBInit = NULL;
 	taskSuspend(taskIdSelf());
