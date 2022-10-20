@@ -7,7 +7,7 @@
 
 #ifndef RECIPE_H_
 #define RECIPE_H_
-#include "recipedef.h"
+#include "RecipeUI.h"
 class Recipe {
 public:
 	enum STEPMODE_DATA_TYPE

@@ -1,9 +1,17 @@
-/*
- * DataTask.h
- *
- *  Created on: Jan 27, 2022
- *      Author: JerryW.Wang
- */
+/**********************************************************************************************************
+
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
+ 
+     This program is the property of Branson Ultrasonics Corporation
+     Copying of this software is expressly forbidden, without the prior
+     written consent of Branson Ultrasonics Corporation.
+
+
+---------------------------- MODULE DESCRIPTION ----------------------------
+
+     Database task for DB related read or write operations    
+ 
+**********************************************************************************************************/
 
 #ifndef DATATASK_H_
 #define DATATASK_H_

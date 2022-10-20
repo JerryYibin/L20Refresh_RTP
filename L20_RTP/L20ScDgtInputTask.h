@@ -5,24 +5,24 @@
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
+---------------------------- MODULE DESCRIPTION ----------------------------
+    
  
 ***************************************************************************/
+#ifndef L20SCDGTINPUTTASK_H_
+#define L20SCDGTINPUTTASK_H_
 
+#include "ScDgtInput.h"
 
-#ifndef USERPRIVILEGE_H_
-#define USERPRIVILEGE_H_
-#define PASSCODE_LEN	6
-struct USER_PRIVILEGE
+class L20ScDgtInputTask: public ScDgtInputTask 
 {
-	int		EntryScreenIndex;
-	int		PermissionLevel;
-	
+public:
+							L20ScDgtInputTask		();
+	virtual 				~L20ScDgtInputTask		();
+protected:
+	int						GetDgtInputBits			() override;
+public:
+	static void				DgtInterruptHandler		(void*);
 };
 
-struct USER_PROFILE
-{
-	int		PermissionLevel;
-	char	Passcode[PASSCODE_LEN];
-};
-
-#endif /* USERPRIVILEGE_H_ */
+#endif /* L20SCDGTINPUTTASK_H_ */

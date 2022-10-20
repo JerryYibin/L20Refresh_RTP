@@ -63,6 +63,7 @@ void SetWeldPressure::Enter()
 		m_Actions = SCState::JUMP;
 	else
 		ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
+	ACStateMachine::AC_RX->MasterState = SCState::WELD_PRESSURE_SET;
 }
 
 /**************************************************************************//**
@@ -93,6 +94,7 @@ void SetWeldPressure::Loop()
 ******************************************************************************/
 void SetWeldPressure::Exit()
 {
+	ACStateMachine::AC_RX->MasterState = SCState::NO_STATE;
 }
 
 /**************************************************************************//**

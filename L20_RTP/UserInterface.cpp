@@ -23,15 +23,16 @@ UserInterface owned using the class object pointer.
 #include "SCStateMachine/SCStateMachine.h"
 #include "versions.h"
 #include "HeightEncoder.h"
-#include "HeightCalibration.h"
+#include "HeightCalibrationUI.h"
 #include "ActuatorTask.h"
+#include "ScDgtInput.h"
+#include "SystemConfiguration.h"
+#include "SystemConfigurationUI.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
 	#include "hwif/drv/resource/vxbRtcLib.h"
 }
-
-auto _SystemConfig = SYSTEMCONFIG::GetSystemConfig();;
 
 /**************************************************************************//**
 * 
@@ -53,6 +54,10 @@ UserInterface::UserInterface()
 	DATA_MSG_Q_ID_REQ  = CP->getMsgQId (Data_Task + "/Request");
 
 	INTERFACE_MSG_Q_ID	= CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T]);
+	
+	OUTPUT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DGTOUT_T]);
+	INPUT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DGTIN_T]);
+	
 }
 
 /**************************************************************************//**
@@ -134,11 +139,18 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 	case TO_UI_TASK_HEIGHT_CALIBRATE_ACCEPT:
 		//TODO send message to Database
 		break;
+	case TO_UI_TASK_USERIO_INPUT_READ:
+		message.msgID = ScDgtInputTask::TO_DGT_INPUT_TASK_IO_GET;
+		SendToMsgQ(message, INPUT_MSG_Q_ID);
+		break;
 	case TO_UI_TASK_HEIGHT_CALIBRATE_RESPONSE:
 		responseHeightCalibration();
 		break;
 	case TO_UI_TASK_HEIGHT_CHECK_RESPONSE:
 		responseHeightCheck();
+		break;
+	case TO_UI_TASK_USER_IO_RESPONSE:
+		responseUserIORequest(message.Buffer);
 		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
@@ -397,77 +409,27 @@ void UserInterface::responseHeightCheck()
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }
 
-void UserInterface::updateLastWeldResult()
-{
-	m_stHeartbeat.AlarmCode = 0;
-	m_stHeartbeat.Amplitude = CommonProperty::WeldResult.Amplitude;
-	m_stHeartbeat.CycleCounter = CommonProperty::WeldResult.CycleCounter;
-	m_stHeartbeat.PeakPower = CommonProperty::WeldResult.PeakPower;
-	m_stHeartbeat.PostHeight = CommonProperty::WeldResult.PostHeight;
-	m_stHeartbeat.PreHeight = CommonProperty::WeldResult.PreHeight;
-	m_stHeartbeat.RecipeNumber = CommonProperty::WeldResult.RecipeNum;
-	m_stHeartbeat.TotalEnergy = CommonProperty::WeldResult.TotalEnergy;
-	m_stHeartbeat.TriggerPress = CommonProperty::WeldResult.TriggerPressure;
-	m_stHeartbeat.WeldPress = CommonProperty::WeldResult.WeldPressure;
-	m_stHeartbeat.WeldTime = CommonProperty::WeldResult.WeldTime;
-}
-
 /**************************************************************************//**
 * 
-* \brief   - Initialize system configuration. 
+* \brief   - response current User IO status ... 
 *
 * \param   - None
 *
 * \return  - None
 *
 ******************************************************************************/
-void UserInterface::responseInitializationData()
-{
-	_SystemConfig->InitialValue();
-}
-
-/**************************************************************************//**
-* 
-* \brief   - Sends response to UIC for system configuration request. 
-*
-* \param   - None
-*
-* \return  - None
-*
-******************************************************************************/
-void UserInterface::responseSystemConfig()
+void UserInterface::responseUserIORequest(char* messagebuf)
 {
 	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
 	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
 
-	sendMsg.msgID	= TO_UI_TASK_SYSCONFIG_READ;
+	sendMsg.msgID	= SCBL_USER_IO_INPUT_REQ;
 	sendMsg.msgLen  = 0;
 	sendMsg.rspCode = 0;
-
-	if(_SystemConfig)
-	{
-		sendMsg.msgLen = _SystemConfig->Size();
-		memcpy(sendMsg.Buffer, reinterpret_cast<char*>(_SystemConfig.get()) + V_PTR_SIZE, sendMsg.msgLen);
-	}
+	memcpy(sendMsg.Buffer, messagebuf, sizeof(unsigned int));
+	sendMsg.msgLen = sizeof(unsigned int);
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }
-
-/**************************************************************************//**
-* \brief   - Write system configuration.  
-*
-* \param   - Message buffer
-*
-* \return  - None
-*
-******************************************************************************/
-void UserInterface::updateSystemConfigData(char* messagebuf)
-{
-	if(_SystemConfig)
-	{
-		memcpy(reinterpret_cast<char*>(_SystemConfig.get()) + V_PTR_SIZE, messagebuf, _SystemConfig->Size());
-	}
-}
-
 
 /**************************************************************************//**
 * 
@@ -511,4 +473,73 @@ void UserInterface::UserInterface_Task(void)
 	
 	UI = NULL;	
 	taskSuspend(taskIdSelf());
+}
+
+void UserInterface::updateLastWeldResult()
+{
+	m_stHeartbeat.AlarmCode = 0;
+	m_stHeartbeat.Amplitude = CommonProperty::WeldResult.Amplitude;
+	m_stHeartbeat.CycleCounter = CommonProperty::WeldResult.CycleCounter;
+	m_stHeartbeat.PeakPower = CommonProperty::WeldResult.PeakPower;
+	m_stHeartbeat.PostHeight = CommonProperty::WeldResult.PostHeight;
+	m_stHeartbeat.PreHeight = CommonProperty::WeldResult.PreHeight;
+	m_stHeartbeat.RecipeNumber = CommonProperty::WeldResult.RecipeNum;
+	m_stHeartbeat.TotalEnergy = CommonProperty::WeldResult.TotalEnergy;
+	m_stHeartbeat.TriggerPress = CommonProperty::WeldResult.TriggerPressure;
+	m_stHeartbeat.WeldPress = CommonProperty::WeldResult.WeldPressure;
+	m_stHeartbeat.WeldTime = CommonProperty::WeldResult.WeldTime;
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Initialize system configuration. 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseInitializationData()
+{
+	SystemConfiguration::_SystemConfig->Init();
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Sends response to UIC for system configuration request. 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseSystemConfig()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+
+	sendMsg.msgID	= TO_UI_TASK_SYSCONFIG_READ;
+	sendMsg.msgLen  = 0;
+	sendMsg.rspCode = 0;
+
+	SYSTEMCONFIGFORUI sysConfigUI;
+	SystemConfiguration::Get(&sysConfigUI);
+	sendMsg.msgLen = sizeof(SYSTEMCONFIGFORUI);
+	memcpy(sendMsg.Buffer, reinterpret_cast<char*>(&sysConfigUI), sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* \brief   - Write system configuration.  
+*
+* \param   - Message buffer
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::updateSystemConfigData(char* messagebuf)
+{
+	SYSTEMCONFIGFORUI sysConfigUI;
+	memcpy(reinterpret_cast<char*>(&sysConfigUI), messagebuf, sizeof(SYSTEMCONFIGFORUI));
+	SystemConfiguration::Set(&sysConfigUI);
 }

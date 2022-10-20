@@ -5,23 +5,23 @@
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
- ---------------------------- MODULE DESCRIPTION ----------------------------
- 
-	The AlarmData is for the AlarmData process only.   
+---------------------------- MODULE DESCRIPTION ----------------------------
+    
  
 ***************************************************************************/
 
-#include "AlarmData.h"
-ALARM_DATA AlarmDataSC::AlarmData;
-vector<UI_ALARM_LOG> AlarmDataSC::AlarmLog;
-AlarmDataSC::AlarmDataSC() 
+#ifndef P1SCDGTINPUTTASK_H_
+#define P1SCDGTINPUTTASK_H_
+
+#include "ScDgtInput.h"
+
+class P1ScDgtInputTask: public ScDgtInputTask 
 {
-	// TODO Auto-generated constructor stub
+public:
+							P1ScDgtInputTask();
+	virtual 				~P1ScDgtInputTask();
+protected:
+	int						GetDgtInputBits			() override;
+};
 
-}
-
-AlarmDataSC::~AlarmDataSC() 
-{
-	// TODO Auto-generated destructor stub
-}
-
+#endif /* P1SCDGTINPUTTASK_H_ */

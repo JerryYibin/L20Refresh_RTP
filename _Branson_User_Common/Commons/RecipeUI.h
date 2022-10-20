@@ -8,7 +8,7 @@
 
  ---------------------------- MODULE DESCRIPTION ----------------------------
 
- The file weldrecipedef.h is to define the enum and struct related to the recipe.
+ The file RecipeUI.h is to define the enum and struct related to the recipe.
 
  **********************************************************************************************************/
 #ifndef WELDRECIPEDEF_H

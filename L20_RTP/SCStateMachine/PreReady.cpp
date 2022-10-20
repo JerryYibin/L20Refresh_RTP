@@ -13,6 +13,7 @@
 #include "../HeightEncoder.h"
 #include "../ACStateMachine.h"
 #include "../PCStateMachine.h"
+#include "../ScDgtOutput.h"
 
 /**************************************************************************//**
 * \brief   - Constructor - 
@@ -43,7 +44,7 @@ PreReady::~PreReady() {
 
 /**************************************************************************//**
 * 
-* \brief   - PreReady Enter.
+* \brief   - PreReady Enter. To set Trigger pressure and start amplitude.
 *
 * \param   - None.
 *
@@ -58,11 +59,12 @@ void PreReady::Enter()
 //	LOG("GetMaxCount = %d\n", HeightEncoder::GetMaxCount());
 	LOG("GetPositionCount = %d\n", HeightEncoder::GetInstance()->GetPositionCount());
 //	LOG("GetDirection = %d\n", HeightEncoder::GetDirection());
+	ACStateMachine::AC_RX->MasterState = SCState::PRE_READY;
 }
 
 /**************************************************************************//**
 * 
-* \brief   - PreReady Loop.
+* \brief   - PreReady Loop. And waitting for the both start switches are released. 
 *
 * \param   - None.
 *
@@ -87,7 +89,7 @@ void PreReady::Loop()
 
 /**************************************************************************//**
 * 
-* \brief   - PreReady Exit.
+* \brief   - PreReady Exit to set external digital I/O.
 *
 * \param   - None.
 *
@@ -96,7 +98,8 @@ void PreReady::Loop()
 ******************************************************************************/
 void PreReady::Exit()
 {
-	
+	ChangeExtDgtOutput(ScDgtOutputTask::TO_DGT_OUTPUT_TASK_READY_SET);
+	ACStateMachine::AC_RX->MasterState = SCState::NO_STATE;
 }
 
 /**************************************************************************//**

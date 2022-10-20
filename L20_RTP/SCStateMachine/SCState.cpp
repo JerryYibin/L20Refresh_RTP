@@ -24,6 +24,7 @@ SCState::SCState() {
 	CP = CommonProperty::getInstance();
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	CTL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
+	DGTOUT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DGTOUT_T]);
 }
 /**************************************************************************//**
 * 
@@ -78,6 +79,7 @@ void SCState::abortWeld(void)
 * \return  - bool.
 *
 ******************************************************************************/
+//TODO This will need to be polymorphic
 bool SCState::DefeatWeldAbortHandler()
 {
 	bool isAbort = false;
@@ -160,3 +162,19 @@ STATUS SCState::SendToMsgQ(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks
 
 	return status;
 }
+
+/**************************************************************************//**
+* \brief   - With the weld cycle running, there are some output digital need to set and reset for external.
+*
+* \param   - ScDgtOutputTask::MESSAGE_IDENTIFY
+*
+* \return  - None.
+*
+******************************************************************************/
+void SCState::ChangeExtDgtOutput(const ScDgtOutputTask::MESSAGE_IDENTIFY msgID)
+{
+	MESSAGE message;
+	message.msgID = msgID;
+	SendToMsgQ(message, DGTOUT_MSG_Q_ID);
+}
+

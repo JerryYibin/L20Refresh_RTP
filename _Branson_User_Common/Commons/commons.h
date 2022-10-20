@@ -1,6 +1,6 @@
 /************************************************************************** 
 
-      Copyright (c) Branson Ultrasonics Corporation, 1996-2021
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
  
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
@@ -63,7 +63,6 @@ enum
 	ALARM_PROCESS_LIMIT_PSA_START = 0x550,
 };
 
-#if 0 // redefinition in alarm_code_common.h
 // alarms IDs
 enum
 {
@@ -193,7 +192,7 @@ enum
 	ALARM_ELC_SONICS_EN = 0xEFA
 	
 };
-#endif
+
 typedef	enum 
 {
 	PREREADY, 

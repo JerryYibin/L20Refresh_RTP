@@ -15,16 +15,8 @@ Get System Type Implementation
 #include <iostream>
 #include <string>
 #include <fstream>
-//#include "SystemType.h"
-typedef enum
-{
-	GSXP1,
-	GSXE1,
-	L20,
-	INVALID_SYSTEM
-}EN_SYSTEM_TYPE;
-
-int g_enSysType = INVALID_SYSTEM;
+#include "SystemType.h"
+EN_SYSTEM_TYPE g_enSysType = INVALID_SYSTEM;
 /******************************************************************************
 * \brief - Get System Type e.g. GSXP1, GSXE1, L20.
 *
@@ -33,7 +25,7 @@ int g_enSysType = INVALID_SYSTEM;
 * \return - SYSTEM_TYPE
 *
 ******************************************************************************/
-int GetSystemType()
+EN_SYSTEM_TYPE GetSystemType()
 {
 	//TO_BE_DONE - Add code here that will identify System Type.
 	g_enSysType = L20;

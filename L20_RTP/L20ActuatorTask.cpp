@@ -46,6 +46,7 @@ L20ActuatorTask::~L20ActuatorTask() {
 
 /**************************************************************************//**
 * \brief  - Set Target Pressure for actuator
+* 			To update Pressure setting in each 1s.
 *
 * \param  - None
 *
@@ -57,7 +58,7 @@ void L20ActuatorTask::PDOUploadRequest()
 	int iResult = OK;
 	CommunicationInterface_CAN::TX_MESSAGE tmpPressure;
 	//TODO Test level one board only
-	if((Tick_1ms & 1000) == 0)
+	if((Tick_1ms % 1000) != 0)
 		return;
 	else
 //	if(RXBackup.TargetPressure != ACStateMachine::AC_RX->TargetPressure)
@@ -80,9 +81,11 @@ void L20ActuatorTask::PDOUploadRequest()
 }
 
 /**************************************************************************//**
-* \brief  - Read relevant data from Actuator.
-* 			
-*			INT32  	ActualHeight;
+* \brief  - Read relevant data from Actuator as following
+*			1. INT32  	ActualHeight;
+*			2. UINT32	RawHeightCount;
+*			3. Horn's status checking each 5ms
+*			4. StartSwitch(PB1) Scanning
 *
 * \param  - None
 *
@@ -107,11 +110,15 @@ void L20ActuatorTask::PDODownloadRequest()
 
 
 /**************************************************************************//**
-* \brief   - To check if the horn is still moving
+* \brief   - To check if the horn is still moving. 
+* 			 There is the weighted average algorithm to calculate the speed. 
+* 			 The function will be run by each 5ms. 
+* 			 The MinMoveCount is to make sure the each element of array 
+* 			 that is responsible for Weighted Average calculation should be filled out.  
 *
 * \param   - None.
 *
-* \return  - None
+* \return  - Horn's status
 *
 ******************************************************************************/
 bool L20ActuatorTask::MovingCheckProcess()
@@ -162,8 +169,7 @@ unsigned int L20ActuatorTask::WeightedAverageSpeed(unsigned int EncoderPosition)
 	DeltaPosition[2] = DeltaPosition[3];
 	DeltaPosition[3] = EncoderPosition - OldPosition;
 	OldPosition = EncoderPosition;
-	// the sum of delta array should be the distance per 20ms.
-	// in order to change the velocity unit to mm/s, the value need to time 50, right? 
+	// in order to change the velocity unit to mm/s, the value need to time 200, right? 
 	tmpSpeed = (DeltaPosition[3] * 60 + DeltaPosition[2] * 60 + DeltaPosition[1] * 40 + DeltaPosition[0] * 40); 
 #if HEIGHT_CALIBRATE_DBG	
 //	LOG("Current Count = %d\n", EncoderPosition);
@@ -172,7 +178,7 @@ unsigned int L20ActuatorTask::WeightedAverageSpeed(unsigned int EncoderPosition)
 //		LOG("DeltaPosition[%d] = %d\n", i, DeltaPosition[i]);
 //	}
 //	LOG("tmpSpeed = %d\n", tmpSpeed);
-	LOG("ABS(Speed) = %d\n", _ABS(tmpSpeed));
+//	LOG("ABS(Speed) = %d\n", _ABS(tmpSpeed));
 #endif
 	return  _ABS(tmpSpeed);
 }

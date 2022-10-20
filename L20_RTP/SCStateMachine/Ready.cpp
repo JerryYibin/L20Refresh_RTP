@@ -12,6 +12,8 @@
 #include "Ready.h"
 #include "../ACStateMachine.h"
 #include "../PCStateMachine.h"
+#include "../ScDgtOutput.h"
+
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -40,7 +42,7 @@ Ready::~Ready() {
 
 /**************************************************************************//**
 * 
-* \brief   - Ready Enter.
+* \brief   - Ready Enter. Set READY as the current Master State of AC.
 *
 * \param   - None.
 *
@@ -49,12 +51,12 @@ Ready::~Ready() {
 ******************************************************************************/
 void Ready::Enter()
 {
-
+	ACStateMachine::AC_RX->MasterState = SCState::READY;
 }
 
 /**************************************************************************//**
 * 
-* \brief   - Ready Loop.
+* \brief   - Ready Loop. Waiting for both start switches has been already pressed. 
 *
 * \param   - None.
 *
@@ -76,7 +78,7 @@ void Ready::Loop()
 
 /**************************************************************************//**
 * 
-* \brief   - Ready Exit.
+* \brief   - Ready Exit. To reset Ready signal for external User I/O.
 *
 * \param   - None.
 *
@@ -85,7 +87,8 @@ void Ready::Loop()
 ******************************************************************************/
 void Ready::Exit()
 {
-	
+	ChangeExtDgtOutput(ScDgtOutputTask::TO_DGT_OUTPUT_TASK_READY_RESET);
+	ACStateMachine::AC_RX->MasterState = SCState::NO_STATE;
 }
 
 /**************************************************************************//**

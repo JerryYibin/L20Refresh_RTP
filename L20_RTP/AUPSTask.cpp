@@ -50,7 +50,9 @@ AUPSTask::~AUPSTask() {
 }
 
 /**************************************************************************//**
-* \brief  - Run state machine here
+* \brief  - Run state machine here to do something as following...
+* 			1. Trigger ADC Sampling within each 1ms
+* 			2. To set Amplitude if the new coming is not equal to current one.
 *
 * \param  - None
 *

@@ -12,7 +12,6 @@
 #ifndef SYSTEMTYPE_H_
 #define SYSTEMTYPE_H_
 
-#define V_PTR_SIZE 4
 typedef enum
 {
 	GSXP1,
@@ -20,6 +19,8 @@ typedef enum
 	L20,
 	INVALID_SYSTEM
 }EN_SYSTEM_TYPE;
+
+#define V_PTR_SIZE 4
 
 EN_SYSTEM_TYPE GetSystemType();
 

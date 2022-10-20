@@ -1,6 +1,6 @@
 /************************************************************************** 
 
-      Copyright (c) Branson Ultrasonics Corporation, 1996-2018
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
  
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
@@ -29,7 +29,7 @@
 #define SC_FW_VERSION_MAJOR 0
 #define SC_FW_VERSION_MINOR 4
 #define SC_FW_VERSION_BUILD 0
-#define SC_FW_VERSION_AUTOS 0
+#define SC_FW_VERSION_AUTOS 2
 
 #define DB_FW_VERSION_MAJOR 0
 #define DB_FW_VERSION_MINOR 0
@@ -39,6 +39,6 @@
 #define HMI_FW_VERSION_MAJOR 0
 #define HMI_FW_VERSION_MINOR 4
 #define HMI_FW_VERSION_BUILD 0
-#define HMI_FW_VERSION_AUTOS 0
+#define HMI_FW_VERSION_AUTOS 2
 
 #endif

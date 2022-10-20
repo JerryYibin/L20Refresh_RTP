@@ -109,6 +109,9 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_HEIGHT_CALIBRATE_ACCEPT_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CALIBRATE_ACCEPT;
 		break;
+	case REQ_USER_IO_INPUT_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_USERIO_INPUT_READ;
+		break;
 	default:
 		message.msgID = UserInterface::TO_UI_TASK_HEART_BEAT;
 		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);

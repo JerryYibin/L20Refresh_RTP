@@ -15,8 +15,8 @@ code IDs.
 
 #ifndef ALARM_CODE_COMMON_H_
 #define ALARM_CODE_COMMON_H_
+#include "RecipeUI.h"
 // alarms IDs
-#include "recipedef.h"
 enum ALARM_CODE
 {
 	ALARM_NONE					= 0x000,

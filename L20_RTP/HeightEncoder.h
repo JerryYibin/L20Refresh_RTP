@@ -11,12 +11,11 @@
 #ifndef HEIGHTENCODER_H_
 #define HEIGHTENCODER_H_
 #include <map>
-#include "HeightCalibration.h"
+#include "HeightCalibrationUI.h"
 #define RESOLUTION 5 //5um
 #define HEIGHT_BASIC_COUNT		30000
 #define HEIGHT_HOME_COUNT		38000
 #define HEIGHT_MAXIMUM_COUNT	0xffff
-#define HEIGHT_UNIT 1000 //convert mm to um
 #define PRESSURE_NUM 				81
 #define PRESSURE_FACTOR 			1000
 using namespace std;

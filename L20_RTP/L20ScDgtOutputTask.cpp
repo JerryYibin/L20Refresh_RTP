@@ -1,18 +1,22 @@
 /************************************************************************** 
 
-      Copyright (c) Branson Ultrasonics Corporation, 1996-2021
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
  
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
- ---------------------------- MODULE DESCRIPTION ----------------------------   
+---------------------------- MODULE DESCRIPTION ----------------------------
+ Specific Output GPIO process   
  
 ***************************************************************************/
 
-#include "ReadyForTrigger.h"
-#include "../ACStateMachine.h"
-#include "SCStateMachine.h"
-#define DEBOUNCE_TIME	1000
+#include "L20ScDgtOutputTask.h"
+#include "GPIO.h"
+extern "C"
+{
+	#include "subsys/gpio/vxbGpioLib.h"		
+}
+
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -21,11 +25,9 @@
 * \return  - None
 *
 ******************************************************************************/
-ReadyForTrigger::ReadyForTrigger() 
-{
-	m_Actions = SCState::INIT;
-	m_State = SCState::READY_FOR_TRIGGER;
-	m_IsTrigger = false;
+L20ScDgtOutputTask::L20ScDgtOutputTask() {
+	// TODO Auto-generated constructor stub
+
 }
 
 /**************************************************************************//**
@@ -37,93 +39,96 @@ ReadyForTrigger::ReadyForTrigger()
 * \return  - None.
 *
 ******************************************************************************/
-ReadyForTrigger::~ReadyForTrigger() 
-{
-	m_Actions = SCState::INIT;
+L20ScDgtOutputTask::~L20ScDgtOutputTask() {
+	// TODO Auto-generated destructor stub
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForTrigger Enter. Set READY_FOR_TRIGGER as the current Master State of AC.
+* \brief   - Set L20 Ready Signal
 *
 * \param   - None.
 *
-* \return  - None.
+* \return  - OK.
 *
 ******************************************************************************/
-void ReadyForTrigger::Enter()
+int L20ScDgtOutputTask::SetDgtReadyOutput()
 {
-	ACStateMachine::AC_RX->MasterState = SCState::READY_FOR_TRIGGER;
-	ACStateMachine::AC_RX->MasterEvents |=  BIT_MASK(ACState::CTRL_AC_MOVE_DISABLE);
-	m_Timeout = 0;
+	vxbGpioSetValue(GPIO::O_READY, GPIO_VALUE_HIGH);
+	return OK;
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForTrigger Loop. With litter debounce time after the triggered.
+* \brief   - Reset L20 Ready Signal
 *
 * \param   - None.
 *
-* \return  - None.
+* \return  - OK.
 *
 ******************************************************************************/
-void ReadyForTrigger::Loop()
+int L20ScDgtOutputTask::ResetDgtReadyOutput()
 {
-	if(ACStateMachine::AC_TX->ACState == ACState::AC_ALARM)
-	{
-		m_Actions = SCState::FAIL;
-	}
-	if(m_IsTrigger == true)
-	{
-		if(m_Timeout > DEBOUNCE_TIME)
-			m_Actions = SCState::JUMP;
-		else
-			m_Timeout++;
-	}
+	vxbGpioSetValue(GPIO::O_READY, GPIO_VALUE_LOW);
+	return OK;
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForTrigger Exit. To set current master state of AC as NO_STATE.
+* \brief   - Set L20 Sonics Signal
 *
 * \param   - None.
 *
-* \return  - None.
+* \return  - OK.
 *
 ******************************************************************************/
-void ReadyForTrigger::Exit()
+int L20ScDgtOutputTask::SetDgtSonicsOutput()
 {
-	m_IsTrigger = false;
-	ACStateMachine::AC_RX->MasterState = SCState::NO_STATE;
+	vxbGpioSetValue(GPIO::O_SPARE, GPIO_VALUE_HIGH);
+	return OK;
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForTrigger Fail.
+* \brief   - Reset L20 Sonics Signal
 *
 * \param   - None.
 *
-* \return  - None.
+* \return  - OK.
 *
 ******************************************************************************/
-void ReadyForTrigger::Fail()
+int L20ScDgtOutputTask::ResetDgtSonicsOutput()
 {
-	m_Actions = SCState::ABORT;
-	LOGERR((char *)"ReadyForTrigger State Alarm happened!\n", 0, 0, 0);
+	vxbGpioSetValue(GPIO::O_SPARE, GPIO_VALUE_LOW);
+	return OK;
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForTrigger Execute. To set m_IsTrigger is true.
+* \brief   - Set L20 Alarm Signal
 *
 * \param   - None.
 *
-* \return  - None.
+* \return  - OK.
 *
 ******************************************************************************/
-int ReadyForTrigger::Execute(void* _obj)
+int L20ScDgtOutputTask::SetDgtAlarmOutput()
 {
-	ReadyForTrigger* _ReadyForTrigger = (ReadyForTrigger*)_obj;
-	_ReadyForTrigger->m_IsTrigger = true;
+	vxbGpioSetValue(GPIO::O_ALARM, GPIO_VALUE_HIGH);
+	return OK;
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Reset L20 Alarm Signal
+*
+* \param   - None.
+*
+* \return  - OK.
+*
+******************************************************************************/
+int L20ScDgtOutputTask::ResetDgtAlarmOutput()
+{
+	vxbGpioSetValue(GPIO::O_ALARM, GPIO_VALUE_LOW);
 	return OK;
 }

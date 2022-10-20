@@ -14,12 +14,14 @@
 **********************************************************************************************************/
 
 #include "ScDgtInput.h"
-
+#include "L20ScDgtInputTask.h"
+#include "P1ScDgtInputTask.h"
+#include "UserInterface.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
 }
-
+ScDgtInputTask* ScDgtInputTask::_DgtInputObj = nullptr;
 /**************************************************************************//**
 * 
 * \brief   - Constructor - initialize the data members of ScDgtInputTask.
@@ -63,13 +65,32 @@ ScDgtInputTask::~ScDgtInputTask()
  ******************************************************************************/
 void ScDgtInputTask::ProcessTaskMessage(MESSAGE& message)
 {
-
+	unsigned int status = 0;
 	switch(message.msgID)
 	{
+	case TO_DGT_INPUT_TASK_IO_GET:
+		status = _DgtInputObj->GetDgtInputBits();
+		memcpy(message.Buffer, &status, sizeof(unsigned int));
+		message.msgID = UserInterface::TO_UI_TASK_USER_IO_RESPONSE;
+		SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
 	default:
 		LOGERR((char *)"ScDgtInput_T : --------Unknown Message ID----------- : ", message.msgID, 0, 0);
 		break;
 	}
+}
+
+/**************************************************************************//**
+* \brief  	- Get specific actuator object following system type
+*
+* \param	- None
+*
+* \return 	- ScDgtInputTask object
+*
+******************************************************************************/
+ScDgtInputTask* ScDgtInputTask::GetInstance()
+{
+	return (_DgtInputObj != nullptr) ? _DgtInputObj : (_DgtInputObj = new(nothrow) L20ScDgtInputTask());
 }
 
 /**************************************************************************//**
@@ -86,25 +107,25 @@ void ScDgtInputTask::ScDgtInput_Task(void)
 	MESSAGE		ProcessBuffer;
 	char		MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0x00};	
 
-	ScDgtInputTask *DigitalInput = new(nothrow) ScDgtInputTask();
-	if(nullptr != DigitalInput)
+	_DgtInputObj = ScDgtInputTask::GetInstance();
+	if(nullptr != _DgtInputObj)
 	{
 		/* ScDgtInput Task loop and the bIsTaskRun flag enabled when task created */
-		while(DigitalInput->bIsTaskRunStatus())
+		while(_DgtInputObj->bIsTaskRunStatus())
 		{
-			if(msgQReceive(DigitalInput->SELF_MSG_Q_ID, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, WAIT_FOREVER) != ERROR)
+			if(msgQReceive(_DgtInputObj->SELF_MSG_Q_ID, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, WAIT_FOREVER) != ERROR)
 			{
-				DigitalInput->Decode(MsgQBuffer, ProcessBuffer);
-				DigitalInput->ProcessTaskMessage(ProcessBuffer);
+				_DgtInputObj->Decode(MsgQBuffer, ProcessBuffer);
+				_DgtInputObj->ProcessTaskMessage(ProcessBuffer);
 			}
 		}
 		
-		delete DigitalInput;
+		delete _DgtInputObj;
 	}
 	else
 	{
 		LOGERR((char *)"DIGITAL_INPUT_T : ----------------Memory allocation failed----------------",0,0,0);
 	}
-	DigitalInput = nullptr;
+	_DgtInputObj = nullptr;
 	taskSuspend(taskIdSelf());
 }

@@ -9,8 +9,8 @@
 ***************************************************************************/
 
 #include "UserAuthority.h"
-//Key is EntryScreenIndex, Value is passcode;
-map<int, string>* UserAuthority::_UserPrivilegesSC 			= nullptr;
+//Key is EntryScreenIndex, Value is premission Level;
+map<int, int>* UserAuthority::_UserPrivilegesSC 			= nullptr;
 //Key is PermissionLevel, Value is passcode;
 map<int, string>* UserAuthority::_UserProfilesSC 			= nullptr;
 vector<USER_PRIVILEGE>* UserAuthority::_UserPrivilegesUI 	= nullptr;
@@ -18,7 +18,7 @@ vector<USER_PROFILE>* UserAuthority::_UserProfilesUI 		= nullptr;
 
 UserAuthority::UserAuthority() 
 {
-	_UserPrivilegesSC 	= new map<int, string>();
+	_UserPrivilegesSC 	= new map<int, int>();
 	_UserProfilesSC		= new map<int, string>();
 	_UserPrivilegesUI	= new vector<USER_PRIVILEGE>();
 	_UserProfilesUI		= new vector<USER_PROFILE>();

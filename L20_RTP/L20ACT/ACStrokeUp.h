@@ -23,6 +23,8 @@ protected:
 	virtual void 		Enter();
 	virtual void		Loop();
 	virtual void		Exit();
+private:
+	unsigned int 		m_MovedCount;
 };
 
 #endif /* ACSTATEMACHINE_ACSTROKEUP_H_ */

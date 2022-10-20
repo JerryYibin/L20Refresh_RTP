@@ -43,7 +43,8 @@ ACReady::~ACReady() {
 
 /**************************************************************************//**
 * 
-* \brief   - ACT Ready.
+* \brief   - ACT Ready. To set MasterEvents with CTRL_AC_MOVE_DISABLE
+*            To set AC_StatusEvent with STATUS_AC_MOVE_DISABLE.
 *
 * \param   - None.
 *
@@ -54,16 +55,17 @@ void ACReady::Enter()
 {
 	ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(CTRL_AC_MOVE_DISABLE);
 	ACStateMachine::AC_TX->AC_StatusEvent |= BIT_MASK(STATUS_AC_MOVE_DISABLE);
-	if((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(CTRL_WELD_CYCLE_ENABLE)) == BIT_MASK(CTRL_WELD_CYCLE_ENABLE))
-	{
-		//TODO the hardware code will be replaced with the override function for the different system type.
-		vxbGpioSetValue(GPIO::O_READY, GPIO_VALUE_HIGH);
-	}
 }
 
 /**************************************************************************//**
 * 
-* \brief   - ACT Ready.
+* \brief   - ACT Ready. In AC Ready Loop there are only three SC states 
+*            need to handle with as following...
+*            1. PRE_READY
+*            2. READY
+*            3. WAIT_FOR_TRIGGER
+*            4. DOWN_STROKE
+*            The normal loop should be AC READY-> DOWN_STROCK-> HOLD -> UP_STROCK
 *
 * \param   - None.
 *
@@ -85,6 +87,7 @@ void ACReady::Loop()
 	else if((ACStateMachine::AC_RX->MasterState == SCState::WAIT_FOR_TRIGGER) ||
 			(ACStateMachine::AC_RX->MasterState == SCState::DOWN_STROKE))
 	{
+		ACStateMachine::AC_RX->MasterEvents &= ~BIT_MASK(CTRL_AC_MOVE_DISABLE);
 		ChangeState(AC_DOWN_STROKE);
 	}
 	else
@@ -96,7 +99,7 @@ void ACReady::Loop()
 
 /**************************************************************************//**
 * 
-* \brief   - ACT Ready.
+* \brief   - ACT Exit.
 *
 * \param   - None.
 *
@@ -110,12 +113,6 @@ void ACReady::Exit()
 	{
 		// clear any alarms
 		ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(CTRL_AC_CLEAR_ALARMS);
-		ACStateMachine::AC_RX->MasterEvents &= ~BIT_MASK(CTRL_AC_MOVE_DISABLE);
-	}
-	if((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(CTRL_WELD_CYCLE_ENABLE)) == BIT_MASK(CTRL_WELD_CYCLE_ENABLE))
-	{
-		//TODO the hardware code will be replaced with the override function for the different system type.
-		vxbGpioSetValue(GPIO::O_READY, GPIO_VALUE_LOW);
 	}
 }
 

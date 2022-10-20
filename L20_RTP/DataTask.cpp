@@ -184,6 +184,9 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_WELD_RECIPE_QUERY:
         _ObjDBConn->QueryWeldRecipe(message.Buffer);
 		break;
+	case TO_DATA_TASK_WELD_RECIPE_UPDATE:
+        _ObjDBConn->UpdateWeldRecipe(message.Buffer);
+		break;
 	case TO_DATA_TASK_WELD_RESULT_QUERY:
         _ObjDBConn->QueryBlockWeldResult(message.Buffer);
 		break;
@@ -204,10 +207,6 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_DATA_TASK_PRIVILEGE_CONFIG_QUERY:
         _ObjDBConn->QueryPrivilegeConfiguration(message.Buffer);
-		break;
-
-	case TO_DATA_TASK_WELD_RECIPE_UPDATE:
-        _ObjDBConn->UpdateWeldRecipe(message.Buffer);
 		break;
 	case TO_DATA_TASK_HI_CALIB_UPDATE:
         _ObjDBConn->UpdateHeightCalibration(message.Buffer);

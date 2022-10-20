@@ -164,12 +164,14 @@ void SCStateMachine::RunStateMachine()
 	if (_objStateList->size() == 0)
 	{
 		m_IsRunning = false;
+		m_StateIndex = 0;
 		return;
 	}
 	
 	if (m_IsLoading == TRUE)
 	{
 		m_IsRunning = false;
+		m_StateIndex = 0;
 		return;
 	}
 	
@@ -214,6 +216,7 @@ void SCStateMachine::RunStateMachine()
 		LOG("Push\n");
 		break;
 	default:
+		m_StateIndex = 0;
 		LOG("Default\n");
 		break;
 	}
@@ -260,13 +263,16 @@ int SCStateMachine::LoadStatesHandler(int operation)
 {
 	m_IsLoading = TRUE;
 	int iResult = ERROR;
+	//If the state list is not empty, it means there is the specific sequence is running. 
 	if(_objStateList->size() > 0)
 	{
 		auto iter = _objStateMap->find(m_objState->m_State);
 		if(iter != _objStateMap->end())
 		{
+			//If the flag is TRUE, all the state of current sequence may be removed from state list when operation mode change.
 			if(iter->second == TRUE)
 			{
+				//TODO It is still need to consider on the FAIL process of SC State.
 				if(m_objState->m_Actions != SCState::FAIL)
 				{
 					if(m_IsRunning == true)
@@ -275,6 +281,10 @@ int SCStateMachine::LoadStatesHandler(int operation)
 						deleteAll();
 				}
 			}
+		}
+		else
+		{
+			LOGERR((char *) "SC State Machine: State Missing, the current State: %d is not in the State Map.",m_objState->m_State, 0, 0);
 		}
 	}
 	else

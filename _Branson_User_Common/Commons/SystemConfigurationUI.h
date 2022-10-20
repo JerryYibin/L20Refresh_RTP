@@ -58,7 +58,7 @@ enum HEIGHT_UNIT{
 	INCH
 };
 
-enum POWER{
+enum POWER_TYPE{
 	POWER_3300W = 0,
 	POWER_4000W,
 	POWER_5500W,
@@ -72,7 +72,7 @@ enum FREQUENCY{
 
 #define TIME_SIZE							32
 
-typedef struct TEACHMODE
+struct TEACHMODE
 {
 	unsigned int Quantity;
 	TEACHMODE_TYPE Teach_mode;
@@ -84,31 +84,13 @@ typedef struct TEACHMODE
 	unsigned int PreHeight_Lower;
 	unsigned int PostHeight_Upper;
 	unsigned int PostHeight_Lower;
-}TEACHMODE;
+};
 
-typedef struct SYSTEMCONFIG
+struct SYSTEMCONFIGFORUI
 {
-public:
-	SYSTEMCONFIG();
-	virtual ~SYSTEMCONFIG();
-	
-	LANGUAGE	Language;
-	POWER 		PowerSupply;
-	FREQUENCY 	Frequency;
-	
-	virtual int		Size() 			= 0;
-	virtual void	Get(char *)		= 0;
-	virtual void	Set(char *)		= 0;
-	virtual void	InitialValue()	= 0;
-	static  void	CurrentTime(char*);
-	static std::shared_ptr<SYSTEMCONFIG> GetSystemConfig();
-}SYSTEMCONFIG;
-
-typedef struct L20_SYSTEMCONFIG : public SYSTEMCONFIG
-{
-public:
-	L20_SYSTEMCONFIG();
-	~L20_SYSTEMCONFIG();
+	LANGUAGE		Language;
+	POWER_TYPE 		PowerSupply;
+	FREQUENCY 		Frequency;
 	bool bHeightEncoder;
 	bool bFootPedalAbort;
 	bool bLockOnAlarm;
@@ -120,26 +102,32 @@ public:
 	PRESSURE_UNIT Pressure_Unit;
 	HEIGHT_UNIT Height_Unit;
 
+	unsigned int MaxAmplitude;
+	
 	TEACHMODE TeachMode;
 
 	char DateTime[TIME_SIZE];
 	
-	int  Size() 			override;
-	void Get(char *)		override;
-	void Set(char *)		override;
-	void InitialValue()		override;
-}L20_SYSTEMCONFIG;
+};
 
-typedef struct P1_SYSTEMCONFIG : public SYSTEMCONFIG
+struct POWER_SUPPLY_TYPE
 {
-public:
-	P1_SYSTEMCONFIG();
-	~P1_SYSTEMCONFIG();
-	
-	int  Size() 			override;
-	void Get(char *)		override;
-	void Set(char *)		override;
-	void InitialValue()		override;
-}P1_SYSTEMCONFIG;
+	unsigned int Frequency;
+	unsigned int Power;
+};
+
+struct TEACH_MODE_SETTING
+{
+	TEACHMODE_TYPE	TeachMode;
+	unsigned int	TimeRangePL;
+	unsigned int	TimeRangeMS;
+	unsigned int	PowerRangePL;
+	unsigned int	PowerRangeMS;
+	unsigned int	PreHeightRangePL;
+	unsigned int	PreHeightRangeMS;
+	unsigned int	PostHeightRangePL;
+	unsigned int	PostHeightRangeMS;
+	unsigned int	Quantity;
+};
 
 #endif

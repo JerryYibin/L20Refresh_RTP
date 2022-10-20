@@ -1,6 +1,6 @@
 /************************************************************************** 
 
-      Copyright (c) Branson Ultrasonics Corporation, 1996-2021
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
  
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
@@ -14,45 +14,6 @@
 
 #ifndef SHARED_COMMON_H_
 #define SHARED_COMMON_H_
-enum RequestIdentities
-{
-	SCBL_HEART_BEAT_REQ							= 0,
-	SCBL_USER_DETAILS_READ_REQ,
-	SCBL_PASSCODE_VALIDATE_REQ,
-	SCBL_ACTIVE_RECIPE_BASIC_INFO_READ_REQ,
-	SCBL_WELD_RECIPE_LIST_READ_REQ,
-	SCBL_SYSINFO_READ_REQ,
-	SCBL_WELDRECIPE_REQ,
-	SCBL_GRAPH_READ_REQ,
-	SCBL_RECIPE_LIBRARY_READ_REQ,
-	SCBL_GET_RECIPE_INFO_READ_REQ,
-	SCBL_CREATE_NEW_RECIPE_READ_REQ,
-	SCBL_INSERT_RECIPE_READ_REQ,
-	SCBL_UPDATE_RECIPE_READ_REQ,
-	SCBL_DELETE_RECIPE_READ_REQ,
-	SCBL_SET_ACTIVE_RECIPE_READ_REQ,
-	SCBL_SETUP_WELD_PARAM_WRITE_REQ,
-	SCBL_SETUP_QUALITY_PARAM_WRITE_REQ,
-	SCBL_SETUP_ADVANCED_PARAM_WRITE_REQ,
-	SCBL_ACTIVE_RECIPE_VALIDATE_REQ,
-	SCBL_TEACH_RECIPE_READ_REQ,
-	SCBL_TEACH_RECIPE_INITIAL_REQ,
-	SCBL_TEAHMODE_RECIPE_VALIDATE_REQ,
-	SCBL_TEACH_RECIPE_ACCEPT_REQ,
-	SCBL_ALARM_RESET_READ_REQ,
-	SCBL_GET_PERMISSION_SCREEN_REQ,
-	SCBL_SET_PERMISSION_SCREEN_REQ,
-	SCBL_GET_PASSCODE_LIST_REQ,
-	SCBL_UPDATE_PASSCODE_REQ,
-	SCBL_SYSCONFIG_READ_REQ,
-	SCBL_SYSCONFIG_WRITE_REQ,
-	SCBL_INITIALIZATION_REQ,
-    SCBL_HEIGHT_CALIBRATE_CHECK_REQ,
-    SCBL_HEIGHT_CALIBRATE_START_REQ,
-    SCBL_HEIGHT_CALIBRATE_CORRECT_REQ,
-    SCBL_HEIGHT_CALIBRATE_ACCEPT_REQ,
-	DUMMY
-};
 
 enum SCREENINDEX
 {
@@ -100,22 +61,10 @@ enum SCREENINDEX
     TEACH_MODE_SCREEN,
     KEYBOARD_SCREEN,
     PROMPT_MESSAGE_SCREEN,
+    LIBRARY_GET,
+    SETUP_SETUPSCREEN,
+    SETUP_TEACH,
+    LANGUAGE_SCREEN,
     SCREEN_END
 };
-
-struct HEARTBEAT
-{
-	unsigned int 	CycleCounter;
-	unsigned int 	RecipeNumber;
-	unsigned int	AlarmCode;
-	unsigned int 	TotalEnergy;
-	unsigned int 	TriggerPress;
-	unsigned int 	WeldPress;
-	unsigned int 	Amplitude;
-	unsigned int 	WeldTime;
-	unsigned int 	PeakPower;
-	unsigned int 	PreHeight;
-	unsigned int	PostHeight;
-};
-
 #endif

@@ -58,7 +58,8 @@ void ACPowerUp::Enter()
 
 /**************************************************************************//**
 * 
-* \brief   - ACT Power up.
+* \brief   - ACT Power up. To check if the horn has been reached out to the home position switch prox.
+* 			 If the timeout happens, the ERR_HOME_POSITION will be set.
 *
 * \param   - None.
 *
@@ -75,13 +76,13 @@ void ACPowerUp::Loop()
 		return;
 	}
 
-//	if(ActuatorTask::GetInstance()->IsMoving() == false)
+	//TODO The signal will be available later
+//	if (vxbGpioGetValue(GPIO::I_OPSIG) == GPIO_VALUE_LOW)
 //	{
-		//TODO The signal will be available later
-//		if (vxbGpioGetValue(GPIO::I_OPSIG) != GPIO_VALUE_HIGH) 
-			ChangeState(AC_READY);
-			ActuatorTask::GetInstance()->InitHeightSystem();
+		ChangeState(AC_READY);
+		ActuatorTask::GetInstance()->InitHeightSystem();
 //	}
+
 	m_Timeout++;
 }
 

@@ -73,6 +73,7 @@ ControlTask::~ControlTask() {
 void ControlTask::updateWorkFlow(char* buff)
 {
 	int tmpOperationMode = SCStateMachine::NO_OPERATION;
+	//Parse OperationMode following screen index
 	unsigned int screenIndex;
 	memcpy(&screenIndex, buff, sizeof(unsigned int));
 	switch(screenIndex)
@@ -91,12 +92,12 @@ void ControlTask::updateWorkFlow(char* buff)
 		break;
 	}
 
-	if(SCStateMachine::getInstance()->GetStateMachineState() == false)
-		m_OperationMode = SCStateMachine::NO_OPERATION;
-	else if((tmpOperationMode > SCStateMachine::NO_OPERATION) && (tmpOperationMode < SCStateMachine::END_OPERATION))
+	if(tmpOperationMode < SCStateMachine::END_OPERATION)
 	{
+		//To check if the new coming operation mode is equal to current operation mode. 
 		if(m_OperationMode != tmpOperationMode)
 		{
+			//To load sequence following the new coming operation mode.
 			if(SCStateMachine::getInstance()->LoadStatesHandler(tmpOperationMode) == OK)
 			{
 				m_OperationMode = tmpOperationMode;

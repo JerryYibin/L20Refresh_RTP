@@ -14,11 +14,9 @@
 **********************************************************************************************************/
 
 #include "ScDgtOutput.h"
-#include "GPIO.h"
-extern "C"
-{
-	#include "subsys/gpio/vxbGpioLib.h"		
-}
+#include "L20ScDgtOutputTask.h"
+#include "P1ScDgtOutputTask.h"
+ScDgtOutputTask* ScDgtOutputTask::_DgtOutputObj = nullptr;
 
 /**************************************************************************//**
 * 
@@ -61,44 +59,43 @@ ScDgtOutputTask::~ScDgtOutputTask()
  ******************************************************************************/
 void ScDgtOutputTask::ProcessTaskMessage(MESSAGE& message)
 {
-	int status = GPIO_VALUE_LOW;
-	memcpy(&status, message.Buffer, sizeof(int));
 	switch(message.msgID)
 	{
 	case TO_DGT_OUTPUT_TASK_READY_SET:
-		if(status == GPIO_VALUE_LOW)
-			vxbGpioSetValue(GPIO::O_READY, GPIO_VALUE_LOW);
-		else if(status == GPIO_VALUE_HIGH)
-			vxbGpioSetValue(GPIO::O_READY, GPIO_VALUE_HIGH);
-		else
-		{
-			
-		}
+		_DgtOutputObj->SetDgtReadyOutput();
+		break;
+	case TO_DGT_OUTPUT_TASK_READY_RESET:
+		_DgtOutputObj->ResetDgtReadyOutput();
 		break;
 	case TO_DGT_OUTPUT_TASK_SONICS_SET:
-		if(status == GPIO_VALUE_LOW)
-			vxbGpioSetValue(GPIO::O_SPARE, GPIO_VALUE_LOW);
-		else if(status == GPIO_VALUE_HIGH)
-			vxbGpioSetValue(GPIO::O_SPARE, GPIO_VALUE_HIGH);
-		else
-		{
-			
-		}
+		_DgtOutputObj->SetDgtSonicsOutput();
+		break;
+	case TO_DGT_OUTPUT_TASK_SONICS_RESET:
+		_DgtOutputObj->ResetDgtSonicsOutput();
 		break;
 	case TO_DGT_OUTPUT_TASK_ALARM_SET:
-		if(status == GPIO_VALUE_LOW)
-			vxbGpioSetValue(GPIO::O_ALARM, GPIO_VALUE_LOW);
-		else if(status == GPIO_VALUE_HIGH)
-			vxbGpioSetValue(GPIO::O_ALARM, GPIO_VALUE_HIGH);
-		else
-		{
-			
-		}
+		_DgtOutputObj->SetDgtAlarmOutput();
+		break;
+	case TO_DGT_OUTPUT_TASK_ALARM_RESET:
+		_DgtOutputObj->ResetDgtAlarmOutput();
 		break;
 	default:
 		LOGERR((char *)"ScDgtOutput : --------Unknown Message ID----------- : ", message.msgID, 0, 0);
 		break;
 	}
+}
+
+/**************************************************************************//**
+* \brief  	- Get specific actuator object following system type
+*
+* \param	- None
+*
+* \return 	- ScDgtOutputTask object
+*
+******************************************************************************/
+ScDgtOutputTask* ScDgtOutputTask::GetInstance()
+{
+	return (_DgtOutputObj != nullptr) ? _DgtOutputObj : (_DgtOutputObj = new(nothrow) L20ScDgtOutputTask());
 }
 
 /**************************************************************************//**
@@ -115,26 +112,26 @@ void ScDgtOutputTask::ScDgtOutput_Task(void)
 	MESSAGE		ProcessBuffer;
 	char		MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0x00};	
 
-	ScDgtOutputTask *DigitalOutput = new(nothrow) ScDgtOutputTask();
+	_DgtOutputObj = ScDgtOutputTask::GetInstance();
 
-	if(nullptr != DigitalOutput)
+	if(nullptr != _DgtOutputObj)
 	{
 		/* ScDgtOutput Task loop and the bIsTaskRun flag enabled when task created */
-		while(DigitalOutput->bIsTaskRunStatus())
+		while(_DgtOutputObj->bIsTaskRunStatus())
 		{
-			if(msgQReceive(DigitalOutput->SELF_MSG_Q_ID, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, WAIT_FOREVER) != ERROR)
+			if(msgQReceive(_DgtOutputObj->SELF_MSG_Q_ID, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, WAIT_FOREVER) != ERROR)
 			{
-				DigitalOutput->Decode(MsgQBuffer, ProcessBuffer);
-				DigitalOutput->ProcessTaskMessage(ProcessBuffer);
+				_DgtOutputObj->Decode(MsgQBuffer, ProcessBuffer);
+				_DgtOutputObj->ProcessTaskMessage(ProcessBuffer);
 			}
 		}
 		
-		delete DigitalOutput;
+		delete _DgtOutputObj;
 	}
 	else
 	{
 		LOGERR((char *)"DIGITAL_OUTPUT_T : ----------------Memory allocation failed----------------",0,0,0);
 	}
-	DigitalOutput = nullptr;
+	_DgtOutputObj = nullptr;
 	taskSuspend(taskIdSelf());
 }

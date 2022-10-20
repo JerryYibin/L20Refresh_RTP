@@ -857,9 +857,9 @@ string DBAccessL20DB::QueryPrivilegeConfiguration(char* buffer)
         }
 #endif
 
-    int PermissionLevel = atoi(str.c_str());
-    str = QueryUserProfiles((char* )&PermissionLevel);
-    UserAuthority::_UserPrivilegesSC->insert(pair<int, string>(ScreenIndex,str));
+//    int PermissionLevel = atoi(str.c_str());
+//    str = QueryUserProfiles((char* )&PermissionLevel);
+//    UserAuthority::_UserPrivilegesSC->insert(pair<int, string>(ScreenIndex,str));
     return str;
 }
 
@@ -1087,16 +1087,16 @@ int DBAccessL20DB::UpdatePrivilegeConfiguration(char* buffer)
 
     map<int,string>::iterator st;
     string pw;
-    for(st=UserAuthority::_UserPrivilegesSC->begin();st!=UserAuthority::_UserPrivilegesSC->end();st++)
-    {
-        if(st->first == ScreenIndex)
-            {
-            pw = st->second;
-            break;
-            }
-    }
-    UserAuthority::_UserProfilesSC->insert(pair<int, string>(PermissionLevel, pw));
-	nErrCode = UpdateUserProfiles((char* )&PermissionLevel);
+//    for(st=UserAuthority::_UserPrivilegesSC->begin();st!=UserAuthority::_UserPrivilegesSC->end();st++)
+//    {
+//        if(st->first == ScreenIndex)
+//            {
+//            pw = st->second;
+//            break;
+//            }
+//    }
+//    UserAuthority::_UserProfilesSC->insert(pair<int, string>(PermissionLevel, pw));
+//	nErrCode = UpdateUserProfiles((char* )&PermissionLevel);
 	return nErrCode;
 }
 

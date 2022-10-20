@@ -197,9 +197,9 @@ public:
 
 		I_IN4 			= GPIO4_2,   // Remote IN4 signal
 
-		I_SETUP_LOCK 	= GPIO5_15, // Lock switch signal
+		I_SETUP_LOCK 	= GPIO5_15,  // Lock switch signal
 		
-		I_SWITCH_HOLD 	= GPIO7_22,// Power off request signal 
+		I_SWITCH_HOLD 	= GPIO7_22,  // Power off request signal 
 		I_24V_LOW		= GPIO7_24,  // 24V lost signal
 		I_USB3_FLT		= GPIO7_25   // USB fault signal
 #endif

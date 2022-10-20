@@ -17,11 +17,10 @@
 #include <vector>
 #include "Common.h"
 #include "WeldResults.h"
-#include "recipedef.h"
-#include "system_configuration_common.h"
-#include "system_information_common.h"
+#include "RecipeUI.h"
+#include "SystemInformationUI.h"
 #include "SystemType.h"
-#include "HeightCalibration.h"
+#include "HeightCalibrationUI.h"
 #include "WeldResultSignature.h"
 #define TOTAL_NUM_OF_TASK			CommonProperty::END_OF_TASKS
 #define PRESSURE_NUM 81

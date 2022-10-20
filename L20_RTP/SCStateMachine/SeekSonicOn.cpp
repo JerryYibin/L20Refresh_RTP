@@ -46,6 +46,8 @@ SeekSonicOn::~SeekSonicOn() {
 /**************************************************************************//**
 *
 * \brief   - SeekSonicOn Enter.
+* 			Set current Master State as the SEEK_SONIC_ON and 
+* 			Reset BIT CTRL_PC_SONIC_DISABLE of Master Events.
 *
 * \param   - None.
 *
@@ -87,6 +89,7 @@ void SeekSonicOn::Loop()
 	}
 	else
 	{
+		//TODO need to consider if the timeout should be controlled by SC rather than PC
 		PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
 		m_Actions = SCState::JUMP;
 		LOG("m_StepIndex: SeekSonicOn Loop Running! Timeout: %d\n", m_Timeout);
@@ -104,7 +107,7 @@ void SeekSonicOn::Loop()
 ******************************************************************************/
 void SeekSonicOn::Exit()
 {
-	
+	PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
 }
 
 /**************************************************************************//**

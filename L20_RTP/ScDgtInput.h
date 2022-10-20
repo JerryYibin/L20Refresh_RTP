@@ -12,20 +12,29 @@
 #define SCDGTINPUT_H_
 
 #include "SCTask.h"
-
+#include "UserIO.h"
 class ScDgtInputTask: public SCTask 
 {
 public:
-	ScDgtInputTask();
-	~ScDgtInputTask();
+	enum MESSAGE_IDENTIFY
+	{
+		TO_DGT_INPUT_TASK_IO_GET,
+	};
 	
-	static void				ScDgtInput_Task(void);
+							ScDgtInputTask		();
+							~ScDgtInputTask		();
+	
+	static ScDgtInputTask*	GetInstance			(void);
+	static void				ScDgtInput_Task		(void);
 protected:
-	virtual void 			ProcessTaskMessage(MESSAGE& message) override;
+	virtual void 			ProcessTaskMessage		(MESSAGE& message) override;
+	virtual int				GetDgtInputBits			() = 0;
 private:
     
     MSG_Q_ID 			SELF_MSG_Q_ID;
     MSG_Q_ID			UI_MSG_Q_ID;
+    
+    static ScDgtInputTask* _DgtInputObj;
 
 };
 

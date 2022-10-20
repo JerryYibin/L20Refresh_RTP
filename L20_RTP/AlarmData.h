@@ -13,7 +13,7 @@
 
 #ifndef ALARMDATA_H_
 #define ALARMDATA_H_
-#include "alarm_code_common.h"
+#include "AlarmCodeUI.h"
 #include <iostream>
 #include <vector>
 

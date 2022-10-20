@@ -15,6 +15,7 @@
 #include "../GPIO.h"
 #include "../Logger.h"
 #include "../Utility.h"
+#include "../ScDgtOutput.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"	
@@ -72,12 +73,14 @@ public:
 	bool 					DefeatWeldAbortHandler	(void);
 	bool 					ProcessAlarmHandler		(void);
 	virtual STATUS			SendToMsgQ 				(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks_t waitType = NO_WAIT);
+	void 					ChangeExtDgtOutput		(const ScDgtOutputTask::MESSAGE_IDENTIFY msgID);
 private:
 	void abortWeld(void);
 	CommonProperty*							CP;
 protected:
 	MSG_Q_ID	UI_MSG_Q_ID;
 	MSG_Q_ID	CTL_MSG_Q_ID;
+	MSG_Q_ID	DGTOUT_MSG_Q_ID;
 };
 
 #endif /* SCSTATE_H_ */

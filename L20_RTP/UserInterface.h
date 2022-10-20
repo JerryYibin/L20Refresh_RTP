@@ -12,6 +12,7 @@
 #define USERINTERFACE_H_
 
 #include "SCTask.h"
+#include "HeartBeatUI.h"
 
 /*
  *
@@ -35,10 +36,12 @@ public:
 	    TO_UI_TASK_HEIGHT_CALIBRATE_START	= SCBL_HEIGHT_CALIBRATE_START_REQ,
 	    TO_UI_TASK_HEIGHT_CORRECT			= SCBL_HEIGHT_CALIBRATE_CORRECT_REQ,
 	    TO_UI_TASK_HEIGHT_CALIBRATE_ACCEPT	= SCBL_HEIGHT_CALIBRATE_ACCEPT_REQ,
+		TO_UI_TASK_USERIO_INPUT_READ		= SCBL_USER_IO_INPUT_REQ,
 		
 		TO_UI_TASK_LAST_WELD_RESULT,
 		TO_UI_TASK_HEIGHT_CALIBRATE_RESPONSE,
 		TO_UI_TASK_HEIGHT_CHECK_RESPONSE,
+		TO_UI_TASK_USER_IO_RESPONSE,
 	};
 	UserInterface();
 	~UserInterface();
@@ -54,6 +57,8 @@ private:
 	MSG_Q_ID 	DATA_MSG_Q_ID_REQ;
 	MSG_Q_ID 	INTERFACE_MSG_Q_ID;
 	MSG_Q_ID	ACT_MSG_Q_ID;
+	MSG_Q_ID	OUTPUT_MSG_Q_ID;
+	MSG_Q_ID	INPUT_MSG_Q_ID;
 	HEARTBEAT 	m_stHeartbeat;
 private:
 	void			responseHeartbeat					();
@@ -70,6 +75,7 @@ private:
 	void			updateSystemConfigData				(char* messagebuf);
 	void			responseHeightCalibration			();
 	void			responseHeightCheck					();
+	void			responseUserIORequest				(char* messagebuf);
 };
 
 #endif /* USERINTERFACE_H_ */

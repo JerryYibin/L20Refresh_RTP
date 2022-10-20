@@ -43,7 +43,8 @@ WaitForTrigger::~WaitForTrigger() {
 
 /**************************************************************************//**
 *
-* \brief   - Wait For Trigger Enter.
+* \brief   - Wait For Trigger Enter. Notify AC that the current SC state is WAIT_FOR_TRIGGER.
+*            , CTRL_AC_MOVE_DISABLE and to set/reset CTRL_PART_CONTACK_ENABLE following Height Encoder option.
 *
 * \param   - None.
 *
@@ -67,7 +68,7 @@ void WaitForTrigger::Enter()
 
 /**************************************************************************//**
 *
-* \brief   - Wait For Trigger Loop.
+* \brief   - Wait For Trigger Loop. Entry to Next State until ACState changes to AC_HOLD.
 *
 * \param   - None.
 *
@@ -82,19 +83,15 @@ void WaitForTrigger::Loop()
 		CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
 		m_Actions = SCState::FAIL;
 	}
-	if((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(ACState::CTRL_PART_CONTACT_ENABLE)) == BIT_MASK(ACState::CTRL_PART_CONTACT_ENABLE))
+	else if(ACStateMachine::AC_TX->ACState == ACState::AC_HOLD)
 	{
-		 if((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_PART_CONTACT_FOUND)) == BIT_MASK(ACState::STATUS_PART_CONTACT_FOUND))
-			m_Actions = SCState::JUMP;
-	}
-	else
 		m_Actions = SCState::JUMP;
-
+	}
 }
 
 /**************************************************************************//**
 *
-* \brief   - Wait For Trigger Exit.
+* \brief   - Wait For Trigger Exit. Reset current AC MasterState to NO_STATE.
 *
 * \param   - None.
 *
@@ -103,7 +100,7 @@ void WaitForTrigger::Loop()
 ******************************************************************************/
 void WaitForTrigger::Exit()
 {
-	
+	ACStateMachine::AC_RX->MasterState = SCState::NO_STATE;
 }
 
 /**************************************************************************//**

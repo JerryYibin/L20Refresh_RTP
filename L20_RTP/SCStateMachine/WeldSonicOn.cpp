@@ -53,7 +53,8 @@ WeldSonicOn::~WeldSonicOn() {
 
 /**************************************************************************//**
 *
-* \brief   - Weld Sonic On Enter.
+* \brief   - Weld Sonic On Enter. Initialize variables?¡ê
+* 			 Reset bit CTRL_PC_SONIC_DISABLE of MasterEvents. 
 *
 * \param   - None.
 *
@@ -73,7 +74,7 @@ void WeldSonicOn::Enter()
 	CommonProperty::WeldSignatureVector.clear();
 	ClearWeldData();
 	CommonProperty::WeldResult.PreHeight = ACStateMachine::AC_TX->ActualHeight;
-	 
+	//TODO Need to consider to move cooling control to the specific actuator task.
 	CoolAirControl(0, 0);
 //	if (SysConfig.m_SystemInfo.HeightEncoder == true)
 //	{
@@ -93,11 +94,13 @@ void WeldSonicOn::Enter()
 
 
 	PCStateMachine::PC_RX->MasterState = SCState::WELD_SONIC_ON;
+	
+	ChangeExtDgtOutput(ScDgtOutputTask::TO_DGT_OUTPUT_TASK_SONICS_SET);
 }
 
 /**************************************************************************//**
 *
-* \brief   - Weld Sonic On Loop.
+* \brief   - Weld Sonic On Loop for weld signature data sampling and weld process control 
 *
 * \param   - None.
 *
@@ -227,7 +230,7 @@ void WeldSonicOn::Loop()
 
 /**************************************************************************//**
 *
-* \brief   - Weld Sonic On Exit.
+* \brief   - Weld Sonic On Exit. Update weld result.
 *
 * \param   - None.
 *
@@ -264,9 +267,15 @@ void WeldSonicOn::Exit()
 //		{
 		CoolAirControl(0, 0);
 //		}
+	//TODO need to move them to Control task.
+	CommonProperty::WeldResult.CycleCounter += 1;
+	CommonProperty::SystemInfo.psLifeCounter += 1;
 	LOG("m_StepIndex: Weld Sonics Loop - Result Update! Weld Time = %d Timeout = %d\n", m_WeldTime, m_Timeout);
 	SendMsgToUIMsgQ();
 	SendMsgToCtrlMsgQ();
+	
+	ChangeExtDgtOutput(ScDgtOutputTask::TO_DGT_OUTPUT_TASK_SONICS_RESET);
+
 }
 
 /**************************************************************************//**
@@ -288,7 +297,7 @@ void WeldSonicOn::Fail()
 
 /**************************************************************************//**
 *
-* \brief   - Clear Weld Data.
+* \brief   - Clear Weld Data. Initialize weld result.
 *
 * \param   - None.
 *

@@ -25,7 +25,7 @@ protected:
 	virtual void		Loop();
 	virtual void		Exit();
 private:
-	unsigned int 		m_TriggerHeight;
+	unsigned int 		m_MovedCount;
 
 };
 

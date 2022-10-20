@@ -26,4 +26,4 @@ protected:
 	virtual void		Exit();
 };
 
-#endif /* ACSTATEMACHINE_ACALARM_H_ */
+#endif /* ACALARM_H_ */
