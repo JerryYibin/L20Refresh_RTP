@@ -200,7 +200,16 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_USER_PROFILE_UPDATE,
 
     TO_DATA_TASK_PRIVILEGE_CONFIG_QUERY,
-    TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE
+    TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE,
+
+    TO_DATA_TASK_PWR_SUPPLY_QUERY,
+    TO_DATA_TASK_PWR_SUPPLY_UPDATE,
+
+    TO_DATA_TASK_TEACH_MODE_SET_QUERY,
+    TO_DATA_TASK_TEACH_MODE_SET_UPDATE,
+
+    TO_DATA_TASK_SYS_CONFIG_QUERY,
+    TO_DATA_TASK_SYS_CONFIG_UPDATE
     };
 
 int main(int argc, char *argv[])
@@ -257,6 +266,15 @@ int main(int argc, char *argv[])
  * 8 for PrivilegeConfiguration
  *   b for query
  *     third parameter for ScreenIndex
+ *   u for update
+ * 9 for PowerSupply
+ *   b for query
+ *   u for update
+ * a for TeachModeSetting
+ *   b for query
+ *   u for update
+ * b for SystemConfigure
+ *   b for query
  *   u for update
  *
  */
@@ -585,6 +603,69 @@ int main(int argc, char *argv[])
                         else
                             *pData = 1;
                         buf.msgID = TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE;
+                        break;
+                        }
+                        break;
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
+            case '9':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'b':
+                        {
+                        buf.msgID = TO_DATA_TASK_PWR_SUPPLY_QUERY;
+                        break;
+                        }
+                    case 'u':
+                        {
+                        buf.msgID = TO_DATA_TASK_PWR_SUPPLY_UPDATE;
+                        break;
+                        }
+                        break;
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
+            case 'a':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'b':
+                        {
+                        buf.msgID = TO_DATA_TASK_TEACH_MODE_SET_QUERY;
+                        break;
+                        }
+                    case 'u':
+                        {
+                        buf.msgID = TO_DATA_TASK_TEACH_MODE_SET_UPDATE;
+                        break;
+                        }
+                        break;
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
+            case 'b':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'b':
+                        {
+                        buf.msgID = TO_DATA_TASK_SYS_CONFIG_QUERY;
+                        break;
+                        }
+                    case 'u':
+                        {
+                        buf.msgID = TO_DATA_TASK_SYS_CONFIG_UPDATE;
                         break;
                         }
                         break;

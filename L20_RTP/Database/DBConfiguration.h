@@ -30,6 +30,9 @@
 #define TABLE_DB_VERSION     	"DBVersion"
 #define TABLE_USER_PROFILE     	"UserProfiles"
 #define TABLE_PRIVILEGE_CONFIG  "PrivilegeConfiguration"
+#define TABLE_PWR_SUPPLY     	"PowerSupply"
+#define TABLE_TEACH_MODE_SET 	"TeachModeSetting"
+#define TABLE_SYS_CONFIG     	"SystemConfigure"
 #define COLUMN_GRAPHDATA		"WeldGraph"
 #define COLUMN_GOLDEN			"Golden"
 

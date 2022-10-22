@@ -16,6 +16,10 @@
 #include "SystemConfigurationUI.h"
 #include <vector>
 using namespace std;
+
+#define TABLE_PWR_SUP_MEM 3
+#define TABLE_TEACH_MODE_MEM 11
+
 class SystemConfiguration 
 {
 public:

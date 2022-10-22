@@ -208,6 +208,16 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_PRIVILEGE_CONFIG_QUERY:
         _ObjDBConn->QueryPrivilegeConfiguration(message.Buffer);
 		break;
+	case TO_DATA_TASK_PWR_SUPPLY_QUERY:
+        _ObjDBConn->QueryBlockPowerSupply(message.Buffer);
+		break;
+	case TO_DATA_TASK_TEACH_MODE_SET_QUERY:
+        _ObjDBConn->QueryBlockTeachModeSetting(message.Buffer);
+		break;
+	case TO_DATA_TASK_SYS_CONFIG_QUERY:
+        _ObjDBConn->QuerySystemConfigure(message.Buffer);
+		break;
+
 	case TO_DATA_TASK_HI_CALIB_UPDATE:
         _ObjDBConn->UpdateHeightCalibration(message.Buffer);
 		break;
@@ -216,6 +226,15 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE:
         _ObjDBConn->UpdatePrivilegeConfiguration(message.Buffer);
+		break;
+	case TO_DATA_TASK_PWR_SUPPLY_UPDATE:
+        _ObjDBConn->UpdateBlockPowerSupply(message.Buffer);
+		break;
+	case TO_DATA_TASK_TEACH_MODE_SET_UPDATE:
+        _ObjDBConn->UpdateBlockTeachModeSetting(message.Buffer);
+		break;
+	case TO_DATA_TASK_SYS_CONFIG_UPDATE:
+        _ObjDBConn->UpdateSystemConfigure(message.Buffer);
 		break;
 
 	case TO_DATA_TASK_WELD_RECIPE_DELETE:

@@ -20,6 +20,7 @@
 #include "../AlarmData.h"
 #include "../HeightEncoder.h"
 #include "../UserAuthority.h"
+#include "../SystemConfiguration.h"
 #include <jansson.h>
 extern "C"
 {
@@ -151,7 +152,7 @@ string DBAccessL20DB::GetWeldSignatureCSVReportHeader2()
 *      		
 * \param   - char* buffer - not used
 *
-* \return  - UINT8 -status of query exec
+* \return  - int -status of query exec
 *
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldResult(char* buffer)
@@ -195,7 +196,7 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 	int nErrCode = SingleTransaction(strStore);
     long long WeldResultID;
     GetLatestID64(TABLE_WELD_RESULT, &WeldResultID);
-	if(nErrCode == 0)
+	if(nErrCode == SQLITE_OK)
 	{
 #ifdef UNITTEST_DATABASE
         LOG("# store WeldResult to ID %llu\n", WeldResultID);
@@ -236,7 +237,7 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 *
 * \param   - char* buffer - WeldResultID
 *
-* \return  - UINT8 - status of query exec
+* \return  - int - status of query exec
 *
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldSignature(char* buffer)
@@ -300,7 +301,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 
 	GetLatestID64(TABLE_WELD_SIGNATURE, &id);
 
-	if(nErrCode == 0)
+	if(nErrCode == SQLITE_OK)
 	{
 #ifdef UNITTEST_DATABASE
         LOG("# store WeldSignature to ID %llu\n", id);
@@ -320,7 +321,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 *
 * \param   - char* buffer - WeldRecipeSC data
 *
-* \return  - UINT8 - status of query exec
+* \return  - int - status of query exec
 *
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldRecipe(char* buffer)
@@ -403,7 +404,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
         strPower.shrink_to_fit();
 
 	int nErrCode = SingleTransaction(strStore);
-	if(nErrCode != 0)
+	if(nErrCode != SQLITE_OK)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
 }
@@ -413,7 +414,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 *
 * \param   - char* buffer - not used
 *
-* \return  - UINT8 - status of query exec
+* \return  - int - status of query exec
 *
 ******************************************************************************/
 int DBAccessL20DB::StoreAlarmLog(char* buffer)
@@ -461,7 +462,7 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	nErrCode = SingleTransaction(str);
 
 	GetLatestID64(TABLE_ALARM_LOG, &id);
-	if(nErrCode == 0)
+	if(nErrCode == SQLITE_OK)
 	{
 #ifdef UNITTEST_DATABASE
         LOG("# store AlarmLog to ID(%llu) with WeldResultID(%llu)\n", id, pData->WeldResultID);
@@ -482,9 +483,9 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 /**************************************************************************//**
 * \brief   - Query the latest records from table Weld Result
 *
-* \param   - char* buffer - not used
+* \param   - char* buffer - ID
 *
-* \return  - UINT8 - count of records
+* \return  - int - count of records
 *
 ******************************************************************************/
 int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
@@ -547,7 +548,7 @@ int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
 *
 * \param   - char* buffer WeldResult ID
 *
-* \return  - UINT8 - status of query exec
+* \return  - N/A
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
@@ -581,7 +582,7 @@ void DBAccessL20DB::QueryWeldSignature(char* buffer)
 *
 * \param   - char* buffer - not used
 *
-* \return  - UINT8 - status of query exec
+* \return  - N/A
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
@@ -603,7 +604,7 @@ void DBAccessL20DB::QueryWeldRecipeAll(char* buffer)
 *
 * \param   - char* buffer - WeldRecipe structure
 *
-* \return  - UINT8 - status of query exec
+* \return  - N/A
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
@@ -691,7 +692,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
 *
 * \param   - char* buffer WeldResult ID
 *
-* \return  - UINT8 - count of records
+* \return  - int - count of records
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
@@ -837,19 +838,19 @@ string DBAccessL20DB::QueryUserProfiles(char* buffer)
 *
 * \param   - char* buffer - ScreenIndex
 *
-* \return  - N/A
+* \return  - PermissionLevel
 *
 ******************************************************************************/
-string DBAccessL20DB::QueryPrivilegeConfiguration(char* buffer)
+int DBAccessL20DB::QueryPrivilegeConfiguration(char* buffer)
 {
     int ScreenIndex = *(int* )buffer;
     string str = ExecuteQuery(
                 "select PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+
                 " where ScreenIndex="+std::to_string(ScreenIndex)+";");
     if(str.empty() == true)
-        return nullptr;
+        return ERROR;
+
 #ifdef UNITTEST_DATABASE
-    LOG("QueryPrivilegeConfiguration:%s\n", str.c_str());
     if(UserAuthority::_UserPrivilegesSC == nullptr)
         {
         LOG("new UserAuthority\n");
@@ -857,10 +858,151 @@ string DBAccessL20DB::QueryPrivilegeConfiguration(char* buffer)
         }
 #endif
 
-//    int PermissionLevel = atoi(str.c_str());
-//    str = QueryUserProfiles((char* )&PermissionLevel);
-//    UserAuthority::_UserPrivilegesSC->insert(pair<int, string>(ScreenIndex,str));
-    return str;
+    int PermissionLevel = atoi(str.c_str());
+    UserAuthority::_UserPrivilegesSC->insert(pair<int, int>(ScreenIndex, PermissionLevel));
+#ifdef UNITTEST_DATABASE
+    LOG("QueryPrivilegeConfiguration: ScreenIndex(%d), PermissionLevel(%d)\n", ScreenIndex, PermissionLevel);
+#endif
+    return PermissionLevel;
+}
+
+/**************************************************************************//**
+* \brief   - Query all records from table PowerSupply
+*
+* \param   - char* buffer - not used
+*
+* \return  - int - count of records
+*
+******************************************************************************/
+int DBAccessL20DB::QueryBlockPowerSupply(char* buffer)
+{
+    int count;
+    string str;
+	vector<string> tmpStr;
+
+    str = ExecuteQuery(string("select * from ")+string(TABLE_PWR_SUPPLY)+";");
+#ifdef UNITTEST_DATABASE
+    LOG("QueryBlockPowerSupply:\n%s\n\n", str.c_str());
+    SystemConfiguration::PowerSupplyType.clear();
+#endif
+
+    Utility::StringToTokens(str, ',', tmpStr);
+	for(count = 0; count < tmpStr.size()/TABLE_RESULT_MEM; count++)
+	    {
+	    POWER_SUPPLY_TYPE tmpPwr;
+        tmpPwr.Frequency = atoi(tmpStr[count*TABLE_RESULT_MEM+1].c_str());//Frequency
+        tmpPwr.Power = atoi(tmpStr[count*TABLE_RESULT_MEM+2].c_str());//Power
+		SystemConfiguration::PowerSupplyType.push_back(tmpPwr);
+
+#ifdef UNITTEST_DATABASE
+        LOG("ID: %s\n", tmpStr[count*TABLE_RESULT_MEM].c_str());
+        LOG("Frequency: %d\n", tmpPwr.Frequency);
+        LOG("Power: %d\n", tmpPwr.Power);
+        LOG("\n");
+#endif
+	    }
+    return count;
+}
+
+/**************************************************************************//**
+* \brief   - Query all records from table TeachModeSetting
+*
+* \param   - char* buffer - not used
+*
+* \return  - int - count of records
+*
+******************************************************************************/
+int DBAccessL20DB::QueryBlockTeachModeSetting(char* buffer)
+{
+    int count;
+    string str;
+	vector<string> tmpStr;
+
+    str = ExecuteQuery(string("select * from ")+string(TABLE_TEACH_MODE_SET)+";");
+#ifdef UNITTEST_DATABASE
+    LOG("QueryBlockTeachModeSetting:\n%s\n\n", str.c_str());
+    SystemConfiguration::TeachModeSetting.clear();
+#endif
+
+    Utility::StringToTokens(str, ',', tmpStr);
+	for(count = 0; count < tmpStr.size()/TABLE_TEACH_MODE_MEM; count++)
+	    {
+	    TEACH_MODE_SETTING tmpTeach;
+        tmpTeach.TeachMode = (TEACHMODE_TYPE)atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+1].c_str());//TeachModeType
+        tmpTeach.TimeRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+2].c_str());//TimePLRG
+        tmpTeach.TimeRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+3].c_str());//TimeMSRG
+        tmpTeach.PowerRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+4].c_str());//PowerPLRG
+        tmpTeach.PowerRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+5].c_str());//PowerMSRG
+        tmpTeach.PreHeightRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+6].c_str());//PreHeightPLRG
+        tmpTeach.PreHeightRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+7].c_str());//PreHeightMSRG
+        tmpTeach.PostHeightRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+8].c_str());//HeightPLRG
+        tmpTeach.PostHeightRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+9].c_str());//HeightMSRG
+        tmpTeach.Quantity = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+10].c_str());//Quantity
+		SystemConfiguration::TeachModeSetting.push_back(tmpTeach);
+
+#ifdef UNITTEST_DATABASE
+        LOG("ID: %s\n", tmpStr[count*TABLE_TEACH_MODE_MEM].c_str());
+        LOG("TeachMode: %d\n", tmpTeach.TeachMode);
+        LOG("TimeRangePL: %d\n", tmpTeach.TimeRangePL);
+        LOG("TimeRangeMS: %d\n", tmpTeach.TimeRangeMS);
+        LOG("PowerRangePL: %d\n", tmpTeach.PowerRangePL);
+        LOG("PowerRangeMS: %d\n", tmpTeach.PowerRangeMS);
+        LOG("PreHeightRangePL: %d\n", tmpTeach.PreHeightRangePL);
+        LOG("PreHeightRangeMS: %d\n", tmpTeach.PreHeightRangeMS);
+        LOG("PostHeightRangePL: %d\n", tmpTeach.PostHeightRangePL);
+        LOG("PostHeightRangeMS: %d\n", tmpTeach.PostHeightRangeMS);
+        LOG("Quantity: %d\n", tmpTeach.Quantity);
+        LOG("\n");
+#endif
+	    }
+    return count;
+}
+
+/**************************************************************************//**
+* \brief   - Query the unique record from table SystemConfigure
+*
+* \param   - char* buffer - not used
+*
+* \return  - N/A
+*
+******************************************************************************/
+void DBAccessL20DB::QuerySystemConfigure(char* buffer)
+{
+    int count;
+    string str;
+	vector<string> tmpStr;
+
+    str = ExecuteQuery(string("select * from ")+string(TABLE_SYS_CONFIG)+";");
+#ifdef UNITTEST_DATABASE
+    LOG("QuerySystemConfigure:\n%s\n\n", str.c_str());
+#endif
+
+    Utility::StringToTokens(str, ',', tmpStr);
+	SYSTEMCONFIGFORUI tmpSysCon;
+    tmpSysCon.bFootPedalAbort      =                 atoi(tmpStr[0].c_str()); //FootPedalAbort
+    tmpSysCon.bLockOnAlarm         =                 atoi(tmpStr[1].c_str()); //LockOnAlarm
+    tmpSysCon.bHeightEncoder       =                 atoi(tmpStr[2].c_str()); //HeightEncoder
+    tmpSysCon.Cooling              =        (COOLING)atoi(tmpStr[3].c_str()); //CoolingOption
+    tmpSysCon.CoolingDuration      =                 atoi(tmpStr[4].c_str()); //CoolingDuration
+    tmpSysCon.CoolingDelay         =                 atoi(tmpStr[5].c_str()); //CoolingDelay
+    tmpSysCon.Language             =       (LANGUAGE)atoi(tmpStr[6].c_str()); //Language
+    tmpSysCon.Amplitude_Unit       = (AMPLITUDE_UNIT)atoi(tmpStr[7].c_str()); //AmplitudeUnit
+    tmpSysCon.Pressure_Unit        =  (PRESSURE_UNIT)atoi(tmpStr[8].c_str()); //PressureUnit
+    tmpSysCon.Height_Unit          =    (HEIGHT_UNIT)atoi(tmpStr[9].c_str()); //HeightUnit
+    tmpSysCon.MaxAmplitude         =                 atoi(tmpStr[10].c_str()); //MaxAmplitude
+    tmpSysCon.TeachMode.Teach_mode = (TEACHMODE_TYPE)atoi(tmpStr[11].c_str()); //TeachModeID
+    tmpSysCon.PowerSupply          =     (POWER_TYPE)atoi(tmpStr[13].c_str()); //PowerSupplyID
+    tmpSysCon.Frequency            =      (FREQUENCY)atoi(tmpStr[14].c_str()); //FrequencyOffset
+
+	struct tm timeStamp;
+	vxbRtcGet(&timeStamp);
+    strftime(tmpSysCon.DateTime, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
+#if 0 // not matched
+    tmpSysCon.xxx = atoi(tmpStr[12].c_str()); //HomePositionCount
+    tmpSysCon.xxx = atoi(tmpStr[15].c_str()); //TunePoint
+#endif
+    SystemConfiguration::Set(&tmpSysCon);
+    return;
 }
 
 /**************************************************************************//**
@@ -868,7 +1010,7 @@ string DBAccessL20DB::QueryPrivilegeConfiguration(char* buffer)
 *
 * \param   - char* buffer (recipe structure)
 *
-* \return  - UINT8 - Database status
+* \return  - int - Database status
 *
 ******************************************************************************/
 int DBAccessL20DB::UpdateWeldRecipe(char* buffer)
@@ -943,7 +1085,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char* buffer)
 #ifdef UNITTEST_DATABASE
     LOG("# update WeldRecipe: result %d\n", nErrCode);
 #endif
-	if(nErrCode != 0)
+	if(nErrCode != SQLITE_OK)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
 }
@@ -953,7 +1095,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char* buffer)
 *
 * \param   - char* buffer - PSI
 *
-* \return  - UINT8 - Database status
+* \return  - int - Database status
 *
 ******************************************************************************/
 int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
@@ -981,7 +1123,7 @@ int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
 #ifdef UNITTEST_DATABASE
     LOG("# %s\n", strStore.c_str());
 #endif
-	if(nErrCode != 0)
+	if(nErrCode != SQLITE_OK)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
 }
@@ -991,7 +1133,7 @@ int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
 *
 * \param   - char* buffer - PermissionLevel
 *
-* \return  - UINT8 - Database status
+* \return  - int - Database status
 *
 ******************************************************************************/
 int DBAccessL20DB::UpdateUserProfiles(char* buffer)
@@ -1035,7 +1177,7 @@ int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 #ifdef UNITTEST_DATABASE
     LOG("# %s\n", strStore.c_str());
 #endif
-	if(nErrCode != 0)
+	if(nErrCode != SQLITE_OK)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 	return nErrCode;
 }
@@ -1045,12 +1187,12 @@ int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 *
 * \param   - char* buffer - ScreenIndex
 *
-* \return  - UINT8 - Database status
+* \return  - int - PermissionLevel, or negative Database status if failed
 *
 ******************************************************************************/
 int DBAccessL20DB::UpdatePrivilegeConfiguration(char* buffer)
 {
-    int ScreenIndex = *(int* )buffer;
+    int ScreenIndex = *(int*)buffer;
 	int nErrCode = SQLITE_ERROR;
 
 #ifdef UNITTEST_DATABASE
@@ -1061,42 +1203,138 @@ int DBAccessL20DB::UpdatePrivilegeConfiguration(char* buffer)
         }
 #endif
 
-#ifdef UNITTEST_DATABASE
-    LOG("# ScreenIndex(%d)\n", ScreenIndex);
-#endif
-
     if(1 != UserAuthority::_UserPrivilegesSC->count(ScreenIndex))
         {
 #ifdef UNITTEST_DATABASE
-        UserAuthority::_UserPrivilegesSC->insert(pair<int, string>(ScreenIndex,"abc123"));
-        LOG("# set ScreenIndex(%d) with Password(%s)\n", ScreenIndex, "abc123");
+        UserAuthority::_UserPrivilegesSC->insert(pair<int, int>(ScreenIndex,1));
 #else
-	    return nErrCode;
+	    return -nErrCode;
 #endif
         }
 
-    string str = ExecuteQuery(
-                "select PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+
-                " where ScreenIndex="+std::to_string(ScreenIndex)+";");
-    if(str.empty() == true)
-        return nErrCode;
-    int PermissionLevel = atoi(str.c_str());
+    map<int,int>::iterator st;
+    int PermissionLevel;
+    for(st=UserAuthority::_UserPrivilegesSC->begin();st!=UserAuthority::_UserPrivilegesSC->end();st++)
+    {
+        if(st->first == ScreenIndex)
+            {
+            PermissionLevel = st->second;
+            break;
+            }
+    }
 #ifdef UNITTEST_DATABASE
-    LOG("# PermissionLevel(%d)\n", PermissionLevel);
+    LOG("# set ScreenIndex(%d) with PermissionLevel(%d)\n", ScreenIndex, PermissionLevel);
 #endif
 
-    map<int,string>::iterator st;
-    string pw;
-//    for(st=UserAuthority::_UserPrivilegesSC->begin();st!=UserAuthority::_UserPrivilegesSC->end();st++)
-//    {
-//        if(st->first == ScreenIndex)
-//            {
-//            pw = st->second;
-//            break;
-//            }
-//    }
-//    UserAuthority::_UserProfilesSC->insert(pair<int, string>(PermissionLevel, pw));
-//	nErrCode = UpdateUserProfiles((char* )&PermissionLevel);
+    string str = ExecuteQuery(
+            "update " 	+ string(TABLE_PRIVILEGE_CONFIG) +
+            " set PermissionLevel=" + std::to_string(PermissionLevel)+//PermissionLevel
+            " where ScreenIndex="+std::to_string(ScreenIndex)+";");
+
+	return PermissionLevel;
+}
+
+/**************************************************************************//**
+* \brief   - Update all records to PowerSupply
+*
+* \param   - char* buffer - not used
+*
+* \return  - int - Database status
+*
+******************************************************************************/
+int DBAccessL20DB::UpdateBlockPowerSupply(char* buffer)
+{
+	for (int i = 0; i < SystemConfiguration::PowerSupplyType.size(); i++)
+	{
+		POWER_SUPPLY_TYPE tmpPwr = SystemConfiguration::PowerSupplyType.at(i);
+    	string strStore =
+            "update " 			+ string(TABLE_PWR_SUPPLY) +
+            " set Frequency=" 	+ std::to_string(tmpPwr.Frequency)+//Frequency
+            ", Power=" 			+ std::to_string(tmpPwr.Power)+//Power
+            " where ID=" 		+ std::to_string(i)+";";
+    	int nErrCode = SingleTransaction(strStore);
+    	if(nErrCode != SQLITE_OK)
+        {   
+    		LOGERR((char*) "Database_T: UpdateBlockPowerSupply Error. %d\n", nErrCode, 0, 0);
+        	return nErrCode;
+        }
+	}
+	return SQLITE_OK;
+}
+
+/**************************************************************************//**
+* \brief   - Update all records to TeachModeSetting
+*
+* \param   - char* buffer - not used
+*
+* \return  - int - Database status
+*
+******************************************************************************/
+int DBAccessL20DB::UpdateBlockTeachModeSetting(char* buffer)
+{
+	for (int i = 0; i < SystemConfiguration::TeachModeSetting.size(); i++)
+	{
+		TEACH_MODE_SETTING tmpTeach = SystemConfiguration::TeachModeSetting.at(i);
+    	string strStore =
+            "update " 				+ string(TABLE_TEACH_MODE_SET) +
+            " set TeachModeType=" 	+ std::to_string(tmpTeach.TeachMode)+//TeachModeType
+            ", TimePLRG=" 			+ std::to_string(tmpTeach.TimeRangePL)+//TimePLRG
+            ", TimeMSRG=" 			+ std::to_string(tmpTeach.TimeRangeMS)+//TimeMSRG
+            ", PowerPLRG=" 			+ std::to_string(tmpTeach.PowerRangePL)+//PowerPLRG
+            ", PowerMSRG=" 			+ std::to_string(tmpTeach.PowerRangeMS)+//PowerMSRG
+            ", PreHeightPLRG=" 		+ std::to_string(tmpTeach.PreHeightRangePL)+//PreHeightPLRG
+            ", PreHeightMSRG=" 		+ std::to_string(tmpTeach.PreHeightRangeMS)+//PreHeightMSRG
+            ", HeightPLRG=" 		+ std::to_string(tmpTeach.PostHeightRangePL)+//HeightPLRG
+            ", HeightMSRG=" 		+ std::to_string(tmpTeach.PostHeightRangeMS)+//HeightMSRG
+            ", Quantity=" 			+ std::to_string(tmpTeach.Quantity)+//Quantity
+            " where ID=" 			+ std::to_string(i)+";";
+    	int nErrCode = SingleTransaction(strStore);
+    	if(nErrCode != SQLITE_OK)
+        {   
+    		LOGERR((char*) "Database_T: UpdateBlockTeachModeSetting Error. %d\n", nErrCode, 0, 0);
+        	return nErrCode;
+        }
+	}
+	return SQLITE_OK;
+}
+
+/**************************************************************************//**
+* \brief   - Update the unique record to SystemConfigure
+*
+* \param   - char* buffer - not used
+*
+* \return  - int - Database status
+*
+******************************************************************************/
+int DBAccessL20DB::UpdateSystemConfigure(char* buffer)
+{
+	SYSTEMCONFIGFORUI tmpSysCon;
+    SystemConfiguration::Get(&tmpSysCon);
+
+	string strStore =
+        "update " 				+ string(TABLE_SYS_CONFIG) +
+        " set FootPedalAbort=" 	+ std::to_string(tmpSysCon.bFootPedalAbort)+
+        ", LockOnAlarm=" 		+ std::to_string(tmpSysCon.bLockOnAlarm)+
+        ", HeightEncoder=" 		+ std::to_string(tmpSysCon.bHeightEncoder)+
+        ", CoolingOption=" 		+ std::to_string(tmpSysCon.Cooling)+
+        ", CoolingDuration=" 	+ std::to_string(tmpSysCon.CoolingDuration)+
+        ", CoolingDelay=" 		+ std::to_string(tmpSysCon.CoolingDelay)+
+        ", Language=" 			+ std::to_string(tmpSysCon.Language)+
+        ", AmplitudeUnit=" 		+ std::to_string(tmpSysCon.Amplitude_Unit)+
+        ", PressureUnit=" 		+ std::to_string(tmpSysCon.Pressure_Unit)+
+        ", HeightUnit=" 		+ std::to_string(tmpSysCon.Height_Unit)+
+        ", MaxAmplitude=" 		+ std::to_string(tmpSysCon.MaxAmplitude)+
+        ", TeachModeID=" 		+ std::to_string(tmpSysCon.TeachMode.Teach_mode)+
+        //", HomePositionCount=" 	+ std::to_string(0)+
+        ", PowerSupplyID=" 		+ std::to_string(tmpSysCon.PowerSupply)+
+        ", FrequencyOffset=" 	+ std::to_string(tmpSysCon.Frequency)+
+        //", TunePoint=" 			+ std::to_string(0)+
+        ";";
+	int nErrCode = SingleTransaction(strStore);
+	if(nErrCode != SQLITE_OK)
+    {   
+		LOGERR((char*) "Database_T: UpdateSystemConfigure Error. %d\n", nErrCode, 0, 0);
+    }
 	return nErrCode;
 }
 

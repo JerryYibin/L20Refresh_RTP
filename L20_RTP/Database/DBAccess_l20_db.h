@@ -55,13 +55,19 @@ public:
 	virtual void 	QueryHeightCalibration(char *) 		override;
 	virtual void 	QueryDbVersion(char *) 				override;
 	virtual string 	QueryUserProfiles(char *) 			override;
-	virtual string 	QueryPrivilegeConfiguration(char *) override;
+	virtual int 	QueryPrivilegeConfiguration(char *) override;
+	virtual int 	QueryBlockPowerSupply(char *)		override;
+	virtual int 	QueryBlockTeachModeSetting(char *)	override;
+	virtual void 	QuerySystemConfigure(char *)		override;
 
 	virtual void 	QueryWeldRecipeAll(char *) 			override;
 	virtual int 	UpdateWeldRecipe(char *) 			override;
 	virtual int 	UpdateHeightCalibration(char *) 	override;
 	virtual int 	UpdateUserProfiles(char *) 			override;
-	virtual int 	UpdatePrivilegeConfiguration(char *) override;
+	virtual int 	UpdatePrivilegeConfiguration(char *)	override;
+	virtual int 	UpdateBlockPowerSupply(char *) 		override;
+	virtual int 	UpdateBlockTeachModeSetting(char *)	override;
+	virtual int 	UpdateSystemConfigure(char *)		override;
 
 	virtual void 	DeleteOldest(const char *) 			override;
 

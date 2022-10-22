@@ -47,13 +47,19 @@ public:
 	virtual void 	QueryHeightCalibration(char *)		= 0;
 	virtual void 	QueryDbVersion(char *)				= 0;
 	virtual string 	QueryUserProfiles(char *)			= 0;
-	virtual string 	QueryPrivilegeConfiguration(char *)	= 0;
+	virtual int 	QueryPrivilegeConfiguration(char *)	= 0;
+	virtual int 	QueryBlockPowerSupply(char *)	= 0;
+	virtual int 	QueryBlockTeachModeSetting(char *)	= 0;
+	virtual void 	QuerySystemConfigure(char *)	= 0;
 
 	virtual void 	QueryWeldRecipeAll(char *)		= 0;
 	virtual int 	UpdateWeldRecipe(char *)			= 0;
 	virtual int 	UpdateHeightCalibration(char *)	= 0;
 	virtual int 	UpdateUserProfiles(char *)			= 0;
 	virtual int 	UpdatePrivilegeConfiguration(char *)	= 0;
+	virtual int 	UpdateBlockPowerSupply(char *)	= 0;
+	virtual int 	UpdateBlockTeachModeSetting(char *)	= 0;
+	virtual int 	UpdateSystemConfigure(char *)	= 0;
 
 	virtual void 	DeleteOldest(const char *)			= 0;
 	
