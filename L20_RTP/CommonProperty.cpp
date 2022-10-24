@@ -20,7 +20,6 @@ CommonProperty*							CommonProperty::m_CPObj							= nullptr;
 const char*								CommonProperty::cTaskName[TOTAL_NUM_OF_TASK]	= {0};
 WELD_RESULT								CommonProperty::WeldResult;
 WELD_RESULT				                CommonProperty::WeldResultForUI[RESULT_FOR_UI_MAX];
-WeldRecipeSC							CommonProperty::ActiveRecipeSC;
 SYSTEM_INFO								CommonProperty::SystemInfo;
 vector<WELD_SIGNATURE>					CommonProperty::WeldSignatureVector;
 HMI_WELD_SIGNATURE_POINTS	            CommonProperty::WeldSignatureForUI[RESULT_FOR_UI_MAX];
@@ -38,22 +37,6 @@ CommonProperty::CommonProperty()
 	#ifdef DEBUG
 		logMsg("---------CommonProperty constructor called---------",0,0,0,0,0,0);
 	#endif
-	ActiveRecipeSC.m_WeldParameter.m_EnergySetting = 100;
-	ActiveRecipeSC.m_WeldParameter.m_Amplitude = 10;
-	ActiveRecipeSC.m_WeldParameter.m_TPpressure = 30000;
-	ActiveRecipeSC.m_WeldParameter.m_WPpressure = 30000;
-	ActiveRecipeSC.m_AdvancedSetting.m_WeldStepMode = STEP_NO_MODE;
-	ActiveRecipeSC.m_QualityWindowSetting.m_PreHeightMin = 0;
-	ActiveRecipeSC.m_QualityWindowSetting.m_PreHeightMax = 15000;
-	ActiveRecipeSC.m_QualityWindowSetting.m_HeightMin = 0;
-	ActiveRecipeSC.m_QualityWindowSetting.m_HeightMax = 15000;
-	ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMin = 0;
-	ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMax = 4800;
-	ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin = 0;
-	ActiveRecipeSC.m_QualityWindowSetting.m_TimeMax = 5000;
-	ActiveRecipeSC.m_AdvancedSetting.m_WeldMode = ENERGY_MODE;
-	char tmpName[] = "NewRecipe";
-	memcpy(ActiveRecipeSC.m_RecipeName, tmpName, sizeof(tmpName));
 	
 	SystemInfo.psLifeCounter = 0;
 	SystemInfo.psFrequency = 20;

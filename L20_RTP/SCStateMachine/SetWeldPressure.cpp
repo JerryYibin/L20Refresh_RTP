@@ -18,6 +18,7 @@
 ***************************************************************************/
 
 #include "SetWeldPressure.h"
+#include "../Recipe.h"
 #include "../ACStateMachine.h"
 /**************************************************************************//**
 *
@@ -59,10 +60,12 @@ SetWeldPressure::~SetWeldPressure() {
 ******************************************************************************/
 void SetWeldPressure::Enter()
 {
-	if (ACStateMachine::AC_RX->TargetPressure == CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure)
+	UINT32 m_WPpressure;
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &m_WPpressure);
+	if (ACStateMachine::AC_RX->TargetPressure == m_WPpressure)
 		m_Actions = SCState::JUMP;
 	else
-		ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
+		ACStateMachine::AC_RX->TargetPressure = m_WPpressure;
 	ACStateMachine::AC_RX->MasterState = SCState::WELD_PRESSURE_SET;
 }
 

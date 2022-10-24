@@ -21,7 +21,7 @@ public:
 							P1ScDgtInputTask();
 	virtual 				~P1ScDgtInputTask();
 protected:
-	int						GetDgtInputBits			() override;
+	virtual void			GetDgtInputBits			() override;
 };
 
 #endif /* P1SCDGTINPUTTASK_H_ */

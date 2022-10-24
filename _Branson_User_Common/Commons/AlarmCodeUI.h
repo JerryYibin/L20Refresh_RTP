@@ -157,7 +157,7 @@ enum ALARM_CODE
 struct UI_ALARM_LOG
 {
 	long long		WeldCount;
-	char			RecipeName[RECIPE_LEN];
+	char			RecipeName[RECIPE_NAME_LENGTH];
 	char			DateTime[20];
 	unsigned int	AlarmType;
 };

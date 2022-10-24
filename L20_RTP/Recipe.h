@@ -1,13 +1,21 @@
-/*
- * Recipe.h
- *
- *  Created on: May 5, 2022
- *      Author: JerryW.Wang
- */
+/**********************************************************************************************************
 
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
+
+     This program is the property of Branson Ultrasonics Corporation
+     Copying of this software is expressly forbidden, without the prior
+     written consent of Branson Ultrasonics Corporation.
+
+ ---------------------------- MODULE DESCRIPTION ----------------------------
+
+ The file Recipe.h is a public interface that provides external.
+
+ **********************************************************************************************************/
 #ifndef RECIPE_H_
 #define RECIPE_H_
-#include "RecipeUI.h"
+#include <vector>
+#include "RecipeDefine.h"
+using namespace std;
 class Recipe {
 public:
 	enum STEPMODE_DATA_TYPE
@@ -17,6 +25,9 @@ public:
 		AMPLITUDE,
 		TOTAL
 	};
+	static WeldRecipeSC* ActiveRecipeSC;
+	static WeldRecipeSC* RecipeSC;
+	static vector<WeldRecipeLibForUI>	WeldRecipeLibraryForUI;
 public:
 	Recipe();
 	virtual ~Recipe();
@@ -24,7 +35,7 @@ public:
 	static void SetActiveRecipeQualityParam(QualityWindowSetting* qualityParam);
 	static void SetActiveRecipeAdvancedParam(AdvancedWeldSetting* advancedParam);
 public:
-	WeldRecipeSC m_Recipe;
+	//WeldRecipeSC m_Recipe;
 };
 
 #endif /* RECIPE_H_ */

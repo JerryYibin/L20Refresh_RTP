@@ -11,12 +11,19 @@
  The file RecipeUI.h is to define the enum and struct related to the recipe.
 
  **********************************************************************************************************/
-#ifndef WELDRECIPEDEF_H
-#define WELDRECIPEDEF_H
+#ifndef RECIPEUI_H
+#define RECIPEUI_H
+
+#include <vector>
+
+#define MAX_NO_OF_FORCE_STEP 10
+#define MAX_NO_OF_AMPLITUDE_STEP 10
+#define RECIPE_NAME_LENGTH   20
 
 #define STEP_MAX 		5
 #define PIC_PATH_LEN 	60
 #define RECIPE_LEN		20
+
 enum WELDMODE
 {
     ENERGY_MODE = 0,
@@ -27,7 +34,7 @@ enum WELDMODE
 
 enum WELDAMPLITUDESTEPMMODE
 {
-    STEP_NO_MODE    = -1,
+    STEP_NO_MODE = -1,
     STEP_ENERGY_MODE = 0,
     STEP_TIME_MODE,
     STEP_POWER_MODE,
@@ -51,8 +58,8 @@ struct Trigger
 
 struct AdvancedWeldSetting
 {
-	WELDMODE m_WeldMode;
-	WELDAMPLITUDESTEPMMODE m_WeldStepMode;
+    int m_WeldMode;
+    int m_WeldStepMode;
     Trigger m_Trigger;
     int m_PreBurst;
     int m_HoldTime;
@@ -73,9 +80,9 @@ struct WeldStepValueSetting
 
 struct WeldParameterSetting
 {
-    unsigned int m_EnergySetting; //0.0 (Value X 10)
-    int          m_TPpressure; //0.000 (Value X 1000)
-    int          m_WPpressure; //0.000 (Value X 1000)
+    unsigned int m_EnergySetting;
+    int          m_TPressure;
+    int          m_WPressure;
     unsigned int m_Amplitude;
     WeldStepValueSetting m_EnergyStep[STEP_MAX];
     WeldStepValueSetting m_TimeStep[STEP_MAX];
@@ -102,42 +109,37 @@ struct WeldRecipeSetting
     AdvancedWeldSetting  m_AdvancedSetting;
 };
 
-
-struct  WeldRecipeSC
+struct  WeldRecipeSCForUI
 {
-	int					  m_RecipeID;
+    int                   m_RecipeID;
     int                   m_RecipeNumber;
     char                  m_RecipePicPath[PIC_PATH_LEN];
-    bool                  m_IsTeachMode;
-    char		          m_RecipeName[RECIPE_LEN];
+    int                   m_IsTeachMode;
+    char                  m_RecipeName[RECIPE_NAME_LENGTH];
     unsigned int		  m_BatchSize; // For active recipe only, don't allow to save it with the recipe in the database. It will be saved into the Last Weld
     WeldParameterSetting  m_WeldParameter;
     QualityWindowSetting  m_QualityWindowSetting;
     AdvancedWeldSetting   m_AdvancedSetting;
-    
 };
 
-
-struct WeldRecipePC
+struct WeldRecipePCForUI
 {
     int     m_PreWeldSeek;
     int  	m_FrequencyOffset;
     int     m_DigitalTune;
 };
 
-
-struct WeldRecipeAC
+struct WeldRecipeACForUI
 {
-    int     m_HeightEncoder;
-    int     m_HomePosition;
+    int    m_HeightEncoder;
+    int    m_HomePosition;
 };
 
-
-struct WeldRecipe
+struct WeldRecipeForUI
 {
-	WeldRecipeSC  m_WeldRecipe_SC;
-    WeldRecipePC  m_WeldRecipe_PC;
-    WeldRecipeAC  m_WeldRecipe_AC;
+	WeldRecipeSCForUI  m_WeldRecipe_SC;
+    WeldRecipePCForUI  m_WeldRecipe_PC;
+    WeldRecipeACForUI  m_WeldRecipe_AC;
 };
 
 

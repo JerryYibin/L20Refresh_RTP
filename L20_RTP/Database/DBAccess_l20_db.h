@@ -1,22 +1,35 @@
-/*
- * DBAccess_l20_db.h
- *
- *  Created on: Jun 20, 2022
- *      Author: JerryW.Wang
- */
+/**********************************************************************************************************
 
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
+ 
+     This program is the property of Branson Ultrasonics Corporation
+     Copying of this software is expressly forbidden, without the prior
+     written consent of Branson Ultrasonics Corporation.
+
+
+---------------------------- MODULE DESCRIPTION ----------------------------
+
+ 	 Use this class to access L20 refresh database file sample_L20.db.  
+ 
+**********************************************************************************************************/
 #ifndef DBACCESS_L20_DB_H_
 #define DBACCESS_L20_DB_H_
 
+#include <sstream>
 #include "DBAccess.h"
 #include "DBConfiguration.h"
+#include "../Commons/RecipeUI.h"
 #include "../CommonProperty.h"
+
+#define	ONE_PAGE_NUM			10
+#define FIRST_SEND_DATA_NUM		10
 
 class DBAccessL20DB: public DBAccess 
 {
 private:
-    int GetLatestID(const string table, int* _id);
-    int GetLatestID64(const string table, long long* _id);
+	int sendDataNum;
+    int getLatestID(const string table, int* _id);
+    int getLatestID64(const string table, long long* _id);
     int Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr);
     int JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray);
     int Array2Vector(const WeldStepValueSetting* _ptrArray, vector<WeldStepValueSetting>* _ptrvector);
@@ -28,6 +41,7 @@ private:
     int String2Vector(const string str, vector<WELD_SIGNATURE>* _ptrVector);
     int Vector2String(const vector<WeldStepValueSetting>* _ptrVector, string& str);
     int String2Vector(const string str, vector<WeldStepValueSetting>* _ptrVector);
+    int pushWeldRecipeLib(const string str);
     
 public:
 	DBAccessL20DB();
@@ -70,6 +84,7 @@ public:
 	virtual int 	UpdateSystemConfigure(char *)		override;
 
 	virtual void 	DeleteOldest(const char *) 			override;
+	virtual int 	DeleteSpecificRecipe(const char *)	override;
 
 	//End of methods to fetch data from database needed for CSV reports generation.	
 };

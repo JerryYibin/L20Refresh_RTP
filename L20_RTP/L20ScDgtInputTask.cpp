@@ -13,6 +13,7 @@
 
 #include "L20ScDgtInputTask.h"
 #include "GPIO.h"
+#include "Utils.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"		
@@ -28,10 +29,8 @@ extern "C"
 ******************************************************************************/
 L20ScDgtInputTask::L20ScDgtInputTask() 
 {
-
-    
-    
-
+	memset(m_OnHoldDebounce, 0, BITS_SIZE);
+	memset(m_ReleaseDebounce, 0, BITS_SIZE);
 }
 
 /**************************************************************************//**
@@ -56,27 +55,43 @@ L20ScDgtInputTask::~L20ScDgtInputTask() {
 * \return  - IOStatus.
 *
 ******************************************************************************/
-int	L20ScDgtInputTask::GetDgtInputBits()
-{
-	USER_IO ioStatus;
-	if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_HIGH)
-		ioStatus.IOBits.PB1 = 0;
-	else
-		ioStatus.IOBits.PB1 = 1;
-	if(vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_HIGH)
-		ioStatus.IOBits.PB2 = 0;
-	else
-		ioStatus.IOBits.PB2 = 1;
-	
+void L20ScDgtInputTask::GetDgtInputBits()
+{	
 	if(vxbGpioGetValue(GPIO::I_OPSIG) == GPIO_VALUE_HIGH)
-		ioStatus.IOBits.Reset = 0;
+		m_UserIO &= ~BIT_MASK(RESET);
 	else
-		ioStatus.IOBits.Reset = 1;
+		m_UserIO |= BIT_MASK(RESET);
 	
-	return ioStatus.UserIOs;
+	if(vxbGpioGetValue(GPIO::I_ESTOPNC) == GPIO_VALUE_HIGH)
+		m_UserIO &= ~BIT_MASK(ESTOP);
+	else
+		m_UserIO |= BIT_MASK(ESTOP);
+	
+	if(vxbGpioGetValue(GPIO::I_SWITCH_HOLD) == GPIO_VALUE_HIGH)
+		m_UserIO &= ~BIT_MASK(POWER_OFF);
+	else
+		m_UserIO |= BIT_MASK(POWER_OFF);
+	
+	if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_HIGH)
+		m_UserIO &= ~BIT_MASK(PB1);
+	else
+		m_UserIO |= BIT_MASK(PB1);
+	
+	if(vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_HIGH)
+		m_UserIO &= ~BIT_MASK(PB2);
+	else
+		m_UserIO |= BIT_MASK(PB2);
+	
+	if(vxbGpioGetValue(GPIO::I_ESTOPNCR) == GPIO_VALUE_HIGH)
+		m_UserIO &= ~BIT_MASK(ACT_STATUS);
+	else
+		m_UserIO |= BIT_MASK(ACT_STATUS);
+
+	if(vxbGpioGetValue(GPIO::I_24V_LOW) == GPIO_VALUE_HIGH)
+		m_UserIO &= ~BIT_MASK(LOST_24V);
+	else
+		m_UserIO |= BIT_MASK(LOST_24V);
+	
+
 }
 
-void L20ScDgtInputTask::DgtInterruptHandler(void* _obj)
-{
-	
-}

@@ -17,7 +17,6 @@
 #include <vector>
 #include "Common.h"
 #include "WeldResults.h"
-#include "RecipeUI.h"
 #include "SystemInformationUI.h"
 #include "SystemType.h"
 #include "HeightCalibrationUI.h"
@@ -76,7 +75,6 @@ public:						/* Public member data */
 	// static member for global access
 	static WELD_RESULT				WeldResult;
 	static WELD_RESULT				WeldResultForUI[RESULT_FOR_UI_MAX];
-	static WeldRecipeSC				ActiveRecipeSC;
 	static SYSTEM_INFO				SystemInfo;
 	static vector<WELD_SIGNATURE> 	WeldSignatureVector;
 	

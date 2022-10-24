@@ -12,6 +12,7 @@
 
 #include "WeldSonicOn.h"
 #include "SCStateMachine.h"
+#include "../Recipe.h"
 #include "../PCStateMachine.h"
 #include "../ACStateMachine.h"
 #include "../UserInterface.h"
@@ -53,7 +54,7 @@ WeldSonicOn::~WeldSonicOn() {
 
 /**************************************************************************//**
 *
-* \brief   - Weld Sonic On Enter. Initialize variables?¡ê
+* \brief   - Weld Sonic On Enter. Initialize variables
 * 			 Reset bit CTRL_PC_SONIC_DISABLE of MasterEvents. 
 *
 * \param   - None.
@@ -70,7 +71,9 @@ void WeldSonicOn::Enter()
 	m_PeakPower = 0;
 	m_EnergyAccumulator = 0;
 	m_Timeout = 0;
-	m_EnergyTarget = Utility::Energy2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergySetting);
+	unsigned int m_EnergySetting;
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_SETTING,&m_EnergySetting);
+	m_EnergyTarget = Utility::Energy2HEX(m_EnergySetting);
 	CommonProperty::WeldSignatureVector.clear();
 	ClearWeldData();
 	CommonProperty::WeldResult.PreHeight = ACStateMachine::AC_TX->ActualHeight;
@@ -112,6 +115,8 @@ void WeldSonicOn::Loop()
 	bool ErrorOn = false;
 	unsigned int tmpHeight = 0;
 	WELD_SIGNATURE tmpWeldSignature;
+	WELDMODE m_WeldMode = ENERGY_MODE;
+	int m_TimeMin = 0;
 
 	m_WeldTime += 1;
 	tmpWeldSignature.Power = GetFilteredPower();
@@ -138,14 +143,16 @@ void WeldSonicOn::Loop()
 	}
 	else
 	{
-		switch (CommonProperty::ActiveRecipeSC.m_AdvancedSetting.m_WeldMode)
+		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WELD_MODE, &m_WeldMode);
+		switch (m_WeldMode)
 		{
 		case ENERGY_MODE:
 			if((m_EnergyAccumulator > m_EnergyTarget) || (m_WeldTime > ABSMAXTIME))
 				m_Actions = SCState::JUMP;
 			break;
 		case TIME_MODE:
-			if (m_WeldTime > CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin)
+			Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TIME_MIN, &m_TimeMin);
+			if (m_WeldTime > m_TimeMin)
 			{
 				m_Actions = SCState::JUMP;
 			}
@@ -156,7 +163,7 @@ void WeldSonicOn::Loop()
 		case ENERGY_HEIGHT_MODE:
 			break;
 		default:
-			if ((m_EnergyAccumulator > CommonProperty::ActiveRecipeSC.m_WeldParameter.m_EnergySetting) || (m_WeldTime > ABSMAXTIME))
+			if ((m_EnergyAccumulator > m_EnergyTarget) || (m_WeldTime > ABSMAXTIME))
 				m_Actions = SCState::JUMP;
 			break;
 		}
@@ -243,9 +250,9 @@ void WeldSonicOn::Exit()
 	CommonProperty::WeldResult.TotalEnergy = Utility::HEX2Energy(m_EnergyAccumulator);
 	CommonProperty::WeldResult.WeldTime = m_WeldTime;
 	CommonProperty::WeldResult.PostHeight = ACStateMachine::AC_TX->ActualHeight;
-	CommonProperty::WeldResult.TriggerPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
-	CommonProperty::WeldResult.WeldPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_WPpressure;
-	CommonProperty::WeldResult.Amplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &CommonProperty::WeldResult.TriggerPressure);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &CommonProperty::WeldResult.WeldPressure);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &CommonProperty::WeldResult.Amplitude);
 	CommonProperty::WeldResult.PeakPower = Utility::HEX2Power(m_PeakPower);
 	
 //		if (SysConfig.m_SystemInfo.CoolingType == WelderSystem::SECOND_PER_100JOULE)
@@ -306,7 +313,7 @@ void WeldSonicOn::Fail()
 ******************************************************************************/
 void WeldSonicOn::ClearWeldData()
 {
-	if(CommonProperty::WeldResult.RecipeNum != CommonProperty::ActiveRecipeSC.m_RecipeNumber)
+	if(CommonProperty::WeldResult.RecipeNum != Recipe::ActiveRecipeSC->m_RecipeNumber)
 		CommonProperty::WeldResult.CycleCounter = 0;
 	CommonProperty::WeldResult.TotalEnergy = 0;
 

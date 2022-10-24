@@ -25,6 +25,8 @@ UserInterface owned using the class object pointer.
 #include "HeightEncoder.h"
 #include "HeightCalibrationUI.h"
 #include "ActuatorTask.h"
+#include "DataTask.h"
+#include "RecipeWrapper.h"
 #include "ScDgtInput.h"
 #include "SystemConfiguration.h"
 #include "SystemConfigurationUI.h"
@@ -152,6 +154,44 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 	case TO_UI_TASK_USER_IO_RESPONSE:
 		responseUserIORequest(message.Buffer);
 		break;
+	case TO_UI_RECIPE_LIBRARY_LATEST_PAGE_READ:
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_QUERY_LATEST_PAGE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_RECIPE_LIBRARY_DATA_RESPONSE:
+		responseWeldRecipeLib();
+		break;
+	case TO_UI_DEFAULT_RECIPE_GET:
+		responseWeldRecipeData();
+		break;
+	case TO_UI_INSERT_RECIPE_WRITE:
+		Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
+		RecipeWrapper::Set(message.Buffer, Recipe::RecipeSC);
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_INSERT;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_RECIPE_LIBRARY_NEXT_PAGE_READ:
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_QUERY_NEXT_PAGE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_UPDATE_RECIPE:
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_DELETE_RECIPE:
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_DELETE_SPECIFIC;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_RECIPE_DETAILS_GET:
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_QUERY;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_TASK_WELD_RECIPE_QUERY:
+		responseWeldRecipeDetails();
+		break;
+	case TO_UI_RECIPE_ERRCODE:
+		sendWeldRecipeErrCode(message.Buffer);
+		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
 		break;
@@ -199,8 +239,8 @@ void UserInterface::getActiveRecipe()
 	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
 	sendMsg.msgID	= REQ_ACTIVE_RECIPE_INFO_IDX;
 	sendMsg.rspCode = 0;
-	memcpy(sendMsg.Buffer, &CommonProperty::ActiveRecipeSC, sizeof(WeldRecipeSC));
-	sendMsg.msgLen = sizeof(WeldRecipeSC);
+	sendMsg.msgLen = sizeof(WeldRecipeSCForUI);
+	RecipeWrapper::Get(Recipe::ActiveRecipeSC, sendMsg.Buffer);
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }
 
@@ -488,6 +528,90 @@ void UserInterface::updateLastWeldResult()
 	m_stHeartbeat.TriggerPress = CommonProperty::WeldResult.TriggerPressure;
 	m_stHeartbeat.WeldPress = CommonProperty::WeldResult.WeldPressure;
 	m_stHeartbeat.WeldTime = CommonProperty::WeldResult.WeldTime;
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Sends response to UIC for Weld Recipe Defaults request. 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseWeldRecipeData()
+{
+	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_DEFAULT_RECIPE_IDX;
+	sendMsg.msgLen = sizeof(WeldRecipeSCForUI);
+	sendMsg.rspCode = 0;
+	RecipeWrapper::Get(Recipe::RecipeSC, sendMsg.Buffer);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+	Recipe::RecipeSC = nullptr;
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Sends response to UIC for Weld Recipe details request. 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseWeldRecipeDetails()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_GET_SELECTED_RECIPE_INFO_REQ;
+	sendMsg.msgLen = sizeof(WeldRecipeSCForUI);
+	sendMsg.rspCode = 0;
+	RecipeWrapper::Get(Recipe::RecipeSC, sendMsg.Buffer);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+	Recipe::RecipeSC = nullptr;
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Sends response to UIC for Weld Recipe library request. 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseWeldRecipeLib()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_RECIPE_LIBRARY_READ_IDX;
+	sendMsg.msgLen = Recipe::WeldRecipeLibraryForUI.size() * sizeof(WeldRecipeLibForUI);
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, &Recipe::WeldRecipeLibraryForUI[0], sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+	Recipe::WeldRecipeLibraryForUI.clear();
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Send the error code obtained by operating the data to the UI. 
+*
+* \param   - Message buffer
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::sendWeldRecipeErrCode(char* recipebuf)
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	sendMsg.msgID	= REQ_RECIPE_ERROR_CODE_IDX;
+	sendMsg.msgLen  = 0;
+	sendMsg.rspCode = 0;
+	sendMsg.msgLen = sizeof(int);
+	memcpy(sendMsg.Buffer, recipebuf, sizeof(int));
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }
 
 /**************************************************************************//**

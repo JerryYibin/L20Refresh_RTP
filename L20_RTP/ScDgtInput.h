@@ -27,8 +27,9 @@ public:
 	static ScDgtInputTask*	GetInstance			(void);
 	static void				ScDgtInput_Task		(void);
 protected:
+	unsigned int 			m_UserIO;
 	virtual void 			ProcessTaskMessage		(MESSAGE& message) override;
-	virtual int				GetDgtInputBits			() = 0;
+	virtual void			GetDgtInputBits			() = 0;
 private:
     
     MSG_Q_ID 			SELF_MSG_Q_ID;

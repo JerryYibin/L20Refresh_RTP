@@ -22,6 +22,7 @@ DataTask class owned using the class object pointer.
 #endif
 #include "DataTask.h"
 #include "Database/DBAccess_l20_db.h"
+#include "UserInterface.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -117,6 +118,26 @@ int DataTask::CloseDB()
 	return nErrCode;
 }
 
+
+/**************************************************************************//**
+* 
+* \brief   - Used to send storage failure information for UI
+*
+* \param   - error code.
+*
+* \return  - None.
+*
+******************************************************************************/
+void DataTask::sendErrorCode(int ErrCode)
+{
+	MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+
+	sendMsg.msgID	= UserInterface::TO_UI_RECIPE_ERRCODE;
+	memcpy(sendMsg.Buffer, &ErrCode, sizeof(int));
+	SendToMsgQ(sendMsg, UI_MSG_Q_ID);
+}
+
 /*************************************************************************//**
  * \brief   - Process the received message from DATA_MSG_Q.
  *
@@ -127,6 +148,7 @@ int DataTask::CloseDB()
  ******************************************************************************/
 void DataTask::ProcessTaskMessage(MESSAGE& message)
 {
+	int ErrCode = 0;
     if((_ObjDBConn == nullptr)&&(message.msgID != TO_DATA_TASK_OPEN_DB))
     {
     	LOGERR((char* )"DataTask: --------Database has not been open, Message ID = --- : ", message.msgID, 0, 0);
@@ -169,7 +191,8 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		break;
 #if 0 //table WeldResultSignature is stored with table WeldResult
 	case TO_DATA_TASK_WELD_SIGN_INSERT:
-		_ObjDBConn->StoreWeldSignature(message.Buffer);
+		ErrCode = _ObjDBConn->StoreWeldSignature(message.Buffer);
+		sendErrorCode(ErrCode);
 		break;
 #endif
 #if 0 //table AlarmLog is stored with table WeldResult
@@ -180,9 +203,23 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 
 	case TO_DATA_TASK_WELD_RECIPE_QUERY_ALL:
         _ObjDBConn->QueryWeldRecipeAll(message.Buffer);
+        message.msgID = UserInterface::TO_UI_RECIPE_LIBRARY_DATA_RESPONSE;
+        SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
+	case TO_DATA_TASK_WELD_RECIPE_QUERY_LATEST_PAGE:
+		_ObjDBConn->QueryWeldRecipeLatestPage();
+	    message.msgID = UserInterface::TO_UI_RECIPE_LIBRARY_DATA_RESPONSE;
+	    SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
+	case TO_DATA_TASK_WELD_RECIPE_QUERY_NEXT_PAGE:
+		_ObjDBConn->QueryWeldRecipeNextPage();
+	    message.msgID = UserInterface::TO_UI_RECIPE_LIBRARY_DATA_RESPONSE;
+	    SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_QUERY:
         _ObjDBConn->QueryWeldRecipe(message.Buffer);
+        message.msgID = UserInterface::TO_UI_TASK_WELD_RECIPE_QUERY;
+        SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_UPDATE:
         _ObjDBConn->UpdateWeldRecipe(message.Buffer);
@@ -249,7 +286,10 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_ALARM_LOG_DELETE:
         _ObjDBConn->DeleteOldest(TABLE_ALARM_LOG);
 		break;
-
+	case TO_DATA_TASK_WELD_RECIPE_DELETE_SPECIFIC:
+		ErrCode = _ObjDBConn->DeleteSpecificRecipe(message.Buffer);
+		sendErrorCode(ErrCode);
+		break;
 	case TO_DATA_TASK_WELD_RECIPE_CLEAR:
         _ObjDBConn->DeleteAllTableRows(TABLE_WELD_RECIPE);
 		break;
@@ -263,7 +303,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->DeleteAllTableRows(TABLE_ALARM_LOG);
 		break;
 	default:
-		LOGERR((char* )"DataTask: --------Unknown Message ID----------- : ", message.msgID, 0, 0);
+		LOGERR((char* )"DataTask: --------Unknown Message ID----------- : %d", message.msgID, 0, 0);
 		break;
 	}
 }

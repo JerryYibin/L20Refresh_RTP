@@ -13,16 +13,18 @@
 #define L20SCDGTINPUTTASK_H_
 
 #include "ScDgtInput.h"
-
+#define DEBOUNCE_TIME 50
 class L20ScDgtInputTask: public ScDgtInputTask 
 {
 public:
 							L20ScDgtInputTask		();
 	virtual 				~L20ScDgtInputTask		();
 protected:
-	int						GetDgtInputBits			() override;
-public:
-	static void				DgtInterruptHandler		(void*);
+	virtual void			GetDgtInputBits			() override;
+private:
+	unsigned int			m_OnHoldDebounce[BITS_SIZE];
+	unsigned int			m_ReleaseDebounce[BITS_SIZE];
+	void					BitsDebounce();
 };
 
 #endif /* L20SCDGTINPUTTASK_H_ */

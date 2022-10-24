@@ -1,14 +1,23 @@
-/*
- * ActiveRecipe.cpp
- *
- *  Created on: May 5, 2022
- *      Author: JerryW.Wang
- */
+/**********************************************************************************************************
+
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
+
+     This program is the property of Branson Ultrasonics Corporation
+     Copying of this software is expressly forbidden, without the prior
+     written consent of Branson Ultrasonics Corporation.
+
+ ---------------------------- MODULE DESCRIPTION ----------------------------
+
+ The file Recipe.h is a public interface that provides external.
+
+ **********************************************************************************************************/
 #include "Recipe.h"
 #include "CommonProperty.h"
+WeldRecipeSC* Recipe::ActiveRecipeSC =  WeldRecipeSC::GetWeldRecipeSC().get();
+WeldRecipeSC* Recipe::RecipeSC = nullptr;
+vector<WeldRecipeLibForUI>				Recipe::WeldRecipeLibraryForUI;
 Recipe::Recipe() {
-	// TODO Auto-generated constructor stub
-
+		ActiveRecipeSC->InitialWeldRecipe();
 }
 
 Recipe::~Recipe() {
@@ -17,15 +26,15 @@ Recipe::~Recipe() {
 
 void Recipe::SetActiveRecipeGeneralParam(WeldParameterSetting* generalParam)
 {
-	memcpy(&CommonProperty::ActiveRecipeSC.m_WeldParameter, generalParam, sizeof(WeldParameterSetting));
+	Recipe::ActiveRecipeSC->Set(generalParam, WeldRecipeSC::PARALIST::WELD_PARAMETER);
 }
 
 void Recipe::SetActiveRecipeQualityParam(QualityWindowSetting* qualityParam)
 {
-	memcpy(&CommonProperty::ActiveRecipeSC.m_QualityWindowSetting, qualityParam, sizeof(QualityWindowSetting));
+	Recipe::ActiveRecipeSC->Set(qualityParam, WeldRecipeSC::PARALIST::QUALITY_WINDOW_SETTING);
 }
 
 void Recipe::SetActiveRecipeAdvancedParam(AdvancedWeldSetting* advancedParam)
 {
-	memcpy(&CommonProperty::ActiveRecipeSC.m_AdvancedSetting, advancedParam, sizeof(AdvancedWeldSetting));
+	Recipe::ActiveRecipeSC->Set(advancedParam, WeldRecipeSC::PARALIST::ADVANCED_SETTING);
 }

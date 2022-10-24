@@ -30,6 +30,7 @@
 #include "ScDgtInput.h"
 #include "ScDgtOutput.h"
 #include "SystemType.h"
+#include "Recipe.h"
 #include <sysLib.h>
 #include <sdLib.h>
 extern "C"
@@ -119,6 +120,28 @@ MainTask::MainTask()
 ******************************************************************************/
 bool MainTask::CreateMsgQ()
 {
+
+#ifdef UNITTEST_DATABASE
+
+	const char* MsgQName[TOTAL_NUM_OF_TASK] = {
+										(const char *) "/CtrlMsgQ",
+										(const char *) "/ActuatorMsgQ",
+										(const char *) "/PSMsgQ",
+										(const char *) "/ActuatorSysMsgQ",
+										(const char *) "/UIMsgQ",
+										(const char *) "/DataMsgQ",
+										(const char *) "/DataInterfaceMsgQ",
+										(const char *) "/AlarmMsgQ",
+										(const char *) "/BarcodeMsgQ",
+										(const char *) "/ScDgtInputMsgQ",
+										(const char *) "/ScDgtOutputMsgQ",
+										(const char *) "/MaintMsgQ",
+										(const char *) "/ConsoleAppMsgQ",
+										(const char *) "/RtpMainMsgQ"};
+
+#endif
+
+
 	bool bSuccess = false;
 	MSG_Q_ID qID = MSG_Q_ID_NULL, dbqID[3];
 	UINT8 q_index;
@@ -153,8 +176,13 @@ bool MainTask::CreateMsgQ()
 		}
 		else
 		{
+#ifdef UNITTEST_DATABASE
+			qID = msgQOpen(MsgQName[t_index], MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
+			LOG("MsgQ ID = 0x%x\n",qID);
+#else
 			// the rest of the tasks
 			qID = msgQCreate(MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO);
+#endif
 		}
 		
 		// register queue ID
@@ -463,6 +491,7 @@ MainTask::~MainTask()
 int main()
 {
 	UINT32 iEvent 		= 0;
+	int m_TPressure 	= 0;
 	bool bDataStruct  	= true;
 	TASK_ID tid			= taskIdSelf();
 	GPIO::InitGPIO();
@@ -495,7 +524,8 @@ int main()
 		
 		DAC_TLV5604::SetFrequencyOffset(0x1ff);
 		DAC_TLV5604::SetTunePoint(0x1ff);
-		unsigned short tmpPressure = Utility::Pressure2HEX(CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure);
+		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &m_TPressure);
+		unsigned short tmpPressure = Utility::Pressure2HEX(m_TPressure);
 		DAC_TLV5604::SetPressure(tmpPressure);
 		
 #ifdef SHUTDOWN_EVENT_REGISTER

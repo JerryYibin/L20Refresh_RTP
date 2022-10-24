@@ -21,7 +21,7 @@ P1ScDgtInputTask::~P1ScDgtInputTask() {
 	// TODO Auto-generated destructor stub
 }
 
-int	P1ScDgtInputTask::GetDgtInputBits()
+void P1ScDgtInputTask::GetDgtInputBits()
 {
-	return OK;
+
 }

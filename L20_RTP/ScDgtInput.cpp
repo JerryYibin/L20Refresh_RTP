@@ -37,7 +37,7 @@ ScDgtInputTask::ScDgtInputTask()
 	// Load the data message Q name
 	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DGTIN_T]);
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
-	
+	m_UserIO = 0;
 
 }
 
@@ -65,18 +65,23 @@ ScDgtInputTask::~ScDgtInputTask()
  ******************************************************************************/
 void ScDgtInputTask::ProcessTaskMessage(MESSAGE& message)
 {
-	unsigned int status = 0;
-	switch(message.msgID)
+	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
+	MESSAGE tmpMsg;
+	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
+	while(msgQReceive(SELF_MSG_Q_ID, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
 	{
-	case TO_DGT_INPUT_TASK_IO_GET:
-		status = _DgtInputObj->GetDgtInputBits();
-		memcpy(message.Buffer, &status, sizeof(unsigned int));
-		message.msgID = UserInterface::TO_UI_TASK_USER_IO_RESPONSE;
-		SendToMsgQ(message, UI_MSG_Q_ID);
-		break;
-	default:
-		LOGERR((char *)"ScDgtInput_T : --------Unknown Message ID----------- : ", message.msgID, 0, 0);
-		break;
+		Decode(tmpMsgBuffer, tmpMsg);
+		switch(message.msgID)
+		{
+		case TO_DGT_INPUT_TASK_IO_GET:
+			memcpy(message.Buffer, &m_UserIO, sizeof(unsigned int));
+			message.msgID = UserInterface::TO_UI_TASK_USER_IO_RESPONSE;
+			SendToMsgQ(message, UI_MSG_Q_ID);
+			break;
+		default:
+			LOGERR((char *)"ScDgtInput_T : --------Unknown Message ID----------- : ", message.msgID, 0, 0);
+			break;
+		}
 	}
 }
 
@@ -105,7 +110,7 @@ ScDgtInputTask* ScDgtInputTask::GetInstance()
 void ScDgtInputTask::ScDgtInput_Task(void)
 {
 	MESSAGE		ProcessBuffer;
-	char		MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0x00};	
+	UINT32		events;	
 
 	_DgtInputObj = ScDgtInputTask::GetInstance();
 	if(nullptr != _DgtInputObj)
@@ -113,10 +118,18 @@ void ScDgtInputTask::ScDgtInput_Task(void)
 		/* ScDgtInput Task loop and the bIsTaskRun flag enabled when task created */
 		while(_DgtInputObj->bIsTaskRunStatus())
 		{
-			if(msgQReceive(_DgtInputObj->SELF_MSG_Q_ID, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, WAIT_FOREVER) != ERROR)
+			// wait for any one event		
+			if(eventReceive(CTRL_1MS | DGT_INPUT_QEVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
 			{
-				_DgtInputObj->Decode(MsgQBuffer, ProcessBuffer);
-				_DgtInputObj->ProcessTaskMessage(ProcessBuffer);
+				if(events & CTRL_1MS)
+				{
+					_DgtInputObj->GetDgtInputBits();
+				}
+				if(events & DGT_INPUT_QEVENT)
+				{
+					// process incoming messages
+					_DgtInputObj->ProcessTaskMessage(ProcessBuffer);
+				}
 			}
 		}
 		

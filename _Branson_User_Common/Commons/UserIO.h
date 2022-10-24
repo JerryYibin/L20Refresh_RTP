@@ -15,17 +15,18 @@ information.
 
 #ifndef USER_IO_COMMON_H_
 #define USER_IO_COMMON_H_
+#include "Utils.h"
+enum USER_IO_BIT
+{
+	RESET = 0, 	//bit 0
+	ESTOP, 		//bit 1
+	POWER_OFF,	//bit 2
+	PB1,		//bit 3
+	PB2,		//bit 4
+	ACT_STATUS,	//bit 5
+	LOST_24V,	//bit 6
+	BITS_SIZE
+};
 
-struct USER_IO_BIT
-{
-	unsigned int	Reset	: 1; //bit 0
-	unsigned int	PB1		: 1; //bit 1
-	unsigned int	PB2		: 1; //bit 2
-};
-union USER_IO
-{
-	unsigned int UserIOs;
-	USER_IO_BIT  IOBits;
-};
 
 #endif

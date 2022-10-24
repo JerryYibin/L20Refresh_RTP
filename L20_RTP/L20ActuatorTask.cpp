@@ -5,6 +5,22 @@
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
+---------------------------- MODULE DESCRIPTION ----------------------------
+     As you see the L20ActuatorTask class is inherited by Actuator Task so 
+     there are some pure virtual functions that defined in the Actuator Task need to 
+     implement with specific code of itself owned following different hardware design as following...
+     1. virtual void			PDOUploadRequest 					() = 0;
+	 2. virtual void 			PDODownloadRequest					() = 0;
+	 3. virtual bool			IsMoving							() = 0;
+	 4. virtual unsigned int	GetMaxSpeed							() = 0;
+	 5. virtual void			InitHeightSystem					() = 0;
+	 6. virtual void 			ScanInputs							() = 0;
+     In the future all the actuator shall connect with SC using Ethernet cable so 
+     PDOUploadRequest and PDODownloadRequest shall be for Ethernet based actuators going forward.
+     For L20 Refresh it is the special case, the actuator connect with SC using CAN bus and some Analog signal cables, 
+     so there are some specific implement in the PDOUploadRequest and PDODownloadRequest here.
+     If the some system without actuator that is similar with DCX, 
+     the PDOUploadRequest and PDODownloadRequest of specific class shall be empty.    
  
 ***************************************************************************/
 
@@ -13,6 +29,7 @@
 #include "Utility.h"
 #include "commons.h"
 #include "DAC_SPI.h"
+#include "Recipe.h"
 //#include "ACState.h"
 CommunicationInterface_CAN* L20ActuatorTask::_ObjDCan 	= nullptr;
 ACStateMachine::RxPDO_AC L20ActuatorTask::RXBackup;
@@ -27,7 +44,7 @@ ACStateMachine::RxPDO_AC L20ActuatorTask::RXBackup;
 L20ActuatorTask::L20ActuatorTask() {
 	_ObjDCan = CommunicationInterface_CAN::GetInstance();
 	RXBackup.TargetPressure = 0;
-	ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &ACStateMachine::AC_RX->TargetPressure);
 	InitMovingProcess();
 }
 

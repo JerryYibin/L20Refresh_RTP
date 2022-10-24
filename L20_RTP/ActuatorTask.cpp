@@ -12,6 +12,7 @@
 #include "ACStateMachine.h"
 #include "L20ActuatorTask.h"
 #include "P1ActuatorTask.h"
+#include "Recipe.h"
 /* Static member variables are initialized */
 unsigned int ActuatorTask::CoreState 				= 0;
 ActuatorTask* ActuatorTask::_ACObj 					= nullptr;
@@ -66,7 +67,7 @@ void ActuatorTask::ProcessTaskMessage(MESSAGE & message)
 		switch(tmpMsg.msgID)
 		{
 		case TO_ACT_TASK_PRESSURE_SET:
-			ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
+			Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &ACStateMachine::AC_RX->TargetPressure);
 			break;
 		default:
 			LOGERR((char*)"Actuator_T: --------Unknown Message ID----------- : %d", tmpMsg.msgID, 0, 0);

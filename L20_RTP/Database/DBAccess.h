@@ -38,30 +38,33 @@ public:
 	virtual int 	StoreWeldResult(char* buffer)		= 0;
 	virtual int 	StoreWeldSignature(char* buffer)	= 0;
 	virtual int 	StoreWeldRecipe(char* buffer)		= 0;
-	virtual int 	StoreAlarmLog(char* buffer)	= 0;
+	virtual int 	StoreAlarmLog(char* buffer)			= 0;
 
 	virtual int 	QueryBlockWeldResult(char *)		= 0;
-	virtual void 	QueryWeldSignature(char *)		= 0;
-	virtual void 	QueryWeldRecipe(char *)			= 0;
+	virtual void 	QueryWeldSignature(char *)			= 0;
+	virtual void 	QueryWeldRecipe(char *)				= 0;
 	virtual int 	QueryBlockAlarmLog(char *)		= 0;
 	virtual void 	QueryHeightCalibration(char *)		= 0;
 	virtual void 	QueryDbVersion(char *)				= 0;
 	virtual string 	QueryUserProfiles(char *)			= 0;
 	virtual int 	QueryPrivilegeConfiguration(char *)	= 0;
-	virtual int 	QueryBlockPowerSupply(char *)	= 0;
+	virtual int 	QueryBlockPowerSupply(char *)		= 0;
 	virtual int 	QueryBlockTeachModeSetting(char *)	= 0;
-	virtual void 	QuerySystemConfigure(char *)	= 0;
-
-	virtual void 	QueryWeldRecipeAll(char *)		= 0;
+	virtual void 	QuerySystemConfigure(char *)		= 0;
+	
+	virtual void 	QueryWeldRecipeAll(char *)			= 0;
+	virtual int 	QueryWeldRecipeLatestPage()			= 0;
+	virtual int 	QueryWeldRecipeNextPage()			= 0;
 	virtual int 	UpdateWeldRecipe(char *)			= 0;
 	virtual int 	UpdateHeightCalibration(char *)	= 0;
 	virtual int 	UpdateUserProfiles(char *)			= 0;
 	virtual int 	UpdatePrivilegeConfiguration(char *)	= 0;
-	virtual int 	UpdateBlockPowerSupply(char *)	= 0;
+	virtual int 	UpdateBlockPowerSupply(char *)		= 0;
 	virtual int 	UpdateBlockTeachModeSetting(char *)	= 0;
-	virtual int 	UpdateSystemConfigure(char *)	= 0;
+	virtual int 	UpdateSystemConfigure(char *)		= 0;
 
 	virtual void 	DeleteOldest(const char *)			= 0;
+	virtual int		DeleteSpecificRecipe(const char *)	= 0;
 	
 	string GetWeldSignatureGraphBlob(int nRowID, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);
 	vector <int> GetGoldenWeldSignatureRowNumbers(int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);

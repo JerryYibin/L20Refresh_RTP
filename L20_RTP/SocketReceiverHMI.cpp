@@ -112,6 +112,27 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_USER_IO_INPUT_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_USERIO_INPUT_READ;
 		break;
+	case REQ_DEFAULT_RECIPE_IDX:
+		message.msgID = UserInterface::TO_UI_DEFAULT_RECIPE_GET;
+		break;
+	case REQ_INSERT_RECIPE_WRITE_IDX:
+		message.msgID = UserInterface::TO_UI_INSERT_RECIPE_WRITE;
+		break;
+	case REQ_RECIPE_LIBRARY_READ_IDX:
+		message.msgID = UserInterface::TO_UI_RECIPE_LIBRARY_LATEST_PAGE_READ;
+		break;
+	case REQ_RECIPE_LIBRARY_NEXT_PAGE_IDX:
+		message.msgID = UserInterface::TO_UI_RECIPE_LIBRARY_NEXT_PAGE_READ;
+		break;
+	case REQ_UPDATE_RECIPE_IDX:
+		message.msgID = UserInterface::TO_UI_UPDATE_RECIPE;
+		break;
+	case REQ_DELETE_RECIPE_IDX:
+		message.msgID = UserInterface::TO_UI_DELETE_RECIPE;
+		break;
+	case REQ_GET_SELECTED_RECIPE_INFO_REQ:
+		message.msgID = UserInterface::TO_UI_RECIPE_DETAILS_GET;
+		break;
 	default:
 		message.msgID = UserInterface::TO_UI_TASK_HEART_BEAT;
 		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);

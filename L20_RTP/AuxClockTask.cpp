@@ -86,17 +86,17 @@ void AuxClockTask::deleteInstance()
 ******************************************************************************/
 void AuxClockTask::AuxClock_Task(void* _obj)
 {
-	static unsigned int tick1 = 0;
-	AuxClockTask* auxClockObj = (AuxClockTask*)_obj;
-	tick1++;
-	SCStateMachine::getInstance()->RunStateMachine();
 #ifdef UNITTEST_DATABASE
     return;
 #endif
+	AuxClockTask* auxClockObj = (AuxClockTask*)_obj;
+	SCStateMachine::getInstance()->RunStateMachine();
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_RX_EVENT | PS_TASK_TX_EVENT | PS_TASK_1MS_EVENT) != OK)
 		LOGERR((char*) "AUX_T: Power supply eventSend: Error\n", 0, 0, 0);
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_RX_EVENT | ACT_TASK_TX_EVENT | ACT_TASK_1MS_EVENT) != OK)
 		LOGERR((char*) "AUX_T: Actuator eventSend: Error\n", 0, 0, 0);
+	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::DGTIN_T]), CTRL_1MS) != OK)
+		LOGERR((char*) "AUX_T: System 1ms eventSend: Error\n", 0, 0, 0);
 //	auxClockObj->debugFlipGPIOLevel();
 }
 

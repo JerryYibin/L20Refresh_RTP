@@ -10,6 +10,7 @@
 ***************************************************************************/
 
 #include "PreReady.h"
+#include "../Recipe.h"
 #include "../HeightEncoder.h"
 #include "../ACStateMachine.h"
 #include "../PCStateMachine.h"
@@ -53,12 +54,12 @@ PreReady::~PreReady() {
 ******************************************************************************/
 void PreReady::Enter()
 {
-	ACStateMachine::AC_RX->TargetPressure = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_TPpressure;
-	PCStateMachine::PC_RX->TargetAmplitude = CommonProperty::ActiveRecipeSC.m_WeldParameter.m_Amplitude;
-//	LOG("GetInitCount = %d\n", HeightEncoder::GetInitCount());
-//	LOG("GetMaxCount = %d\n", HeightEncoder::GetMaxCount());
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &ACStateMachine::AC_RX->TargetPressure);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &PCStateMachine::PC_RX->TargetAmplitude);
+	//LOG("GetInitCount = %d\n", HeightEncoder::GetInitCount());
+	//LOG("GetMaxCount = %d\n", HeightEncoder::GetMaxCount());
 	LOG("GetPositionCount = %d\n", HeightEncoder::GetInstance()->GetPositionCount());
-//	LOG("GetDirection = %d\n", HeightEncoder::GetDirection());
+	//LOG("GetDirection = %d\n", HeightEncoder::GetDirection());
 	ACStateMachine::AC_RX->MasterState = SCState::PRE_READY;
 }
 
