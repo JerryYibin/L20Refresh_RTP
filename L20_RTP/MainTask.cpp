@@ -60,7 +60,7 @@ MainTask::MainTask()
 										(char *) "PS_Task", 
 										(char *) "Actuator_System_Task", 
 										(char *) "UI_Task", 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
 										(char *) "/Data_Task", 
 #else
 										(char *) "Data_Task", 
@@ -121,7 +121,7 @@ MainTask::MainTask()
 bool MainTask::CreateMsgQ()
 {
 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
 
 	const char* MsgQName[TOTAL_NUM_OF_TASK] = {
 										(const char *) "/CtrlMsgQ",
@@ -152,7 +152,7 @@ bool MainTask::CreateMsgQ()
 		if(t_index == CommonProperty::DATA_T)
 		{
 			// multiple queues for this task
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
             dbqID[0] = msgQOpen("/msgQControl", MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
             dbqID[1] = msgQOpen("/msgQData", MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
             dbqID[2] = msgQOpen("/msgQRequest", MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
@@ -176,7 +176,7 @@ bool MainTask::CreateMsgQ()
 		}
 		else
 		{
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
 			qID = msgQOpen(MsgQName[t_index], MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
 			LOG("MsgQ ID = 0x%x\n",qID);
 #else

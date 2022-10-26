@@ -20,9 +20,12 @@
 #include "HeightCalibrate.h"
 #include "ReadyForTrigger.h"
 #include "SetWeldPressure.h"
+#include "SqueezeTime.h"
+#include "HoldTime.h"
 #include "../PCStateMachine.h"
 #include "../ACStateMachine.h"
 #include "../Logger.h"
+#include "../Recipe.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -320,6 +323,8 @@ int SCStateMachine::LoadStatesHandler(int operation)
 ******************************************************************************/
 void SCStateMachine::SelectWeldSequence(void)
 {
+	unsigned int iSqueezeTime = 0;
+	unsigned int iHoldTime = 0;
 	ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_WELD_CYCLE_ENABLE);
 	m_objState = NULL;
 	m_objState = new PreReady();
@@ -334,12 +339,26 @@ void SCStateMachine::SelectWeldSequence(void)
 	m_objState = new WaitForTrigger();
 	_objStateList->push_back(m_objState);
 	
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::SQUEEZE_TIME, &iSqueezeTime); 	
+	if(iSqueezeTime > 0)
+	{
+		m_objState = new SqueezeTime();
+		_objStateList->push_back(m_objState);
+	}
+	
 	m_objState = new SetWeldPressure();
 	_objStateList->push_back(m_objState);
 
 	m_objState = new WeldSonicOn();
 	_objStateList->push_back(m_objState);
-
+	
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::HOLD_TIME, &iHoldTime);
+	if(iHoldTime > 0)
+	{
+		m_objState = new HoldTime();
+		_objStateList->push_back(m_objState);
+	}
+	
 	m_objState = new WaitForReadyPosition();
 	_objStateList->push_back(m_objState);
 

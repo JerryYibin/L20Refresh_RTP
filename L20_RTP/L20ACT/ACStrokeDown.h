@@ -15,7 +15,7 @@
 #define ACSTROKEDOWN_H_
 
 #include "../ACState.h"
-#define MOVE_NOISE	500/5 //0.50mm
+#define MOVE_NOISE	1000/5 //1.00mm
 class ACStrokeDown: public ACState {
 public:
 	ACStrokeDown();

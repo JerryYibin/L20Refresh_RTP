@@ -143,4 +143,11 @@ struct WeldRecipeForUI
 };
 
 
+struct WeldRecipeLibForUI
+{
+	int                   m_RecipeID;
+	char		          m_RecipeName[RECIPE_LEN];
+	char				  m_DateTime[RECIPE_LEN];
+};
+
 #endif // WELDRECIPEDEF_H

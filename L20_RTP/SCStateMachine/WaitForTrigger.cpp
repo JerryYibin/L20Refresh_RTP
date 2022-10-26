@@ -6,13 +6,17 @@
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
  ---------------------------- MODULE DESCRIPTION ----------------------------   
- SC Wait For Trigger State
+ SC Wait For Trigger State is the combination state for the 
+ Horn down (AC State Machine) and pre-burst (PC State Machine).
+ If the Pre-burst time is more than zero, the pre-burst feature will be enabled. 
 ***************************************************************************/
 
 #include "WaitForTrigger.h"
 #include "Utils.h"
 #include "../ACStateMachine.h"
 #include "../PCStateMachine.h"
+#include "../SystemConfiguration.h"
+#include "../Recipe.h"
 
 /**************************************************************************//**
 * \brief   - Constructor.
@@ -53,22 +57,28 @@ WaitForTrigger::~WaitForTrigger() {
 ******************************************************************************/
 void WaitForTrigger::Enter()
 {
+	m_bHeightEncoder = true;
+	m_iPreburst = 0;
 	ACStateMachine::AC_RX->MasterState = SCState::WAIT_FOR_TRIGGER;
-	ACStateMachine::AC_RX->MasterEvents &= ~ BIT_MASK(ACState::CTRL_AC_MOVE_DISABLE);
-	
-//	if (SysConfig.m_SystemInfo.HeightEncoder == false)
+	ACStateMachine::AC_RX->MasterEvents &= ~BIT_MASK(ACState::CTRL_AC_MOVE_DISABLE);
+	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::HGT_ENCODER, &m_bHeightEncoder);
+	if(m_bHeightEncoder == false)
 	{
 		ACStateMachine::AC_RX->MasterEvents &= ~BIT_MASK(ACState::CTRL_PART_CONTACT_ENABLE);
 	}
-//	else
-//	{
-
-//	}
+	else
+	{
+		ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_PART_CONTACT_ENABLE);
+	}
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PRE_BURST, &m_iPreburst);
+	PCStateMachine::PC_RX->MasterState = SCState::WAIT_FOR_TRIGGER;
+	PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_PREBURST_ENABLE);
 }
 
 /**************************************************************************//**
 *
 * \brief   - Wait For Trigger Loop. Entry to Next State until ACState changes to AC_HOLD.
+* 			 AC state machine for horn down and PC state machine for pre-burst should be parallel.
 *
 * \param   - None.
 *
@@ -83,9 +93,35 @@ void WaitForTrigger::Loop()
 		CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
 		m_Actions = SCState::FAIL;
 	}
-	else if(ACStateMachine::AC_TX->ACState == ACState::AC_HOLD)
+	switch(PCStateMachine::PC_TX->PCState)
 	{
-		m_Actions = SCState::JUMP;
+	case PCState::PC_READY:
+		//If Pre-burst is not equal to 0, it means the pre-burst is enabled. 
+		if((m_iPreburst > 0) && (m_Timeout == 0))
+		{
+			//To make sure the horn has been moving before the pre-burst.
+			if((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_AC_MOVE_DISABLE)) == 0)
+			{
+				PCStateMachine::PC_RX->MasterEvents |= BIT_MASK(PCState::CTRL_PREBURST_ENABLE);
+			}
+		}
+		else
+		{
+			//If pre-burst is not enabled, PC State should be always in the PC_READY for waiting for horn down only. 
+			if(ACStateMachine::AC_TX->ACState == ACState::AC_HOLD)
+				m_Actions = SCState::JUMP;
+		}
+		break;
+	case PCState::PC_WELD_RUN:
+		// If the PC State is PC_WELD_RUN, it means the PC is running pre-burst process.
+		if(m_Timeout >= m_iPreburst)
+			PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_PREBURST_ENABLE);
+		else
+			m_Timeout++;
+		break;
+	default:
+		m_Actions = SCState::FAIL;
+		break;
 	}
 }
 
@@ -101,6 +137,8 @@ void WaitForTrigger::Loop()
 void WaitForTrigger::Exit()
 {
 	ACStateMachine::AC_RX->MasterState = SCState::NO_STATE;
+	PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
+	PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_PREBURST_ENABLE);
 }
 
 /**************************************************************************//**

@@ -65,8 +65,8 @@ struct WeldRecipeSC
     int                   m_RecipeNumber;
     char		          m_RecipeName[RECIPE_LEN];
     virtual int	Size() = 0;
-    virtual void Set(void*, int) = 0;
-    virtual void Get(int, void*) = 0;
+    virtual int Set(void*, int) = 0;
+    virtual int Get(int, void*) = 0;
     virtual void InitialWeldRecipe() = 0;
     static std::shared_ptr<WeldRecipeSC> GetWeldRecipeSC();
 };
@@ -105,8 +105,8 @@ struct L20_WeldRecipeSC : public WeldRecipeSC
     AdvancedWeldSetting   m_AdvancedSetting;
     
     int Size() 						override;
-    void Set(void*, int) 			override;
-    void Get(int, void*) 			override;
+    int Set(void*, int) 			override;
+    int Get(int, void*) 			override;
     void InitialWeldRecipe()		override;
 };
 
@@ -115,8 +115,8 @@ struct P1_WeldRecipeSC : public WeldRecipeSC
 	P1_WeldRecipeSC();
 	~P1_WeldRecipeSC();
     int Size() 						override;
-    void Set(void*, int) 			override;
-    void Get(int, void*) 			override;
+    int Set(void*, int) 			override;
+    int Get(int, void*) 			override;
     void InitialWeldRecipe()		override;
 };
 
@@ -140,13 +140,6 @@ struct L20_WeldRecipePC : public WeldRecipePC
 struct P1_WeldRecipePC : public WeldRecipePC
 {
     int Size()						override;
-};
-
-struct WeldRecipeLibForUI
-{
-	int                   m_RecipeID;
-	char		          m_RecipeName[RECIPE_LEN];
-	char				  m_DateTime[RECIPE_LEN];
 };
 
 #endif // WELDRECIPEDEF_H

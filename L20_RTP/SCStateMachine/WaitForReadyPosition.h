@@ -15,6 +15,11 @@
 #include "SCState.h"
 
 class WaitForReadyPosition: public SCState {
+private:
+	bool m_bHeightEncoder;
+	unsigned int m_iAfterBurst;
+	unsigned int m_iAfterBurstDelay;
+	unsigned int m_TimeDelay;
 public:
 	WaitForReadyPosition();
 	virtual ~WaitForReadyPosition();

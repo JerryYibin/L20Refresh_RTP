@@ -14,6 +14,7 @@
 #include <iostream>
 #include "RecipeDefine.h"
 #include "SystemType.h"
+#include "commons.h"
 
 WeldRecipeSC::WeldRecipeSC()
 {
@@ -152,8 +153,9 @@ int L20_WeldRecipeSC::Size()
 	return sizeof(L20_WeldRecipeSC);
 }
 
-void L20_WeldRecipeSC::Set(void* para, int indlx)
+int L20_WeldRecipeSC::Set(void* para, int indlx)
 {
+	int iResult = TRUE;
 	if (nullptr != para) {
 		switch (indlx) {
 		case WeldRecipeSC::PARALIST::RECIPE_PIC_PATH:
@@ -256,15 +258,18 @@ void L20_WeldRecipeSC::Set(void* para, int indlx)
 			memcpy(&this->m_AdvancedSetting.m_MeasuredHeightOffset, para, sizeof(int));
 			break;
 		default:
+			iResult = FALSE;
 			break;
 		}
 	} else {
-
+		iResult = FALSE;
 	}
+	return iResult;
 }
 
-void L20_WeldRecipeSC::Get(int indlx, void* para)
+int L20_WeldRecipeSC::Get(int indlx, void* para)
 {
+	int iResult = TRUE;
 	if (nullptr != para) {
 		switch (indlx) {
 		case WeldRecipeSC::PARALIST::RECIPE_PIC_PATH:
@@ -367,11 +372,13 @@ void L20_WeldRecipeSC::Get(int indlx, void* para)
 			memcpy(para, &this->m_AdvancedSetting.m_MeasuredHeightOffset, sizeof(int));
 			break;
 		default:
+			iResult = FALSE;
 			break;
 		}
 	} else {
-
+		iResult = FALSE;
 	}
+	return iResult;
 }
 
 void L20_WeldRecipeSC::InitialWeldRecipe()
@@ -390,6 +397,7 @@ void L20_WeldRecipeSC::InitialWeldRecipe()
 	m_QualityWindowSetting.m_TimeMin = 0;
 	m_QualityWindowSetting.m_TimeMax = 5000;
 	m_AdvancedSetting.m_WeldMode = ENERGY_MODE;
+	m_BatchSize = 999999;
 	char tmpName[] = "NewRecipe";
 	memcpy(m_RecipeName, tmpName, sizeof(tmpName));
 }
@@ -405,12 +413,14 @@ int P1_WeldRecipeSC::Size()
 	return sizeof(P1_WeldRecipeSC);
 }
 
-void P1_WeldRecipeSC::Set(void* para, int indlx)
+int P1_WeldRecipeSC::Set(void* para, int indlx)
 {
+	return OK;
 }
 
-void P1_WeldRecipeSC::Get(int indlx, void* para)
+int P1_WeldRecipeSC::Get(int indlx, void* para)
 {
+	return OK;
 }
 
 void P1_WeldRecipeSC::InitialWeldRecipe()

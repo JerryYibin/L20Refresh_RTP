@@ -31,8 +31,6 @@ extern "C"
 #include <timerDev.h>
 #endif
 
-extern long long atoll(const char* );
-
 /******************************************************************************
 * \brief - Constructor.
 *
@@ -267,7 +265,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
     	return nErrCode;
 	}
 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
 	if(CommonProperty::WeldSignatureVector.size()==0)
     {
 		WELD_SIGNATURE tmpWeldSignature;
@@ -303,7 +301,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 
 	if(nErrCode == SQLITE_OK)
 	{
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
         LOG("# store WeldSignature to ID %llu\n", id);
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_SIGNAT_LIMIT)
@@ -326,9 +324,10 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 {
+	cout << "305 StoreWeldRecipe" << endl;
     int id = ERROR;
     getLatestID(TABLE_WELD_RECIPE, &id);
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("# already %d WeldRecipe existing, try to insert new one\n", id);
 #endif
     if(id >= DB_RECORDS_STORAGE_WELD_RECIPE_LIMIT)
@@ -365,33 +364,38 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
     int m_WeldStepMode = 0;
     char m_RecipePicPath[PIC_PATH_LEN];
     
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_STEP, &m_EnergyStep);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_STEP, &m_TimeStep);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::POWER_STEP, &m_PowerStep);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::IS_TEACH_MODE, &m_IsTeachMode);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &m_Amplitude);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WIDTH_SETTING, &m_WidthSetting);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &m_WPpressure);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &m_TPpressure);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_MAX, &m_TimeMax);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_MIN, &m_TimeMin);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PEAK_POWER_MAX, &m_PeakPowerMax);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PEAK_POWER_MIN, &m_PeakPowerMin);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PRE_HEIGHT_MAX, &m_PreHeightMax);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PRE_HEIGHT_MIN, &m_PreHeightMin);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::HEIGHT_MAX, &m_HeightMax);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::HEIGHT_MIN, &m_HeightMin);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WELD_MODE, &m_WeldMode);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PRE_BURST, &m_PreBurst);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::HOLD_TIME, &m_HoldTime);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::SQUEEZE_TIME, &m_SqueezeTime);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AFTER_BURST_DELAY, &m_AfterBurstDelay);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AFTER_BURST_TIME, &m_AfterBurstTime);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AFTER_BURST_AMPLITUDE, &m_AfterBurstAmplitude);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::DISPLAYED_HEIGHT_OFFSET, &m_DisplayedHeightOffset);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::MEASURED_HEIGHT_OFFSET, &m_MeasuredHeightOffset);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WELD_STEP_MODE, &m_WeldStepMode);
-    Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::RECIPE_PIC_PATH, m_RecipePicPath);
+    if(
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_STEP, &m_EnergyStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_STEP, &m_TimeStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::POWER_STEP, &m_PowerStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::IS_TEACH_MODE, &m_IsTeachMode)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &m_Amplitude)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WIDTH_SETTING, &m_WidthSetting)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &m_WPpressure)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &m_TPpressure)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_MAX, &m_TimeMax)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_MIN, &m_TimeMin)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PEAK_POWER_MAX, &m_PeakPowerMax)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PEAK_POWER_MIN, &m_PeakPowerMin)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PRE_HEIGHT_MAX, &m_PreHeightMax)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PRE_HEIGHT_MIN, &m_PreHeightMin)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::HEIGHT_MAX, &m_HeightMax)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::HEIGHT_MIN, &m_HeightMin)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WELD_MODE, &m_WeldMode)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PRE_BURST, &m_PreBurst)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::HOLD_TIME, &m_HoldTime)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::SQUEEZE_TIME, &m_SqueezeTime)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AFTER_BURST_DELAY, &m_AfterBurstDelay)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AFTER_BURST_TIME, &m_AfterBurstTime)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AFTER_BURST_AMPLITUDE, &m_AfterBurstAmplitude)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::DISPLAYED_HEIGHT_OFFSET, &m_DisplayedHeightOffset)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::MEASURED_HEIGHT_OFFSET, &m_MeasuredHeightOffset)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WELD_STEP_MODE, &m_WeldStepMode)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::RECIPE_PIC_PATH, m_RecipePicPath))
+	{
+		LOGERR((char*) "Get Error.\n", 0, 0, 0);
+        return ERROR;
+	}
     
 	struct tm timeStamp;
     char timeBuf[20];
@@ -454,7 +458,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
         strPower.shrink_to_fit();
 
 	int nErrCode = SingleTransaction(strStore);
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     static int count=0;
     LOG("#WeldRecipe(num %d): result %d\n", count++, nErrCode);
 #endif
@@ -555,7 +559,7 @@ int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
                 " where ID <= "+std::to_string(id)+" and ID > "+
                 std::to_string(id-RESULT_FOR_UI_MAX)+
                 " order by ID desc;");
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("QueryBlockWeldResult:\n%s\n\n", str.c_str());
 #endif
 
@@ -586,7 +590,7 @@ int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
             atoi(tmpStr[count*TABLE_RESULT_MEM+12].c_str());//AlarmFlag
         CommonProperty::WeldResultForUI[count].CycleCounter =
             atoi(tmpStr[count*TABLE_RESULT_MEM+14].c_str());//CycleCounter
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
         LOG("ID: %s\n", tmpStr[count*TABLE_RESULT_MEM].c_str());
         LOG("PartID: %s\n", CommonProperty::WeldResultForUI[count].PartID);
         LOG("DateTime: %s\n", tmpStr[count*TABLE_RESULT_MEM+2].c_str());
@@ -617,7 +621,7 @@ void DBAccessL20DB::QueryWeldSignature(char* buffer)
     string str = ExecuteQuery(strQuery);
     vector<WELD_SIGNATURE> WeldSignVector;
     String2Vector(str, &WeldSignVector);
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     for(int i=0;i<WeldSignVector.size();i++)
 	{
     	LOG("\tOrder(%d): Frquency %d, Power %d, Height %d, Amplitude %d\n",
@@ -647,7 +651,7 @@ void DBAccessL20DB::QueryWeldRecipeAll(char* buffer)
         "select * from "+string(TABLE_WELD_RECIPE)+";";
     string str = ExecuteQuery(strQuery);
 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     if(str.size()>0)
         LOG("QueryWeldRecipe all:\n%s\n", str.c_str());
 #endif
@@ -664,6 +668,7 @@ void DBAccessL20DB::QueryWeldRecipeAll(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::QueryWeldRecipeLatestPage()
 {
+	cout << "637 QueryWeldRecipeLatestPage" << endl;
 	sendDataNum = FIRST_SEND_DATA_NUM;
 	
     string strQuery =
@@ -673,9 +678,9 @@ int DBAccessL20DB::QueryWeldRecipeLatestPage()
     if(!pushWeldRecipeLib(str))
     	return FALSE;
 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     if(str.size()>0)
-        LOG("417 QueryWeldRecipe:\n%s\n", str.c_str());
+        LOG("649 QueryWeldRecipe:\n%s\n", str.c_str());
 #endif
     return TRUE;
 }
@@ -698,7 +703,7 @@ int DBAccessL20DB::QueryWeldRecipeNextPage()
     	return FALSE;
 
     sendDataNum += ONE_PAGE_NUM;
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     if(str.size()>0)
         LOG("448 QueryWeldRecipe:\n%s\n", str.c_str());
 #endif
@@ -755,7 +760,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
         " where ID="+
         std::to_string(RecipeID)+";";
     string str = ExecuteQuery(strQuery);
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     if(str.size()>0)
         LOG("QueryWeldRecipe:\n%s\n", str.c_str());
 #endif
@@ -778,9 +783,9 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
 	int m_HeightMin				= stoi(data.at(17));
 	int m_WeldMode				= stoi(data.at(18));
 	
-	Recipe::RecipeSC->m_RecipeID = atoi(data[1].c_str());
+	Recipe::RecipeSC->m_RecipeID = atoi(data[0].c_str());
 	cout << "641 Recipe::RecipeSC->m_RecipeID " << Recipe::RecipeSC->m_RecipeID <<endl;
-    strcpy(Recipe::RecipeSC->m_RecipeName, data[2].c_str());
+    strcpy(Recipe::RecipeSC->m_RecipeName, data[1].c_str());
     Recipe::RecipeSC->Set(&m_Amplitude, WeldRecipeSC::PARALIST::AMPLITUDE);
     Recipe::RecipeSC->Set(&m_WPpressure, WeldRecipeSC::PARALIST::WP_PRESSURE);
     Recipe::RecipeSC->Set(&m_TPpressure, WeldRecipeSC::PARALIST::TP_PRESSURE);
@@ -803,7 +808,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
     vector<WeldStepValueSetting> vectorEnergy;
     String2Vector(str, &vectorEnergy);
     Vector2Array(&vectorEnergy, energy);
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("\nEnergyToStep\n");
     for(int i=0; i<STEP_MAX; i++)
         {
@@ -821,7 +826,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
     vector<WeldStepValueSetting> vectorTime;
     String2Vector(str, &vectorTime);
     Vector2Array(&vectorTime, timeStep);
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("\nTimeToStep\n");
     for(int i=0; i<STEP_MAX; i++)
         {
@@ -839,7 +844,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
     vector<WeldStepValueSetting> vectorPower;
     String2Vector(str, &vectorPower);
     Vector2Array(&vectorPower, power);
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("\nPowerToStep\n");
     for(int i=0; i<STEP_MAX; i++)
         {
@@ -1044,7 +1049,7 @@ int DBAccessL20DB::QueryBlockPowerSupply(char* buffer)
 	vector<string> tmpStr;
 
     str = ExecuteQuery(string("select * from ")+string(TABLE_PWR_SUPPLY)+";");
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("QueryBlockPowerSupply:\n%s\n\n", str.c_str());
     SystemConfiguration::PowerSupplyType.clear();
 #endif
@@ -1057,7 +1062,7 @@ int DBAccessL20DB::QueryBlockPowerSupply(char* buffer)
         tmpPwr.Power = atoi(tmpStr[count*TABLE_RESULT_MEM+2].c_str());//Power
 		SystemConfiguration::PowerSupplyType.push_back(tmpPwr);
 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
         LOG("ID: %s\n", tmpStr[count*TABLE_RESULT_MEM].c_str());
         LOG("Frequency: %d\n", tmpPwr.Frequency);
         LOG("Power: %d\n", tmpPwr.Power);
@@ -1082,7 +1087,7 @@ int DBAccessL20DB::QueryBlockTeachModeSetting(char* buffer)
 	vector<string> tmpStr;
 
     str = ExecuteQuery(string("select * from ")+string(TABLE_TEACH_MODE_SET)+";");
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("QueryBlockTeachModeSetting:\n%s\n\n", str.c_str());
     SystemConfiguration::TeachModeSetting.clear();
 #endif
@@ -1103,7 +1108,7 @@ int DBAccessL20DB::QueryBlockTeachModeSetting(char* buffer)
         tmpTeach.Quantity = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+10].c_str());//Quantity
 		SystemConfiguration::TeachModeSetting.push_back(tmpTeach);
 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
         LOG("ID: %s\n", tmpStr[count*TABLE_TEACH_MODE_MEM].c_str());
         LOG("TeachMode: %d\n", tmpTeach.TeachMode);
         LOG("TimeRangePL: %d\n", tmpTeach.TimeRangePL);
@@ -1136,7 +1141,7 @@ void DBAccessL20DB::QuerySystemConfigure(char* buffer)
 	vector<string> tmpStr;
 
     str = ExecuteQuery(string("select * from ")+string(TABLE_SYS_CONFIG)+";");
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("QuerySystemConfigure:\n%s\n\n", str.c_str());
 #endif
 
@@ -1154,8 +1159,6 @@ void DBAccessL20DB::QuerySystemConfigure(char* buffer)
     tmpSysCon.Height_Unit          =    (HEIGHT_UNIT)atoi(tmpStr[9].c_str()); //HeightUnit
     tmpSysCon.MaxAmplitude         =                 atoi(tmpStr[10].c_str()); //MaxAmplitude
     tmpSysCon.TeachMode.Teach_mode = (TEACHMODE_TYPE)atoi(tmpStr[11].c_str()); //TeachModeID
-    tmpSysCon.PowerSupply          =     (POWER_TYPE)atoi(tmpStr[13].c_str()); //PowerSupplyID
-    tmpSysCon.Frequency            =      (FREQUENCY)atoi(tmpStr[14].c_str()); //FrequencyOffset
 
 	struct tm timeStamp;
 	vxbRtcGet(&timeStamp);
@@ -1178,18 +1181,84 @@ void DBAccessL20DB::QuerySystemConfigure(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 {
+	cout << "857 UpdateWeldRecipe" << endl;
     string strStore;
-    L20_WeldRecipeSC *pRecipe = (L20_WeldRecipeSC *)buffer;
+    //L20_WeldRecipeSC *pRecipe = (L20_WeldRecipeSC *)buffer;
 	int nErrCode = SQLITE_ERROR;
 
 	strStore = ExecuteQuery(
             "select * from "+string(TABLE_WELD_RECIPE)+
-            " where ID="+std::to_string(pRecipe->m_RecipeID)+";");
+            " where ID="+std::to_string(Recipe::RecipeSC->m_RecipeID)+";");
 	if(strStore.empty()==true)
 	{
-		LOGERR((char*) "Database_T: ID %u doesn't exist in table WeldRecipe\n", pRecipe->m_RecipeID, 0, 0);
+		LOGERR((char*) "Database_T: ID %u doesn't exist in table WeldRecipe\n", Recipe::RecipeSC->m_RecipeID, 0, 0);
     	return nErrCode;
 	}
+	
+	///////////////////////////////////////////////////////////////////////
+	
+    WeldStepValueSetting m_EnergyStep;
+    WeldStepValueSetting m_TimeStep;
+    WeldStepValueSetting m_PowerStep;
+    int m_IsTeachMode = 0;
+    unsigned int m_Amplitude = 0;
+    int m_WidthSetting = 0;
+    int m_WPressure = 0;
+    int m_TPressure = 0;
+    int m_TimeMax = 0;
+    int m_TimeMin = 0;
+    unsigned int m_PeakPowerMax = 0;
+    unsigned int m_PeakPowerMin = 0;
+    int m_PreHeightMax = 0;
+	int m_PreHeightMin = 0;
+	int m_HeightMax = 0;
+	int m_HeightMin = 0;
+	int m_WeldMode = 0;
+    int m_PreBurst = 0;
+    int m_HoldTime = 0;
+    int m_SqueezeTime = 0;
+    int m_AfterBurstDelay = 0;
+    int m_AfterBurstTime = 0;
+    int m_AfterBurstAmplitude = 0;
+    int m_DisplayedHeightOffset = 0;
+    int m_MeasuredHeightOffset = 0;
+    int m_WeldStepMode = 0;
+    char m_RecipePicPath[PIC_PATH_LEN];
+    
+    if(
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_STEP, &m_EnergyStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_STEP, &m_TimeStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::POWER_STEP, &m_PowerStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::IS_TEACH_MODE, &m_IsTeachMode)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &m_Amplitude)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WIDTH_SETTING, &m_WidthSetting)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &m_WPressure)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &m_TPressure)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_MAX, &m_TimeMax)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_MIN, &m_TimeMin)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PEAK_POWER_MAX, &m_PeakPowerMax)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PEAK_POWER_MIN, &m_PeakPowerMin)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PRE_HEIGHT_MAX, &m_PreHeightMax)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PRE_HEIGHT_MIN, &m_PreHeightMin)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::HEIGHT_MAX, &m_HeightMax)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::HEIGHT_MIN, &m_HeightMin)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WELD_MODE, &m_WeldMode)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::PRE_BURST, &m_PreBurst)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::HOLD_TIME, &m_HoldTime)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::SQUEEZE_TIME, &m_SqueezeTime)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AFTER_BURST_DELAY, &m_AfterBurstDelay)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AFTER_BURST_TIME, &m_AfterBurstTime)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AFTER_BURST_AMPLITUDE, &m_AfterBurstAmplitude)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::DISPLAYED_HEIGHT_OFFSET, &m_DisplayedHeightOffset)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::MEASURED_HEIGHT_OFFSET, &m_MeasuredHeightOffset)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WELD_STEP_MODE, &m_WeldStepMode)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::RECIPE_PIC_PATH, m_RecipePicPath))
+	{
+		LOGERR((char*) "Get Error.\n", 0, 0, 0);
+        return ERROR;
+	}
+	
+	///////////////////////////////////////////////////////////////////////
 
 	struct tm timeStamp;
     char timeBuf[20];
@@ -1198,9 +1267,9 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 
     string strEnergy, strTime, strPower;
     vector<WeldStepValueSetting> vectorEnergy, vectorTime, vectorPower;
-    Array2Vector(pRecipe->m_WeldParameter.m_EnergyStep, &vectorEnergy);
-    Array2Vector(pRecipe->m_WeldParameter.m_TimeStep, &vectorTime);
-    Array2Vector(pRecipe->m_WeldParameter.m_PowerStep, &vectorPower);
+    Array2Vector(&m_EnergyStep, &vectorEnergy);
+    Array2Vector(&m_TimeStep, &vectorTime);
+    Array2Vector(&m_PowerStep, &vectorPower);
     
     Vector2String(&vectorEnergy, strEnergy);
     Vector2String(&vectorTime, strTime);
@@ -1209,47 +1278,48 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 	strStore =
         "update " 				+ string(TABLE_WELD_RECIPE) +
         " set UserID=" 			+ std::to_string(0)+//userID
-        ", IsValidate=" 		+ std::to_string(pRecipe->m_IsTeachMode)+//IsValidate
-        ", Amplitude=" 			+ std::to_string(pRecipe->m_WeldParameter.m_Amplitude)+//Amplitude
-        ", Width=" 				+ std::to_string(pRecipe->m_WeldParameter.m_WidthSetting)+//Width
-        ", WeldPressure="	 	+ std::to_string(pRecipe->m_WeldParameter.m_WPressure)+//WeldPressure
-        ", TriggerPressure=" 	+ std::to_string(pRecipe->m_WeldParameter.m_TPressure)+//TriggerPressure
-        ", TimePlus=" 			+ std::to_string(pRecipe->m_QualityWindowSetting.m_TimeMax)+//TimePlus
-        ", TimeMinus=" 			+ std::to_string(pRecipe->m_QualityWindowSetting.m_TimeMin)+//TimeMinus
-        ", PeakPowerPlus=" 		+ std::to_string(pRecipe->m_QualityWindowSetting.m_PeakPowerMax)+//PeakPowerPlus
-        ", PeakPowerMinus=" 	+ std::to_string(pRecipe->m_QualityWindowSetting.m_PeakPowerMin)+//PeakPowerMinus
-        ", TriggerHeightPlus="	+ std::to_string(pRecipe->m_QualityWindowSetting.m_PreHeightMax)+//TriggerHeightPlus
-        ", TriggerHeightMinus="	+ std::to_string(pRecipe->m_QualityWindowSetting.m_PreHeightMin)+//TriggerHeightMinus
-        ", WeldHeightPlus=" 	+ std::to_string(pRecipe->m_QualityWindowSetting.m_HeightMax)+//WeldHeightPlus
-        ", WeldHeightMinus=" 	+ std::to_string(pRecipe->m_QualityWindowSetting.m_HeightMin)+//WeldHeightMinus
-        ", WeldMode=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_WeldMode)+//WeldMode
+        ", IsValidate=" 		+ std::to_string(m_IsTeachMode)+//IsValidate
+        ", Amplitude=" 			+ std::to_string(m_Amplitude)+//Amplitude
+        ", Width=" 				+ std::to_string(m_WidthSetting)+//Width
+        ", WeldPressure="	 	+ std::to_string(m_WPressure)+//WeldPressure
+        ", TriggerPressure=" 	+ std::to_string(m_TPressure)+//TriggerPressure
+        ", TimePlus=" 			+ std::to_string(m_TimeMax)+//TimePlus
+        ", TimeMinus=" 			+ std::to_string(m_TimeMin)+//TimeMinus
+        ", PeakPowerPlus=" 		+ std::to_string(m_PeakPowerMax)+//PeakPowerPlus
+        ", PeakPowerMinus=" 	+ std::to_string(m_PeakPowerMin)+//PeakPowerMinus
+        ", TriggerHeightPlus="	+ std::to_string(m_PreHeightMax)+//TriggerHeightPlus
+        ", TriggerHeightMinus="	+ std::to_string(m_PreHeightMin)+//TriggerHeightMinus
+        ", WeldHeightPlus=" 	+ std::to_string(m_HeightMax)+//WeldHeightPlus
+        ", WeldHeightMinus=" 	+ std::to_string(m_HeightMin)+//WeldHeightMinus
+        ", WeldMode=" 			+ std::to_string(m_WeldMode)+//WeldMode
         ", ModeValue=" 			+ std::to_string(0)+//ModeValue
-        ", PreBurst=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_PreBurst)+//PreBurst
-        ", HoldTime=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_HoldTime)+//HoldTime
-        ", SqueezeTime=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_SqueezeTime)+//SqueezeTime
-        ", AfterBurstDelay=" 		+ std::to_string(pRecipe->m_AdvancedSetting.m_AfterBurstDelay)+//AfterBurstDelay
-        ", AfterBurstDuration=" 	+ std::to_string(pRecipe->m_AdvancedSetting.m_AfterBurstTime)+//AfterBurstDuration
-        ", AfterBurstAmplitude="	+ std::to_string(pRecipe->m_AdvancedSetting.m_AfterBurstAmplitude)+//AfterBurstAmplitude
-        ", WeldHeight=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_DisplayedHeightOffset)+//WeldHeight
-        ", MeasuredHeight=" 		+ std::to_string(pRecipe->m_AdvancedSetting.m_MeasuredHeightOffset)+//MeasuredHeight
-        ", StepWeldMode=" 			+ std::to_string(pRecipe->m_AdvancedSetting.m_WeldStepMode)+//StepWeldMode
+        ", PreBurst=" 			+ std::to_string(m_PreBurst)+//PreBurst
+        ", HoldTime=" 			+ std::to_string(m_HoldTime)+//HoldTime
+        ", SqueezeTime=" 			+ std::to_string(m_SqueezeTime)+//SqueezeTime
+        ", AfterBurstDelay=" 		+ std::to_string(m_AfterBurstDelay)+//AfterBurstDelay
+        ", AfterBurstDuration=" 	+ std::to_string(m_AfterBurstTime)+//AfterBurstDuration
+        ", AfterBurstAmplitude="	+ std::to_string(m_AfterBurstAmplitude)+//AfterBurstAmplitude
+        ", WeldHeight=" 			+ std::to_string(m_DisplayedHeightOffset)+//WeldHeight
+        ", MeasuredHeight=" 		+ std::to_string(m_MeasuredHeightOffset)+//MeasuredHeight
+        ", StepWeldMode=" 			+ std::to_string(m_WeldStepMode)+//StepWeldMode
         ", EnergyToStep='" 			+ strEnergy+//EnergyToStep
         "', TimeToStep='" 			+ strTime+//TimeToStep
         "', PowerToStep='" 			+ strPower+//PowerToStep
-        "', RecipeName='" 			+ pRecipe->m_RecipeName+//RecipeName
+        "', RecipeName='" 			+ Recipe::RecipeSC->m_RecipeName+//RecipeName
         "', DateTime='" 			+ timeBuf+//DateTime
-        "', PresetPicPath='" 		+ pRecipe->m_RecipePicPath+//PresetPicPath
-        "' where ID=" 				+ std::to_string(pRecipe->m_RecipeID)+";";
+        "', PresetPicPath='" 		+ m_RecipePicPath+//PresetPicPath
+        "' where ID=" 				+ std::to_string(Recipe::RecipeSC->m_RecipeID)+";";
         strEnergy.shrink_to_fit();
         strTime.shrink_to_fit();
         strPower.shrink_to_fit();
 
 	nErrCode = SingleTransaction(strStore);
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("# update WeldRecipe: result %d\n", nErrCode);
 #endif
 	if(nErrCode != SQLITE_OK)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+	Recipe::RecipeSC = nullptr;
 	return nErrCode;
 }
 
@@ -1489,9 +1559,6 @@ int DBAccessL20DB::UpdateSystemConfigure(char* buffer)
         ", MaxAmplitude=" 		+ std::to_string(tmpSysCon.MaxAmplitude)+
         ", TeachModeID=" 		+ std::to_string(tmpSysCon.TeachMode.Teach_mode)+
         //", HomePositionCount=" 	+ std::to_string(0)+
-        ", PowerSupplyID=" 		+ std::to_string(tmpSysCon.PowerSupply)+
-        ", FrequencyOffset=" 	+ std::to_string(tmpSysCon.Frequency)+
-        //", TunePoint=" 			+ std::to_string(0)+
         ";";
 	int nErrCode = SingleTransaction(strStore);
 	if(nErrCode != SQLITE_OK)
@@ -1532,6 +1599,7 @@ int DBAccessL20DB::DeleteSpecificRecipe(const char *buffer)
 {
 	int Index;
 	memcpy(&Index, buffer, sizeof(int));
+	cout << "1035 DeleteSpecificRecipe " << Index << endl;
 	string strQuery = "delete from "+string(TABLE_WELD_RECIPE)+" where ID = "+ std::to_string(Index) +";";
     int nErrCode= SingleTransaction(strQuery);
 	if(nErrCode != 0)

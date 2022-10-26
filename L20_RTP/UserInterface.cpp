@@ -175,6 +175,8 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	case TO_UI_UPDATE_RECIPE:
+		Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
+		RecipeWrapper::Set(message.Buffer, Recipe::RecipeSC);
 		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_UPDATE;
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;

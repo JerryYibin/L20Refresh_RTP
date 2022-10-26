@@ -86,7 +86,7 @@ void AuxClockTask::deleteInstance()
 ******************************************************************************/
 void AuxClockTask::AuxClock_Task(void* _obj)
 {
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     return;
 #endif
 	AuxClockTask* auxClockObj = (AuxClockTask*)_obj;

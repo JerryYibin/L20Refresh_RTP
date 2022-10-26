@@ -82,8 +82,10 @@ void PCWeldRun::Loop()
     else
     {
     	if ((PCStateMachine::PC_RX->MasterState == SCState::HOLD) || (PCStateMachine::PC_RX->MasterState == SCState::NO_STATE)
-    			|| ((PCStateMachine::PC_RX->MasterState == SCState::WAIT_FOR_READY_POSITION) 
-    					&& (PCStateMachine::PC_RX->MasterEvents & BIT_MASK(CTRL_AFTERBURST_ENABLE)) != BIT_MASK(CTRL_AFTERBURST_ENABLE)))
+    			|| ((PCStateMachine::PC_RX->MasterState == SCState::WAIT_FOR_TRIGGER) 
+    					&& (PCStateMachine::PC_RX->MasterEvents & BIT_MASK(CTRL_PREBURST_ENABLE)) != BIT_MASK(CTRL_PREBURST_ENABLE))
+				|| ((PCStateMachine::PC_RX->MasterState == SCState::WAIT_FOR_READY_POSITION)
+						&& (PCStateMachine::PC_RX->MasterEvents & BIT_MASK(CTRL_AFTERBURST_ENABLE)) != BIT_MASK(CTRL_AFTERBURST_ENABLE)))
 		{
 			ChangeState(PC_READY);
 		}

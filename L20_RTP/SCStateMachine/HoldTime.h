@@ -1,6 +1,6 @@
 /************************************************************************** 
 
-      Copyright (c) Branson Ultrasonics Corporation, 1996-2021
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
  
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
@@ -9,24 +9,22 @@
  
 ***************************************************************************/
 
-#ifndef WAITFORTRIGGER_H_
-#define WAITFORTRIGGER_H_
+#ifndef HOLDTIME_H_
+#define HOLDTIME_H_
 
 #include "SCState.h"
-#define DELAY6SEC 6000
-#define MINHORNDOWNSPEED 30 //3mm/s
-class WaitForTrigger: public SCState {
+
+class HoldTime: public SCState {
 private:
-	unsigned int m_iPreburst;
-	bool		 m_bHeightEncoder;
+	unsigned int m_iHoldTime;
 public:
-	WaitForTrigger();
-	virtual ~WaitForTrigger();
+	HoldTime();
+	virtual ~HoldTime();
 public:
-	virtual void Enter() override;
-	virtual void Loop() override;
-	virtual void Exit() override;
-	virtual void Fail() override;
+	virtual void Enter	()	override;
+	virtual void Loop	()	override;
+	virtual void Exit	()	override;
+	virtual void Fail	()	override;
 };
 
-#endif /* WAITFORTRIGGER_H_ */
+#endif /* HOLDTIME_H_ */
