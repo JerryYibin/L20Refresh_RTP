@@ -5,7 +5,6 @@
 #include <msgQLib.h>
 
 extern int atoi(const char *);
-extern long long atoll(const char *);
 
 #define MSG_Q_Control "/msgQControl"  /* Public semaphore */
 #define MSG_Q_Data "/msgQData"  /* Public semaphore */
@@ -170,11 +169,14 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_CLOSE_DB,
 
     TO_DATA_TASK_WELD_RECIPE_QUERY_ALL,
+    TO_DATA_TASK_WELD_RECIPE_QUERY_LATEST_PAGE,
+    TO_DATA_TASK_WELD_RECIPE_QUERY_NEXT_PAGE,
     TO_DATA_TASK_WELD_RECIPE_QUERY,
     TO_DATA_TASK_WELD_RECIPE_INSERT,
     TO_DATA_TASK_WELD_RECIPE_UPDATE,
     TO_DATA_TASK_WELD_RECIPE_DELETE,
     TO_DATA_TASK_WELD_RECIPE_CLEAR,
+    TO_DATA_TASK_WELD_RECIPE_DELETE_SPECIFIC,
 
     TO_DATA_TASK_WELD_RESULT_QUERY,
     TO_DATA_TASK_WELD_RESULT_INSERT,
@@ -211,6 +213,7 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_SYS_CONFIG_QUERY,
     TO_DATA_TASK_SYS_CONFIG_UPDATE
     };
+#define DATA_TASK_EVENT 0x02
 
 int main(int argc, char *argv[])
     {
@@ -231,9 +234,12 @@ int main(int argc, char *argv[])
  *     no third parameter for all records
  *     third parameter for m_RecipeID of WeldRecipeSC
  *   c for clear
- *   d for delete oldest
+ *   d for delete
+ *     no third parameter for last record
+ *     third parameter for ID
+ *   e for query last page
+ *   f for query next page
  *   u for update
- *     third parameter for m_RecipeID of WeldRecipeSC
  *
  * 2 for WELD_RESULT
  *   a for insert including table AlarmLog and WeldResultSignature
@@ -329,7 +335,7 @@ int main(int argc, char *argv[])
                         for(i=0; i<(count-1); i++)
                             {
                             msgQSend(mqidControl, (char *)&buf, sizeof(MESSAGE),-1,0);
-                            eventSend(tid, 4);
+                            eventSend(tid, DATA_TASK_EVENT);
                             }
                         break;
                         }
@@ -351,7 +357,24 @@ int main(int argc, char *argv[])
                         buf.msgID = TO_DATA_TASK_WELD_RECIPE_CLEAR;
                         break;
                     case 'd':
-                        buf.msgID = TO_DATA_TASK_WELD_RECIPE_DELETE;
+                        {
+                        int *pData = (int *)&buf.Buffer[0];
+                        if(argc>=4)
+                            {
+                            pData = atoi(argv[3]);
+                            buf.msgID = TO_DATA_TASK_WELD_RECIPE_DELETE_SPECIFIC;
+                            }
+                        else
+                            {
+                            buf.msgID = TO_DATA_TASK_WELD_RECIPE_DELETE;
+                            }
+                        break;
+                        }
+                    case 'e':
+                        buf.msgID = TO_DATA_TASK_WELD_RECIPE_QUERY_LATEST_PAGE;
+                        break;
+                    case 'f':
+                        buf.msgID = TO_DATA_TASK_WELD_RECIPE_QUERY_NEXT_PAGE;
                         break;
                     case 'u':
                         {
@@ -394,15 +417,15 @@ int main(int argc, char *argv[])
                         for(i=0; i<(count-1); i++)
                             {
                             msgQSend(mqidControl, (char *)&buf, sizeof(MESSAGE),-1,0);
-                            eventSend(tid, 4);
+                            eventSend(tid, DATA_TASK_EVENT);
                             }
                         break;
                         }
                     case 'b':
                         {
-                        long long *pData = (long long *)&buf.Buffer[0];
+                        int *pData = (int *)&buf.Buffer[0];
                         if(argc>=4)
-                            *pData = atoll(argv[3]);
+                            *pData = atoi(argv[3]);
                         else
                             *pData = 1;
                         buf.msgID = TO_DATA_TASK_WELD_RESULT_QUERY;
@@ -426,9 +449,9 @@ int main(int argc, char *argv[])
                     {
                     case 'a':
                         {
-                        long long *pData = (long long *)&buf.Buffer[0];
+                        int *pData = (int *)&buf.Buffer[0];
                         if(argc>=4)
-                            *pData = atoll(argv[3]);
+                            *pData = atoi(argv[3]);
                         else
                             *pData = 1;
                         buf.msgID = TO_DATA_TASK_WELD_SIGN_INSERT;
@@ -438,7 +461,7 @@ int main(int argc, char *argv[])
                         {
                         int i;    
                         int count = 1;
-                        long long *pData = (long long *)&buf.Buffer[0];
+                        int *pData = (int *)&buf.Buffer[0];
                         buf.msgID = TO_DATA_TASK_WELD_SIGN_INSERT;
 
                         if(argc>=4)
@@ -449,16 +472,16 @@ int main(int argc, char *argv[])
                             {
                             *pData = i+1;
                             msgQSend(mqidControl, (char *)&buf, sizeof(MESSAGE),-1,0);
-                            eventSend(tid, 4);
+                            eventSend(tid, DATA_TASK_EVENT);
                             }
                         *pData = i+1;
                         break;
                         }
                     case 'b':
                         {
-                        long long *pData = (long long *)&buf.Buffer[0];
+                        int *pData = (int *)&buf.Buffer[0];
                         if(argc>=4)
-                            *pData = atoll(argv[3]);
+                            *pData = atoi(argv[3]);
                         else
                             *pData = 1;
                         buf.msgID = TO_DATA_TASK_WELD_SIGN_QUERY;
@@ -482,9 +505,9 @@ int main(int argc, char *argv[])
                     {
                     case 'a':
                         {
-                        long long *pData = (long long *)&buf.Buffer[0];
+                        int *pData = (int *)&buf.Buffer[0];
                         if(argc>=4)
-                            *pData = atoll(argv[3]);
+                            *pData = atoi(argv[3]);
                         else
                             *pData = 1;
                         buf.msgID = TO_DATA_TASK_ALARM_LOG_INSERT;
@@ -492,9 +515,9 @@ int main(int argc, char *argv[])
                         }
                     case 'b':
                         {
-                        long long *pData = (long long *)&buf.Buffer[0];
+                        int *pData = (int *)&buf.Buffer[0];
                         if(argc>=4)
-                            *pData = atoll(argv[3]);
+                            *pData = atoi(argv[3]);
                         else
                             *pData = 1;
                         buf.msgID = TO_DATA_TASK_ALARM_LOG_QUERY;
@@ -680,7 +703,7 @@ int main(int argc, char *argv[])
                 return 0;
             }
         msgQSend(mqidControl, (char *)&buf, sizeof(MESSAGE),-1,0);
-        eventSend(tid, 4);
+        eventSend(tid, DATA_TASK_EVENT);
         }
 
     return 0;

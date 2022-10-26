@@ -192,12 +192,12 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 		std::to_string(pData->CycleCounter)+");";//CycleCounter
 
 	int nErrCode = SingleTransaction(strStore);
-    long long WeldResultID;
-    GetLatestID64(TABLE_WELD_RESULT, &WeldResultID);
+    int WeldResultID;
+    getLatestID(TABLE_WELD_RESULT, &WeldResultID);
 	if(nErrCode == SQLITE_OK)
 	{
 #ifdef UNITTEST_DATABASE
-        LOG("# store WeldResult to ID %llu\n", WeldResultID);
+        LOG("# store WeldResult to ID %u\n", WeldResultID);
 #endif
         if(WeldResultID > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -211,20 +211,20 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
         pAlarm->WeldResultID = WeldResultID;
         pAlarm->WeldRecipeID = pData->RecipeNum;
         pAlarm->UserID = 789;
-        LOG("\n#try to StoreAlarmLog with WeldResultID(%llu) WeldRecipeID(%u)\n",
+        LOG("\n#try to StoreAlarmLog with WeldResultID(%u) WeldRecipeID(%u)\n",
                 WeldResultID, pData->RecipeNum);
 #endif
         StoreAlarmLog(nullptr);
 
 #ifdef UNITTEST_DATABASE
-        LOG("\n#try to StoreWeldSignature with WeldResultID(%llu)\n",
+        LOG("\n#try to StoreWeldSignature with WeldResultID(%u)\n",
                 WeldResultID);
 #endif
         StoreWeldSignature((char* )&WeldResultID);
 	}
 	else
 	{
-		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %llu\n",
+		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %u\n",
                 nErrCode, WeldResultID, 0);
 	}
 	return nErrCode;
@@ -241,8 +241,8 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 int DBAccessL20DB::StoreWeldSignature(char* buffer)
 {
 	string str;
-    long long id;
-	long long WeldResultID = *(long long* )buffer;
+    int id;
+	int WeldResultID = *(int* )buffer;
 	int nErrCode = SQLITE_ERROR;
 
 	str = ExecuteQuery(
@@ -250,7 +250,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
             " where WeldResultID="+std::to_string(WeldResultID)+";");
 	if(str.empty()!=true)
 	{
-		LOGERR((char*) "Database_T: WeldResultID %llu already exists in table WeldResultSignature\n",
+		LOGERR((char*) "Database_T: WeldResultID %u already exists in table WeldResultSignature\n",
                 WeldResultID, 0, 0);
     	return nErrCode;
 	}
@@ -260,7 +260,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
             " where ID="+std::to_string(WeldResultID)+";");
 	if(str.empty()==true)
 	{
-		LOGERR((char*) "Database_T: ID %llu doesn't exist in table WeldResult\n",
+		LOGERR((char*) "Database_T: ID %u doesn't exist in table WeldResult\n",
                 WeldResultID, 0, 0);
     	return nErrCode;
 	}
@@ -297,12 +297,12 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
     	nErrCode = SingleTransaction(strStore);
 	}
 
-	GetLatestID64(TABLE_WELD_SIGNATURE, &id);
+	getLatestID(TABLE_WELD_SIGNATURE, &id);
 
 	if(nErrCode == SQLITE_OK)
 	{
 #if UNITTEST_DATABASE
-        LOG("# store WeldSignature to ID %llu\n", id);
+        LOG("# store WeldSignature to ID %u\n", id);
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_SIGNAT_LIMIT)
 		{
@@ -310,14 +310,14 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 		}
 	}
 	else
-		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %llu\n", nErrCode, id, 0);
+		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %u\n", nErrCode, id, 0);
 	return nErrCode;
 }
 
 /**************************************************************************//**
 * \brief   - Writing Weld Recipe into DB
 *
-* \param   - char* buffer - WeldRecipeSC data
+* \param   - char* buffer - not used
 *
 * \return  - int - status of query exec
 *
@@ -335,10 +335,10 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 		LOGERR((char*) "Database_T: WeldRecipe reached the limit.\n", 0, 0, 0);
         return SQLITE_ERROR;
 	}
-    
-    WeldStepValueSetting m_EnergyStep;
-    WeldStepValueSetting m_TimeStep;
-    WeldStepValueSetting m_PowerStep;
+
+    WeldStepValueSetting m_EnergyStep[STEP_MAX];
+    WeldStepValueSetting m_TimeStep[STEP_MAX];
+    WeldStepValueSetting m_PowerStep[STEP_MAX];
     int m_IsTeachMode = 0;
     unsigned int m_Amplitude = 0;
     int m_WidthSetting = 0;
@@ -363,11 +363,15 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
     int m_MeasuredHeightOffset = 0;
     int m_WeldStepMode = 0;
     char m_RecipePicPath[PIC_PATH_LEN];
-    
+
+#if UNITTEST_DATABASE
+	if(Recipe::RecipeSC == nullptr)
+    	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
+#endif
     if(
-    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_STEP, &m_EnergyStep)||
-    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_STEP, &m_TimeStep)||
-    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::POWER_STEP, &m_PowerStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_STEP, m_EnergyStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_STEP, m_TimeStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::POWER_STEP, m_PowerStep)||
     !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::IS_TEACH_MODE, &m_IsTeachMode)||
     !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &m_Amplitude)||
     !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WIDTH_SETTING, &m_WidthSetting)||
@@ -404,9 +408,9 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 
     vector<WeldStepValueSetting> vectorEnergy, vectorTime, vectorPower;
     string strEnergy, strTime, strPower;
-    Array2Vector(&m_EnergyStep, &vectorEnergy);
-    Array2Vector(&m_TimeStep, &vectorTime);
-    Array2Vector(&m_PowerStep, &vectorPower);
+    Array2Vector(m_EnergyStep, &vectorEnergy);
+    Array2Vector(m_TimeStep, &vectorTime);
+    Array2Vector(m_PowerStep, &vectorPower);
     
     Vector2String(&vectorEnergy, strEnergy);
     Vector2String(&vectorTime, strTime);
@@ -478,7 +482,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::StoreAlarmLog(char* buffer)
 {
-	long long id;
+	int id;
 	string str;
 	int nErrCode = SQLITE_ERROR;
     ALARM_DATA* pData = &AlarmDataSC::AlarmData;
@@ -488,7 +492,7 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
             " where WeldResultID="+std::to_string(pData->WeldResultID)+";");
 	if(str.empty()!=true)
 	{
-		LOGERR((char*) "Database_T: WeldResultID %llu already exists in table AlarmLog\n",
+		LOGERR((char*) "Database_T: WeldResultID %u already exists in table AlarmLog\n",
                 pData->WeldResultID, 0, 0);
     	return nErrCode;
 	}
@@ -498,7 +502,7 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
             " where ID="+std::to_string(pData->WeldResultID)+";");
 	if(str.empty()==true)
 	{
-		LOGERR((char*) "Database_T: ID %llu doesn't exist in table WeldResult\n",
+		LOGERR((char*) "Database_T: ID %u doesn't exist in table WeldResult\n",
                 pData->WeldResultID, 0, 0);
     	return nErrCode;
 	}
@@ -520,11 +524,11 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
         std::to_string(pData->AlarmSubType)+");";//is AlarmSubType for column IsReset?
 	nErrCode = SingleTransaction(str);
 
-	GetLatestID64(TABLE_ALARM_LOG, &id);
+	getLatestID(TABLE_ALARM_LOG, &id);
 	if(nErrCode == SQLITE_OK)
 	{
 #ifdef UNITTEST_DATABASE
-        LOG("# store AlarmLog to ID(%llu) with WeldResultID(%llu)\n", id, pData->WeldResultID);
+        LOG("# store AlarmLog to ID(%u) with WeldResultID(%u)\n", id, pData->WeldResultID);
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -534,7 +538,7 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	else
     {
         LOG("StoreAlarmLog:\n%s\n", str.c_str());
-		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %llu\n", nErrCode, id, 0);
+		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %u\n", nErrCode, id, 0);
     }
 	return nErrCode;
 }
@@ -552,7 +556,7 @@ int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
     int count;
     string str;
 	vector<string> tmpStr;
-	long long id = *(long long* )buffer;
+	int id = *(int* )buffer;
 
     str = ExecuteQuery(
                 string("select * from ")+string(TABLE_WELD_RESULT)+
@@ -617,7 +621,7 @@ void DBAccessL20DB::QueryWeldSignature(char* buffer)
         "select "+string(COLUMN_GRAPHDATA)+
         " from "+string(TABLE_WELD_SIGNATURE)+
         " where WeldResultID="+
-        std::to_string(*(long long* )buffer)+";";
+        std::to_string(*(int* )buffer)+";";
     string str = ExecuteQuery(strQuery);
     vector<WELD_SIGNATURE> WeldSignVector;
     String2Vector(str, &WeldSignVector);
@@ -672,7 +676,8 @@ int DBAccessL20DB::QueryWeldRecipeLatestPage()
 	sendDataNum = FIRST_SEND_DATA_NUM;
 	
     string strQuery =
-        "select rowid,ID,RecipeName,DateTime from "+string(TABLE_WELD_RECIPE)+" order by rowid DESC limit "+std::to_string(sendDataNum)+";";
+        "select rowid,ID,RecipeName,DateTime from "+string(TABLE_WELD_RECIPE)+
+        " order by rowid DESC limit "+std::to_string(sendDataNum)+";";
     string str = ExecuteQuery(strQuery);
     
     if(!pushWeldRecipeLib(str))
@@ -696,7 +701,8 @@ int DBAccessL20DB::QueryWeldRecipeLatestPage()
 int DBAccessL20DB::QueryWeldRecipeNextPage()
 {
     string strQuery =
-        "select rowid,ID,RecipeName,DateTime from "+string(TABLE_WELD_RECIPE)+" order by rowid DESC limit "+ std::to_string(sendDataNum) +", " + std::to_string(ONE_PAGE_NUM) +";";
+        "select rowid,ID,RecipeName,DateTime from "+string(TABLE_WELD_RECIPE)+
+        " order by rowid DESC limit "+ std::to_string(sendDataNum) +", " + std::to_string(ONE_PAGE_NUM) +";";
     string str = ExecuteQuery(strQuery);
     
     if(!pushWeldRecipeLib(str))
@@ -743,7 +749,7 @@ int DBAccessL20DB::pushWeldRecipeLib(const string str)
 /**************************************************************************//**
 * \brief   - Query Specific Weld Recipe from DB
 *
-* \param   - char* buffer - WeldRecipe structure
+* \param   - char* buffer - RecipeID
 *
 * \return  - N/A
 *
@@ -760,10 +766,13 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
         " where ID="+
         std::to_string(RecipeID)+";";
     string str = ExecuteQuery(strQuery);
-#if UNITTEST_DATABASE
-    if(str.size()>0)
+    if(str.size()==0)
+        return;
+#ifdef UNITTEST_DATABASE
+    else
         LOG("QueryWeldRecipe:\n%s\n", str.c_str());
 #endif
+
 	vector<string> data;
 	string tmp{};
 	stringstream input(str);
@@ -804,6 +813,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
         " where ID="+
         std::to_string(RecipeID)+";";
     str = ExecuteQuery(strQuery);
+
     WeldStepValueSetting energy[STEP_MAX];
     vector<WeldStepValueSetting> vectorEnergy;
     String2Vector(str, &vectorEnergy);
@@ -813,7 +823,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
     for(int i=0; i<STEP_MAX; i++)
         {
         LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-            i, energy[i].m_StepValue, energy[i].m_AmplitudeValue);
+            energy[i].m_Order, energy[i].m_StepValue, energy[i].m_AmplitudeValue);
         }
 #endif
 
@@ -822,6 +832,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
         " where ID="+
         std::to_string(RecipeID)+";";
     str = ExecuteQuery(strQuery);
+
     WeldStepValueSetting timeStep[STEP_MAX];
     vector<WeldStepValueSetting> vectorTime;
     String2Vector(str, &vectorTime);
@@ -831,7 +842,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
     for(int i=0; i<STEP_MAX; i++)
         {
         LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-            i, timeStep[i].m_StepValue, timeStep[i].m_AmplitudeValue);
+            timeStep[i].m_Order, timeStep[i].m_StepValue, timeStep[i].m_AmplitudeValue);
         }
 #endif
 
@@ -840,6 +851,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
         " where ID="+
         std::to_string(RecipeID)+";";
     str = ExecuteQuery(strQuery);
+
     WeldStepValueSetting power[STEP_MAX];
     vector<WeldStepValueSetting> vectorPower;
     String2Vector(str, &vectorPower);
@@ -849,7 +861,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
     for(int i=0; i<STEP_MAX; i++)
         {
         LOG("\tOrder(%d): StepValue %d, AmplitudeValue %d\n",
-            i, power[i].m_StepValue, power[i].m_AmplitudeValue);
+            power[i].m_Order, power[i].m_StepValue, power[i].m_AmplitudeValue);
         }
 #endif
     return;
@@ -858,7 +870,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
 /**************************************************************************//**
 * \brief   - Query AlarmLog from DB
 *
-* \param   - char* buffer WeldResult ID
+* \param   - char* buffer - ID
 *
 * \return  - int - count of records
 *
@@ -868,7 +880,7 @@ int DBAccessL20DB::QueryBlockAlarmLog(char* buffer)
 {
     int count;
 	vector<string> tmpStr;
-    long long id = *(long long* )buffer;
+    int id = *(int* )buffer;
 
     string str = ExecuteQuery(
                 "select * from "+string(TABLE_ALARM_LOG)+
@@ -891,14 +903,14 @@ int DBAccessL20DB::QueryBlockAlarmLog(char* buffer)
         bzero(tmpLog.RecipeName, RECIPE_LEN);
         strncpy(tmpLog.RecipeName, str.c_str(), RECIPE_LEN);
 
-        tmpLog.WeldCount = atoll(tmpStr[count*TABLE_ALARMLOG_MEM+4].c_str());//WeldResultID
+        tmpLog.WeldCount = atoi(tmpStr[count*TABLE_ALARMLOG_MEM+4].c_str());//WeldResultID
 
         for(int i=0; i<AlarmDataSC::AlarmLog.size(); i++)
             {
             if(AlarmDataSC::AlarmLog[i].WeldCount == tmpLog.WeldCount)
                 {
 #ifdef UNITTEST_DATABASE
-                LOG("erase:%llu\n", tmpLog.WeldCount);
+                LOG("erase:%u\n", tmpLog.WeldCount);
 #endif
                 AlarmDataSC::AlarmLog.erase(AlarmDataSC::AlarmLog.begin()+i);
                 break;
@@ -908,7 +920,7 @@ int DBAccessL20DB::QueryBlockAlarmLog(char* buffer)
 
 #ifdef UNITTEST_DATABASE
         LOG("ID:%s\n", tmpStr[count*TABLE_ALARMLOG_MEM].c_str());
-        LOG("WeldCount:%llu\n", tmpLog.WeldCount);
+        LOG("WeldCount:%u\n", tmpLog.WeldCount);
         LOG("RecipeId:%d\n", atoi(tmpStr[count*TABLE_ALARMLOG_MEM+3].c_str()));
         LOG("RecipeName:%s\n", tmpLog.RecipeName);
         LOG("DateTime:%s\n", tmpLog.DateTime);
@@ -1163,10 +1175,7 @@ void DBAccessL20DB::QuerySystemConfigure(char* buffer)
 	struct tm timeStamp;
 	vxbRtcGet(&timeStamp);
     strftime(tmpSysCon.DateTime, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
-#if 0 // not matched
-    tmpSysCon.xxx = atoi(tmpStr[12].c_str()); //HomePositionCount
-    tmpSysCon.xxx = atoi(tmpStr[15].c_str()); //TunePoint
-#endif
+
     SystemConfiguration::Set(&tmpSysCon);
     return;
 }
@@ -1174,7 +1183,7 @@ void DBAccessL20DB::QuerySystemConfigure(char* buffer)
 /**************************************************************************//**
 * \brief   - Update Specific Weld Recipe to DB
 *
-* \param   - char* buffer (recipe structure)
+* \param   - char* buffer - not used
 *
 * \return  - int - Database status
 *
@@ -1183,9 +1192,14 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 {
 	cout << "857 UpdateWeldRecipe" << endl;
     string strStore;
-    //L20_WeldRecipeSC *pRecipe = (L20_WeldRecipeSC *)buffer;
 	int nErrCode = SQLITE_ERROR;
 
+#if UNITTEST_DATABASE
+	if(Recipe::RecipeSC == nullptr)
+    	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
+    LOG("# Recipe::RecipeSC->m_RecipeID %d\n", Recipe::RecipeSC->m_RecipeID);
+    Recipe::RecipeSC->m_RecipeID = 1;
+#endif
 	strStore = ExecuteQuery(
             "select * from "+string(TABLE_WELD_RECIPE)+
             " where ID="+std::to_string(Recipe::RecipeSC->m_RecipeID)+";");
@@ -1194,12 +1208,12 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 		LOGERR((char*) "Database_T: ID %u doesn't exist in table WeldRecipe\n", Recipe::RecipeSC->m_RecipeID, 0, 0);
     	return nErrCode;
 	}
-	
+
 	///////////////////////////////////////////////////////////////////////
 	
-    WeldStepValueSetting m_EnergyStep;
-    WeldStepValueSetting m_TimeStep;
-    WeldStepValueSetting m_PowerStep;
+    WeldStepValueSetting m_EnergyStep[STEP_MAX];
+    WeldStepValueSetting m_TimeStep[STEP_MAX];
+    WeldStepValueSetting m_PowerStep[STEP_MAX];
     int m_IsTeachMode = 0;
     unsigned int m_Amplitude = 0;
     int m_WidthSetting = 0;
@@ -1226,9 +1240,9 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
     char m_RecipePicPath[PIC_PATH_LEN];
     
     if(
-    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_STEP, &m_EnergyStep)||
-    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_STEP, &m_TimeStep)||
-    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::POWER_STEP, &m_PowerStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_STEP, m_EnergyStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_STEP, m_TimeStep)||
+    !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::POWER_STEP, m_PowerStep)||
     !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::IS_TEACH_MODE, &m_IsTeachMode)||
     !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &m_Amplitude)||
     !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::WIDTH_SETTING, &m_WidthSetting)||
@@ -1257,7 +1271,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 		LOGERR((char*) "Get Error.\n", 0, 0, 0);
         return ERROR;
 	}
-	
+
 	///////////////////////////////////////////////////////////////////////
 
 	struct tm timeStamp;
@@ -1267,10 +1281,10 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 
     string strEnergy, strTime, strPower;
     vector<WeldStepValueSetting> vectorEnergy, vectorTime, vectorPower;
-    Array2Vector(&m_EnergyStep, &vectorEnergy);
-    Array2Vector(&m_TimeStep, &vectorTime);
-    Array2Vector(&m_PowerStep, &vectorPower);
-    
+    Array2Vector(m_EnergyStep, &vectorEnergy);
+    Array2Vector(m_TimeStep, &vectorTime);
+    Array2Vector(m_PowerStep, &vectorPower);
+
     Vector2String(&vectorEnergy, strEnergy);
     Vector2String(&vectorTime, strTime);
     Vector2String(&vectorPower, strPower);
@@ -1590,7 +1604,7 @@ void DBAccessL20DB::DeleteOldest(const char* table)
 /**************************************************************************//**
 * \brief   - Delete Specific Weld Recipe to DB
 *
-* \param   - char *buffer (int)
+* \param   - char *buffer - Recipe ID
 *
 * \return  - int - ErrCode
 *
@@ -1630,32 +1644,6 @@ int DBAccessL20DB::getLatestID(const string table, int* _id)
     string str = ExecuteQuery(strQuery, &errorCode);
     if(errorCode == SQLITE_OK)
     	*_id = atoi(str.c_str());
-    return errorCode;
-}
-
-/**************************************************************************//**
-* \brief   - Latest ID getting for the specific table.
-*
-* \param   - table name, _id pointer
-*
-* \return  - If there is not any error happened while querying, it will return SQLITE_OK; 
-* 			 else return ERROR or database status.
-*
-******************************************************************************/
-int DBAccessL20DB::getLatestID64(const string table, long long* _id)
-{
-	int errorCode = SQLITE_OK;
-	if(table.empty() == true)
-		return ERROR;
-	if(_id == nullptr)
-		return ERROR;
-    string strQuery =
-        "select seq from sqlite_sequence where name='" +
-        table +
-        "';";
-    string str = ExecuteQuery(strQuery, &errorCode);
-    if(errorCode == SQLITE_OK)
-    	*_id = atoll(str.c_str());
     return errorCode;
 }
 
@@ -2003,7 +1991,7 @@ int DBAccessL20DB::Vector2String(const vector<WeldStepValueSetting>* _ptrVector,
 	int j = 0;
 	for (int i = 0; i < _ptrVector->size(); i++)
 	{
-		tmpStepSetting = _ptrVector->at(0);
+		tmpStepSetting = _ptrVector->at(i);
 		for(int j = 0; j < TOTAL; j++)
 		{
 			switch(j)

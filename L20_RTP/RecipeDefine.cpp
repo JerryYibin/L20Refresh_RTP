@@ -297,13 +297,13 @@ int L20_WeldRecipeSC::Get(int indlx, void* para)
 			memcpy(para, &this->m_WeldParameter.m_Amplitude, sizeof(unsigned int));
 			break;
 		case WeldRecipeSC::PARALIST::ENERGY_STEP:
-			memcpy(para, &this->m_WeldParameter.m_EnergyStep, sizeof(WeldStepValueSetting));
+			memcpy(para, this->m_WeldParameter.m_EnergyStep, sizeof(WeldStepValueSetting)*STEP_MAX);
 			break;
 		case WeldRecipeSC::PARALIST::TIME_STEP:
-			memcpy(para, &this->m_WeldParameter.m_TimeStep, sizeof(WeldStepValueSetting));
+			memcpy(para, this->m_WeldParameter.m_TimeStep, sizeof(WeldStepValueSetting)*STEP_MAX);
 			break;
 		case WeldRecipeSC::PARALIST::POWER_STEP:
-			memcpy(para, &this->m_WeldParameter.m_PowerStep, sizeof(WeldStepValueSetting));
+			memcpy(para, this->m_WeldParameter.m_PowerStep, sizeof(WeldStepValueSetting)*STEP_MAX);
 			break;
 		case WeldRecipeSC::PARALIST::WIDTH_SETTING:
 			memcpy(para, &this->m_WeldParameter.m_WidthSetting, sizeof(int));
