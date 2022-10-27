@@ -24,7 +24,7 @@ struct ALARM_DATA
 {
 	unsigned int 	AlarmType;
 	unsigned int	AlarmSubType;
-	long			WeldResultID;
+	unsigned int	WeldResultID;
 	unsigned int	WeldRecipeID;
 	unsigned int	UserID;
 };

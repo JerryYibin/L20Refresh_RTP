@@ -1001,13 +1001,13 @@ string DBAccessL20DB::QueryUserProfiles(char* buffer)
     string str = ExecuteQuery("select Password from "+string(TABLE_USER_PROFILE)+
                 " where PermissionLevel="+std::to_string(PermissionLevel)+";");
 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("QueryUserProfiles:%s\n", str.c_str());
     if(UserAuthority::_UserProfilesSC == nullptr)
-        {
+	{
         LOG("new UserAuthority\n");
 		new UserAuthority();
-        }
+	}
 #endif
     UserAuthority::_UserProfilesSC->insert(pair<int, string>(PermissionLevel,str));
     return str;
@@ -1030,17 +1030,17 @@ int DBAccessL20DB::QueryPrivilegeConfiguration(char* buffer)
     if(str.empty() == true)
         return ERROR;
 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     if(UserAuthority::_UserPrivilegesSC == nullptr)
-        {
+	{
         LOG("new UserAuthority\n");
 		new UserAuthority();
-        }
+	}
 #endif
 
     int PermissionLevel = atoi(str.c_str());
     UserAuthority::_UserPrivilegesSC->insert(pair<int, int>(ScreenIndex, PermissionLevel));
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("QueryPrivilegeConfiguration: ScreenIndex(%d), PermissionLevel(%d)\n", ScreenIndex, PermissionLevel);
 #endif
     return PermissionLevel;
@@ -1388,40 +1388,40 @@ int DBAccessL20DB::UpdateUserProfiles(char* buffer)
     int PermissionLevel = *(int* )buffer;
 	int nErrCode = SQLITE_ERROR;
 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     if(UserAuthority::_UserProfilesSC == nullptr)
-        {
+	{
         LOG("new UserAuthority\n");
 		new UserAuthority();
-        }
+	}
 #endif
 
     if(1 != UserAuthority::_UserProfilesSC->count(PermissionLevel))
-        {
-#ifdef UNITTEST_DATABASE
+	{
+#if UNITTEST_DATABASE
         UserAuthority::_UserProfilesSC->insert(pair<int, string>(PermissionLevel,"123456"));
         LOG("# set PermissionLevel(%d) with Password(%s)\n", PermissionLevel, "123456");
 #else
 	    return nErrCode;
 #endif
-        }
+	}
 
     map<int,string>::iterator st;
     string pw;
     for(st=UserAuthority::_UserProfilesSC->begin();st!=UserAuthority::_UserProfilesSC->end();st++)
     {
         if(st->first == PermissionLevel)
-            {
+		{
             pw = st->second;
             break;
-            }
+		}
     }
 	string strStore =
         "update " 	+ string(TABLE_USER_PROFILE) +
         " set Password='" + pw+//Password
         "' where PermissionLevel="+ std::to_string(PermissionLevel)+";";//PermissionLevel
 	nErrCode = SingleTransaction(strStore);
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("# %s\n", strStore.c_str());
 #endif
 	if(nErrCode != SQLITE_OK)
@@ -1442,22 +1442,22 @@ int DBAccessL20DB::UpdatePrivilegeConfiguration(char* buffer)
     int ScreenIndex = *(int*)buffer;
 	int nErrCode = SQLITE_ERROR;
 
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     if(UserAuthority::_UserPrivilegesSC == nullptr)
-        {
+    {
         LOG("new UserAuthority\n");
 		new UserAuthority();
-        }
+    }
 #endif
 
     if(1 != UserAuthority::_UserPrivilegesSC->count(ScreenIndex))
-        {
-#ifdef UNITTEST_DATABASE
+    {
+#if UNITTEST_DATABASE
         UserAuthority::_UserPrivilegesSC->insert(pair<int, int>(ScreenIndex,1));
 #else
 	    return -nErrCode;
 #endif
-        }
+    }
 
     map<int,int>::iterator st;
     int PermissionLevel;
@@ -1469,7 +1469,7 @@ int DBAccessL20DB::UpdatePrivilegeConfiguration(char* buffer)
             break;
             }
     }
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("# set ScreenIndex(%d) with PermissionLevel(%d)\n", ScreenIndex, PermissionLevel);
 #endif
 

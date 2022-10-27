@@ -31,6 +31,7 @@
 #include "ScDgtOutput.h"
 #include "SystemType.h"
 #include "Recipe.h"
+#include "Connectivity.h"
 #include <sysLib.h>
 #include <sdLib.h>
 extern "C"
@@ -498,6 +499,7 @@ int main()
 	DAC_TLV5604::InitDAConverter();
 	ADC_AD7689::InitADConverter();
 	HeightEncoder::GetInstance();
+	Connectivity::GetInstance();
 	
 	MainTask *MT 		= new(nothrow) MainTask();
 	if(NULL != MT)

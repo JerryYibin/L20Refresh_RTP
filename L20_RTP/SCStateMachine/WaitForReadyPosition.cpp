@@ -95,6 +95,14 @@ void WaitForReadyPosition::Loop()
 		CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
 		m_Actions = SCState::FAIL;
 	}
+	
+	if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
+	{
+		//TODO Record Database alarm table
+		CommonProperty::WeldResult.ALARMS.AlarmFlags.Overload = 1;
+		m_Actions = SCState::FAIL;
+	}
+	
 	switch(PCStateMachine::PC_TX->PCState)
 	{
 	case PCState::PC_READY:
