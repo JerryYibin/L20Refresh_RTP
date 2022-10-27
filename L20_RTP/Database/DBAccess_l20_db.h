@@ -67,8 +67,8 @@ public:
 	virtual int 	QueryBlockAlarmLog(char *) 		  	override;
 	virtual void 	QueryHeightCalibration(char *) 		override;
 	virtual void 	QueryDbVersion(char *) 				override;
-	virtual string 	QueryUserProfiles(char *) 			override;
-	virtual int 	QueryPrivilegeConfiguration(char *) override;
+	virtual int 	QueryBlockUserProfiles(char *) 		override;
+	virtual int 	QueryBlockPrivilegeConfiguration(char *) override;
 	virtual int 	QueryBlockPowerSupply(char *)		override;
 	virtual int 	QueryBlockTeachModeSetting(char *)	override;
 	virtual void 	QuerySystemConfigure(char *)		override;

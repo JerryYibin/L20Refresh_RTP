@@ -240,10 +240,10 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->QueryDbVersion(message.Buffer);
 		break;
 	case TO_DATA_TASK_USER_PROFILE_QUERY:
-        _ObjDBConn->QueryUserProfiles(message.Buffer);
+        _ObjDBConn->QueryBlockUserProfiles(message.Buffer);
 		break;
 	case TO_DATA_TASK_PRIVILEGE_CONFIG_QUERY:
-        _ObjDBConn->QueryPrivilegeConfiguration(message.Buffer);
+        _ObjDBConn->QueryBlockPrivilegeConfiguration(message.Buffer);
 		break;
 	case TO_DATA_TASK_PWR_SUPPLY_QUERY:
         _ObjDBConn->QueryBlockPowerSupply(message.Buffer);

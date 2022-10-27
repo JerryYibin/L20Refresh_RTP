@@ -51,7 +51,7 @@ Connectivity::Connectivity()
 										{"Machine 10", 65109, "150.150.150.19"}};
 	_DIGServersUI->clear();
 	_DIGServersSC->clear();
-	for(int i = 0; i < sizeof(server); i++)
+	for(int i = 0; i < (sizeof(server)/sizeof((server)[0])); i++)
 	{
 		_DIGServersUI->push_back(server[i]);
 		_DIGServersSC->insert(pair<int, struct GATEWAY_SERVER>(i, server[i]));

@@ -46,8 +46,8 @@ public:
 	virtual int 	QueryBlockAlarmLog(char *)		= 0;
 	virtual void 	QueryHeightCalibration(char *)		= 0;
 	virtual void 	QueryDbVersion(char *)				= 0;
-	virtual string 	QueryUserProfiles(char *)			= 0;
-	virtual int 	QueryPrivilegeConfiguration(char *)	= 0;
+	virtual int 	QueryBlockUserProfiles(char *)			= 0;
+	virtual int 	QueryBlockPrivilegeConfiguration(char *)	= 0;
 	virtual int 	QueryBlockPowerSupply(char *)		= 0;
 	virtual int 	QueryBlockTeachModeSetting(char *)	= 0;
 	virtual void 	QuerySystemConfigure(char *)		= 0;

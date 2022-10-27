@@ -267,12 +267,12 @@ int main(int argc, char *argv[])
  *   b for query
  * 7 for UserProfiles
  *   b for query
- *     third parameter for PermissionLevel
  *   u for update
+ *     third parameter for PermissionLevel
  * 8 for PrivilegeConfiguration
  *   b for query
- *     third parameter for ScreenIndex
  *   u for update
+ *     third parameter for ScreenIndex
  * 9 for PowerSupply
  *   b for query
  *   u for update
