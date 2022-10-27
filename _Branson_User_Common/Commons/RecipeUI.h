@@ -109,7 +109,7 @@ struct WeldRecipeSetting
     AdvancedWeldSetting  m_AdvancedSetting;
 };
 
-struct  WeldRecipeSCForUI
+struct WeldRecipeSCForUI
 {
     int                   m_RecipeID;
     int                   m_RecipeNumber;
