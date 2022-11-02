@@ -115,7 +115,7 @@ void WeldSonicOn::Loop()
 	bool ErrorOn = false;
 	unsigned int tmpHeight = 0;
 	WELD_SIGNATURE tmpWeldSignature;
-	WELDMODE m_WeldMode = ENERGY_MODE;
+	WELDMODE m_WeldMode = (WELDMODE)0; //ENERGY_MODE;
 	int m_TimeMin = 0;
 
 	m_WeldTime += 1;
@@ -163,7 +163,7 @@ void WeldSonicOn::Loop()
 		case ENERGY_HEIGHT_MODE:
 			break;
 		default:
-			if ((m_EnergyAccumulator > m_EnergyTarget) || (m_WeldTime > ABSMAXTIME))
+			if(m_WeldTime > ABSMAXTIME)
 				m_Actions = SCState::JUMP;
 			break;
 		}

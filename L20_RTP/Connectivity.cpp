@@ -39,19 +39,19 @@ Connectivity::Connectivity()
 	EthernetConfig.DIG_WeldRecipe = false;
 	EthernetConfig.DIG_Signature = false;
 	EthernetConfig.DIG_ServerID = 0;
-	struct GATEWAY_SERVER server[10] = {{"Machine 01", 65100, "150.150.150.10"},
-										{"Machine 02", 65101, "150.150.150.11"},
-										{"Machine 03", 65102, "150.150.150.12"},
-										{"Machine 04", 65103, "150.150.150.13"},
-										{"Machine 05", 65104, "150.150.150.14"},
-										{"Machine 06", 65105, "150.150.150.15"},
-										{"Machine 07", 65106, "150.150.150.16"},
-										{"Machine 08", 65107, "150.150.150.17"},
-										{"Machine 09", 65108, "150.150.150.18"},
-										{"Machine 10", 65109, "150.150.150.19"}};
+	struct GATEWAY_SERVER server[DIG_SERVERS] = {{"Machine 01", 65100, "150.150.150.10"},
+												{"Machine 02", 65101, "150.150.150.11"},
+												{"Machine 03", 65102, "150.150.150.12"},
+												{"Machine 04", 65103, "150.150.150.13"},
+												{"Machine 05", 65104, "150.150.150.14"},
+												{"Machine 06", 65105, "150.150.150.15"},
+												{"Machine 07", 65106, "150.150.150.16"},
+												{"Machine 08", 65107, "150.150.150.17"},
+												{"Machine 09", 65108, "150.150.150.18"},
+												{"Machine 10", 65109, "150.150.150.19"}};
 	_DIGServersUI->clear();
 	_DIGServersSC->clear();
-	for(int i = 0; i < (sizeof(server)/sizeof((server)[0])); i++)
+	for(int i = 0; i < DIG_SERVERS; i++)
 	{
 		_DIGServersUI->push_back(server[i]);
 		_DIGServersSC->insert(pair<int, struct GATEWAY_SERVER>(i, server[i]));

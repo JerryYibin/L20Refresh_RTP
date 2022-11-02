@@ -58,7 +58,7 @@ public:
 	virtual int 	UpdateWeldRecipe(char *)			= 0;
 	virtual int 	UpdateHeightCalibration(char *)	= 0;
 	virtual int 	UpdateUserProfiles(char *)			= 0;
-	virtual int 	UpdatePrivilegeConfiguration(char *)	= 0;
+	virtual int 	UpdatePrivilegeConfigure(char *)	= 0;
 	virtual int 	UpdateBlockPowerSupply(char *)		= 0;
 	virtual int 	UpdateBlockTeachModeSetting(char *)	= 0;
 	virtual int 	UpdateSystemConfigure(char *)		= 0;

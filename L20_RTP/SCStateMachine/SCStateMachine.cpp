@@ -339,6 +339,7 @@ void SCStateMachine::SelectWeldSequence(void)
 	m_objState = new WaitForTrigger();
 	_objStateList->push_back(m_objState);
 	
+	//TODO need to change recipe getter function 
 	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::SQUEEZE_TIME, &iSqueezeTime); 	
 	if(iSqueezeTime > 0)
 	{

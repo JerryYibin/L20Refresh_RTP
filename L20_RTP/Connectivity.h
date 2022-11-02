@@ -17,6 +17,7 @@ The file is used to define all the Ethernet settings.
 #include "ConnectivityUI.h"
 #include <vector>
 #include <map>
+#define DIG_SERVERS 10
 using namespace std;
 class Connectivity 
 {

@@ -262,7 +262,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->UpdateUserProfiles(message.Buffer);
 		break;
 	case TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE:
-        _ObjDBConn->UpdatePrivilegeConfiguration(message.Buffer);
+        _ObjDBConn->UpdatePrivilegeConfigure(message.Buffer);
 		break;
 	case TO_DATA_TASK_PWR_SUPPLY_UPDATE:
         _ObjDBConn->UpdateBlockPowerSupply(message.Buffer);

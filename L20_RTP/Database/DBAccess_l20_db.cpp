@@ -404,7 +404,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 	struct tm timeStamp;
     char timeBuf[20];
 	vxbRtcGet(&timeStamp);
-    strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
+    strftime(timeBuf, 20, "%Y/%m/%d %H:%M:%S", &timeStamp);
 
     vector<WeldStepValueSetting> vectorEnergy, vectorTime, vectorPower;
     string strEnergy, strTime, strPower;
@@ -997,23 +997,18 @@ void DBAccessL20DB::QueryDbVersion(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
 {
-#if UNITTEST_DATABASE
-    if(UserAuthority::_UserProfilesSC == nullptr)
-		new UserAuthority();
-    else
-        UserAuthority::_UserProfilesSC->clear();
-#endif
     int PermissionLevel;
     string str = ExecuteQuery("select PermissionLevel, Password from "+string(TABLE_USER_PROFILE)+";");
     int count;
 	vector<string> tmpStr;
+	UserAuthority::_UserProfilesSC.clear();
     Utility::StringToTokens(str, ',', tmpStr);
 	for(count = 0; count < tmpStr.size()/2; count++)
-	    {
+	{
         UserAuthority::_UserProfilesSC->insert(
              pair<int, string>
             (atoi(tmpStr[count*2].c_str()),tmpStr[count*2+1]));
-	    }
+	}
 #if UNITTEST_DATABASE
     map<int,string>::iterator st;
     for(st=UserAuthority::_UserProfilesSC->begin();st!=UserAuthority::_UserProfilesSC->end();st++)
@@ -1034,23 +1029,18 @@ int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::QueryBlockPrivilegeConfiguration(char* buffer)
 {
-#if UNITTEST_DATABASE
-    if(UserAuthority::_UserPrivilegesSC == nullptr)
-		new UserAuthority();
-    else
-        UserAuthority::_UserPrivilegesSC->clear();
-#endif
+	UserAuthority::_UserPrivilegesSC->clear();
     int ScreenIndex;
     string str = ExecuteQuery("select ScreenIndex,PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+";");
     int count;
 	vector<string> tmpStr;
     Utility::StringToTokens(str, ',', tmpStr);
 	for(count = 0; count < tmpStr.size()/2; count++)
-	    {
+	{
         UserAuthority::_UserPrivilegesSC->insert(
              pair<int, int>
             (atoi(tmpStr[count*2].c_str()),atoi(tmpStr[count*2+1].c_str())));
-	    }
+	}
 #if UNITTEST_DATABASE
     map<int,int>::iterator st;
     for(st=UserAuthority::_UserPrivilegesSC->begin();st!=UserAuthority::_UserPrivilegesSC->end();st++)
@@ -1400,11 +1390,6 @@ int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 {
-#if UNITTEST_DATABASE
-    if(UserAuthority::_UserProfilesSC == nullptr)
-		new UserAuthority();
-#endif
-
     map<int,string>::iterator st = UserAuthority::_UserProfilesSC->find(*(int* )buffer);
     if(st == UserAuthority::_UserProfilesSC->end())
 	{
@@ -1429,12 +1414,8 @@ int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 * \return  - int - PermissionLevel, or negative Database status if failed
 *
 ******************************************************************************/
-int DBAccessL20DB::UpdatePrivilegeConfiguration(char* buffer)
+int DBAccessL20DB::UpdatePrivilegeConfigure(char* buffer)
 {
-#if UNITTEST_DATABASE
-    if(UserAuthority::_UserPrivilegesSC == nullptr)
-		new UserAuthority();
-#endif
     map<int,int>::iterator st = UserAuthority::_UserPrivilegesSC->find(*(int* )buffer);
     if(st == UserAuthority::_UserPrivilegesSC->end())
 	{

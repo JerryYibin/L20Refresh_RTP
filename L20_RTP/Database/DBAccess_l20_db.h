@@ -79,7 +79,7 @@ public:
 	virtual int 	UpdateWeldRecipe(char *) 			override;
 	virtual int 	UpdateHeightCalibration(char *) 	override;
 	virtual int 	UpdateUserProfiles(char *) 			override;
-	virtual int 	UpdatePrivilegeConfiguration(char *)	override;
+	virtual int 	UpdatePrivilegeConfigure(char *)	override;
 	virtual int 	UpdateBlockPowerSupply(char *) 		override;
 	virtual int 	UpdateBlockTeachModeSetting(char *)	override;
 	virtual int 	UpdateSystemConfigure(char *)		override;
