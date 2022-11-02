@@ -83,9 +83,9 @@ public:
 protected:
 	virtual void 	ProcessTaskMessage					(MESSAGE& message) override;
 private:
-    int 		ConnectDB								();
-    int 		CloseDB									(); 
-    void		sendErrorCode							(int ErrCode);
+    int 		ConnectDB					();
+    int 		CloseDB						(); 
+    void		sendErrorCode				(int ErrCode);
     
 private:
     MSG_Q_ID 			SELF_MSG_Q_ID_DATA;

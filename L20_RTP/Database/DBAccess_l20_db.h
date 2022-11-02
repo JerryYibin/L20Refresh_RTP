@@ -56,36 +56,36 @@ public:
 	string GetWeldSignatureCSVReportHeader1() override;
 	string GetWeldSignatureCSVReportHeader2() override;
 	
-	virtual int 	StoreWeldResult(char* buffer) 		override;
-	virtual int 	StoreWeldSignature(char* buffer)	override;
-	virtual int 	StoreWeldRecipe(char* buffer) 		override;
-	virtual int 	StoreAlarmLog(char* buffer)			override;
+	virtual int 	StoreWeldResult(char* buffer) 			override;
+	virtual int 	StoreWeldSignature(char* buffer)		override;
+	virtual int 	StoreWeldRecipe(char* buffer) 			override;
+	virtual int 	StoreAlarmLog(char* buffer)				override;
 
-	virtual int 	QueryBlockWeldResult(char *) 		override;
-	virtual void 	QueryWeldSignature(char *) 			override;
+	virtual int 	QueryBlockWeldResult(char *) 			override;
+	virtual void 	QueryWeldSignature(char *) 				override;
 	virtual int 	QueryWeldRecipe(char *) 			override;
 	virtual int 	QueryBlockAlarmLog(char *) 		  	override;
 	virtual void 	QueryHeightCalibration(char *) 		override;
 	virtual int 	QueryDbVersion(char *) 				override;
 	virtual int 	QueryBlockUserProfiles(char *) 		override;
-	virtual int 	QueryBlockPrivilegeConfiguration(char *) override;
-	virtual int 	QueryBlockPowerSupply(char *)		override;
-	virtual int 	QueryBlockTeachModeSetting(char *)	override;
-	virtual void 	QuerySystemConfigure(char *)		override;
+	virtual int 	QueryBlockPrivilegeConfigure(char *) 	override;
+	virtual int 	QueryBlockPowerSupply(char *)			override;
+	virtual int 	QueryBlockTeachModeSetting(char *)		override;
+	virtual void 	QuerySystemConfigure(char *)			override;
 
-	virtual void 	QueryWeldRecipeAll(char *) 			override;
-	virtual int 	QueryWeldRecipeLatestPage()			override;
-	virtual int 	QueryWeldRecipeNextPage()			override;
-	virtual int 	UpdateWeldRecipe(char *) 			override;
+	virtual void 	QueryWeldRecipeAll(char *) 				override;
+	virtual int 	QueryWeldRecipeLatestPage() 			override;
+	virtual int 	QueryWeldRecipeNextPage()				override;
+	virtual int 	UpdateWeldRecipe(char *) 				override;
 	virtual int 	UpdateHeightCalibration(char *) 	override;
-	virtual int 	UpdateUserProfiles(char *) 			override;
-	virtual int 	UpdatePrivilegeConfigure(char *)	override;
-	virtual int 	UpdateBlockPowerSupply(char *) 		override;
-	virtual int 	UpdateBlockTeachModeSetting(char *)	override;
-	virtual int 	UpdateSystemConfigure(char *)		override;
+	virtual int 	UpdateUserProfiles(char *) 				override;
+	virtual int 	UpdatePrivilegeConfigure(char *)		override;
+	virtual int 	UpdateBlockPowerSupply(char *) 			override;
+	virtual int 	UpdateBlockTeachModeSetting(char *)		override;
+	virtual int 	UpdateSystemConfigure(char *)			override;
 
-	virtual void 	DeleteOldest(const char *) 			override;
-	virtual int 	DeleteSpecificRecipe(const char *)	override;
+	virtual void 	DeleteOldest(const char *) 				override;
+	virtual int 	DeleteSpecificRecipe(const char *)		override;
 
 	//End of methods to fetch data from database needed for CSV reports generation.	
 };

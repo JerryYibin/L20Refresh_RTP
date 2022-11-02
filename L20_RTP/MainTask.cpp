@@ -32,6 +32,7 @@
 #include "SystemType.h"
 #include "Recipe.h"
 #include "Connectivity.h"
+#include "UserAuthority.h"
 #include <sysLib.h>
 #include <sdLib.h>
 extern "C"

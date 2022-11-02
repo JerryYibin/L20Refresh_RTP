@@ -30,6 +30,7 @@
 #include "commons.h"
 #include "DAC_SPI.h"
 #include "Recipe.h"
+#include "AuxMotionUI.h"
 //#include "ACState.h"
 CommunicationInterface_CAN* L20ActuatorTask::_ObjDCan 	= nullptr;
 ACStateMachine::RxPDO_AC L20ActuatorTask::RXBackup;
@@ -280,3 +281,33 @@ void L20ActuatorTask::ScanInputs()
 		ACStateMachine::AC_TX->ACInputs |= SS2MASK;
 }
 
+/**************************************************************************//**
+* \brief   - These commands are used to manually control the hardware from UIController
+*   		 and sending the DOAUXMOTION command with one of the following parameters.
+*   		 Note: Some commands were inherited from Legacy L20.
+*
+* \param   - enum AUXMOTION..
+*
+* \return  - None
+*
+******************************************************************************/
+void L20ActuatorTask::DoAuxMotion(int motion)
+{
+	switch(motion)
+	{
+	case DO_HORN_DOWN:
+		vxbGpioSetValue(GPIO::O_HORN, GPIO_VALUE_HIGH);
+		break;
+	case DO_HORN_UP:
+		vxbGpioSetValue(GPIO::O_HORN, GPIO_VALUE_LOW);
+		break;
+	case DO_COOLING_ON:
+		vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_HIGH);
+		break;
+	case DO_COOLING_OFF:
+		vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_LOW);
+		break;
+	default:
+		break;
+	}
+}

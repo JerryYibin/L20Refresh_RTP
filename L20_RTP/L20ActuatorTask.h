@@ -30,18 +30,20 @@ private:
 	UINT32											m_ActualTotalTime;
 	bool											m_IsMoving;
 public:
-	L20ActuatorTask();
-	virtual				 ~L20ActuatorTask			();
-	virtual void		 PDOUploadRequest			() override;
-	virtual void		 PDODownloadRequest			() override;
-	virtual bool		 IsMoving					() override;
-	virtual unsigned int GetMaxSpeed				() override;
-	virtual void		 InitHeightSystem			() override;
-	virtual void 		 ScanInputs					() override;
+							L20ActuatorTask();
+	virtual					~L20ActuatorTask			();
+	virtual void			PDOUploadRequest			() override;
+	virtual void			PDODownloadRequest			() override;
+	virtual bool			IsMoving					() override;
+	virtual unsigned int	GetMaxSpeed					() override;
+	virtual void			InitHeightSystem			() override;
+	virtual void			ScanInputs					() override;
+protected:
+	virtual	void		 	DoAuxMotion					(int motion) override;
 private:
-	bool		 		MovingCheckProcess			();
-	unsigned int		WeightedAverageSpeed		(unsigned int EncoderPosition);
-	void				InitMovingProcess			();
+	bool		 			MovingCheckProcess			();
+	unsigned int			WeightedAverageSpeed		(unsigned int EncoderPosition);
+	void					InitMovingProcess			();
 };
 
 #endif /* L20ACTUATORTASK_H_ */

@@ -243,7 +243,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->QueryBlockUserProfiles(message.Buffer);
 		break;
 	case TO_DATA_TASK_PRIVILEGE_CONFIG_QUERY:
-        _ObjDBConn->QueryBlockPrivilegeConfiguration(message.Buffer);
+        _ObjDBConn->QueryBlockPrivilegeConfigure(message.Buffer);
 		break;
 	case TO_DATA_TASK_PWR_SUPPLY_QUERY:
         _ObjDBConn->QueryBlockPowerSupply(message.Buffer);
@@ -273,7 +273,6 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_SYS_CONFIG_UPDATE:
         _ObjDBConn->UpdateSystemConfigure(message.Buffer);
 		break;
-
 	case TO_DATA_TASK_WELD_RECIPE_DELETE:
         _ObjDBConn->DeleteOldest(TABLE_WELD_RECIPE);
 		break;

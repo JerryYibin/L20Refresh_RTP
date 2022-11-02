@@ -46,3 +46,8 @@ void P1ActuatorTask::ScanInputs()
 {
 	
 }
+
+void P1ActuatorTask::DoAuxMotion(int motion)
+{
+	
+}

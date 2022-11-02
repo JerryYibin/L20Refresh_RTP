@@ -67,10 +67,15 @@ void SqueezeTime::Enter()
 ******************************************************************************/
 void SqueezeTime::Loop()
 {
-	if (m_Timeout > m_iSqueezeTime)
+	if(m_iSqueezeTime == 0)
 		m_Actions = SCState::JUMP;
 	else
-		m_Timeout++;
+	{
+		if (m_Timeout < m_iSqueezeTime)
+			m_Timeout++;
+		else	
+			m_Actions = SCState::JUMP;
+	}
 }
 
 /**************************************************************************//**

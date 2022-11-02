@@ -79,6 +79,9 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_ACTIVE_RECIPE_INFO_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_ACTIVE_RECIPE_INFO;
 		break;
+	case REQ_SET_ACTIVE_RECIPE_IDX:
+		message.msgID = UserInterface::TO_UI_SET_ACTIVE_RECIPE;
+		break;
 	case REQ_SETUP_WELD_PARAM_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_SETUP_WELD_PARAM;
 		break;
@@ -108,6 +111,9 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case REQ_HEIGHT_CALIBRATE_ACCEPT_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CALIBRATE_ACCEPT;
+		break;
+	case REQ_MAINTAIN_ACTUATOR_MOTION_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_AUX_MOTION_REQ;
 		break;
 	case REQ_USER_IO_INPUT_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_USERIO_INPUT_READ;

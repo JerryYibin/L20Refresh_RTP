@@ -26,6 +26,7 @@
 
 enum WELDMODE
 {
+	INVALID_MODE = -1,
     ENERGY_MODE = 0,
     TIME_MODE,
     HEIGHT_MODE,

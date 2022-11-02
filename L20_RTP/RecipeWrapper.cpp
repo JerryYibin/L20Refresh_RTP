@@ -16,6 +16,16 @@
 //#include "Utility.h"
 //#include "Recipe.h"
 
+/**************************************************************************//**
+* 
+* \brief   - Set SC Weld Recipe to UI Weld Recipe
+*
+* \param   - WeldRecipeSC, message.
+*
+* \return  - if there is any error happened during the data setting, 
+* 			 it will return ERROR; else it will return OK.
+*
+******************************************************************************/
 int RecipeWrapper::Set(const char* messagebuf, WeldRecipeSC* _RecipeObj)
 {
 	if (messagebuf == nullptr)
@@ -28,7 +38,7 @@ int RecipeWrapper::Set(const char* messagebuf, WeldRecipeSC* _RecipeObj)
 
     _RecipeObj->m_RecipeID = pRecipeForUI.m_RecipeID;
     _RecipeObj->m_RecipeNumber = pRecipeForUI.m_RecipeNumber;
-    
+
 	memcpy(_RecipeObj->m_RecipeName, pRecipeForUI.m_RecipeName, RECIPE_NAME_LENGTH);
 
 	_RecipeObj->Set(pRecipeForUI.m_RecipePicPath, 			WeldRecipeSC::PARALIST::RECIPE_PIC_PATH);
@@ -37,10 +47,20 @@ int RecipeWrapper::Set(const char* messagebuf, WeldRecipeSC* _RecipeObj)
 	_RecipeObj->Set(&pRecipeForUI.m_WeldParameter, 			WeldRecipeSC::PARALIST::WELD_PARAMETER);
 	_RecipeObj->Set(&pRecipeForUI.m_QualityWindowSetting, 	WeldRecipeSC::PARALIST::QUALITY_WINDOW_SETTING);
 	_RecipeObj->Set(&pRecipeForUI.m_AdvancedSetting, 		WeldRecipeSC::PARALIST::ADVANCED_SETTING);
-	
+
 	return OK;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Get SC Weld Recipe to UI Weld Recipe
+*
+* \param   - WeldRecipeSC, message.
+*
+* \return  - if there is any error happened during the data setting, 
+* 			 it will return ERROR; else it will return OK.
+*
+******************************************************************************/
 int RecipeWrapper::Get(WeldRecipeSC* _RecipeObj, char* messagebuf)
 {
 	if (messagebuf == nullptr)

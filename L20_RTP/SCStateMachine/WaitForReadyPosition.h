@@ -17,8 +17,10 @@
 class WaitForReadyPosition: public SCState {
 private:
 	bool m_bHeightEncoder;
-	unsigned int m_iAfterBurst;
-	unsigned int m_iAfterBurstDelay;
+	unsigned int m_iABDuration;
+	unsigned int m_iABTimeDelay;
+	//TODO it is the option for AfterBurst in case of customer need it.
+	unsigned int m_iABAmplitude;
 	unsigned int m_TimeDelay;
 public:
 	WaitForReadyPosition();

@@ -21,17 +21,22 @@ The file is used to define all the Ethernet settings.
 using namespace std;
 class Connectivity 
 {
+private:
+	static Connectivity* 						_ConnectivityObj;
+private:
+							Connectivity	();
 public:
-	static struct ETHERNET EthernetConfig;
+	static struct ETHERNET 						EthernetConfig;
 	static vector<struct GATEWAY_SERVER>* 		_DIGServersUI;
 	static map<int, struct GATEWAY_SERVER>* 	_DIGServersSC;
 	virtual 				~Connectivity	();
 	static Connectivity*	GetInstance		();
-private:
-							Connectivity	();
+	
+							Connectivity	(const Connectivity&) 			= delete;
+							Connectivity& operator=(const Connectivity&) 	= delete;
+	
 
-private:
-	static Connectivity* _ConnectivityObj;	
+
 };
 
 #endif /* CONNECTIVITY_H_ */

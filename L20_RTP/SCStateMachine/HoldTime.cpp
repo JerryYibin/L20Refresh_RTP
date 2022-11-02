@@ -65,10 +65,15 @@ void HoldTime::Enter()
 ******************************************************************************/
 void HoldTime::Loop()
 {
-	if (m_Timeout > m_iHoldTime)
+	if(m_iHoldTime == 0)
 		m_Actions = SCState::JUMP;
 	else
-		m_Timeout++;
+	{
+		if (m_Timeout < m_iHoldTime)
+			m_Timeout++;
+		else
+			m_Actions = SCState::JUMP;
+	}
 }
 
 /**************************************************************************//**

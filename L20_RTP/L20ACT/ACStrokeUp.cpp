@@ -90,7 +90,7 @@ void ACStrokeUp::Loop()
 		//Reset bit Status_AC_MOVE_DISABLE in AC_StatusEvent, because the horn is moving.
 		ACStateMachine::AC_TX->AC_StatusEvent &= ~BIT_MASK(STATUS_AC_MOVE_DISABLE);
 
-		if((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(CTRL_HOME_POSITION_ENABLE)) == BIT_MASK(CTRL_HOME_POSITION_ENABLE))
+		if((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(CTRL_ULS_ENABLE)) == BIT_MASK(CTRL_ULS_ENABLE))
 		{
 			if(ActuatorTask::GetInstance()->IsMoving() == false)
 			{
@@ -103,10 +103,7 @@ void ACStrokeUp::Loop()
 		}
 		else
 		{
-//			if (vxbGpioGetValue(GPIO::I_OPSIG) == GPIO_VALUE_HIGH)
-//			{
-				ChangeState(AC_READY);
-//			}
+			ChangeState(AC_READY);
 			LOG("CTRL_HOME_POSITION_DISABLE\n");
 		}
 	}

@@ -91,7 +91,13 @@ void ControlTask::updateWorkFlow(char* buff)
 		tmpOperationMode = SCStateMachine::NO_OPERATION;
 		break;
 	}
-
+	if(((m_OperationMode == SCStateMachine::BATCH_WELD) && (tmpOperationMode == SCStateMachine::WELD)) || 
+			((m_OperationMode == SCStateMachine::WELD) && (tmpOperationMode == SCStateMachine::BATCH_WELD)))
+	{
+		m_OperationMode = tmpOperationMode;
+		return;
+	}
+	
 	if(tmpOperationMode < SCStateMachine::END_OPERATION)
 	{
 		//To check if the new coming operation mode is equal to current operation mode. 

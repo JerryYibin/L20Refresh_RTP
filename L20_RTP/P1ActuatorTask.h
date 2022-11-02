@@ -24,6 +24,8 @@ public:
 	virtual unsigned int GetMaxSpeed				() override;
 	virtual void		 InitHeightSystem			() override;
 	virtual void 		 ScanInputs					() override;
+protected:
+	virtual	void		 DoAuxMotion				(int motion) override;
 };
 
 #endif /* P1ACTUATORTASK_H_ */

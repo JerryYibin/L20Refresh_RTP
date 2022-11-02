@@ -194,6 +194,13 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 	case TO_UI_RECIPE_ERRCODE:
 		sendWeldRecipeErrCode(message.Buffer);
 		break;
+	case TO_UI_SET_ACTIVE_RECIPE:
+		// TODO: GET ACTIVE
+		break;
+	case TO_UI_TASK_AUX_MOTION_REQ:
+		message.msgID = ActuatorTask::TO_ACT_TASK_AUX_MOTION;
+		SendToMsgQ(message, ACT_MSG_Q_ID);
+		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
 		break;

@@ -60,7 +60,33 @@ enum RequestIdentities
     SCBL_DATA_EXPORT_REQ,
 	SCBL_RECIPE_ERROR_CODE_REQ,
 	SCBL_USER_IO_INPUT_REQ,
+	SCBL_DETECT_SC_USB_DEVICE_REQ,   
+	SCBL_EXCUTE_FIRMWARE_UPGRADE_FROM_USB_REQ,
 	DUMMY
+};
+
+enum USBdetectStatus
+{
+	USB_DETECT_FAIL = 0,
+	USB_DETECT_SUCCESS
+};
+
+enum FirmwareUpgradeErrorCode
+{
+	FAILED_TO_OPEN_USB = 11,                               
+	FAILED_TO_OPEN_FIRMWARE_FILE,                         
+	FAILED_TO_READ_VXWORKS_FILES_FROM_USB,                
+	FAILED_TO_OPEN_VXWORKS_FILE,                         
+	SC_FILE_SIZE_IS_ZERO                          
+};
+
+enum SCProgressResponseToUI
+{
+	SC_PROGRESS_ONE = 21,
+	SC_PROGRESS_TWO,
+	SC_PROGRESS_THREE,
+	SC_PROGRESS_FOUR,
+	SC_PROGRESS_FIVE	
 };
 
 #endif

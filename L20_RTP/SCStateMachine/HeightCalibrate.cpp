@@ -126,7 +126,7 @@ void HeightCalibrate::Loop()
 			HeightEncoder::RawHeight.ZeroCount = ACStateMachine::AC_TX->RawHeightCount;
 			HeightEncoder::HeightProperty.ActualHeight = ACStateMachine::AC_TX->ActualHeight;
 			HeightEncoder::HeightProperty.Stroke = (HeightEncoder::RawHeight.TopCount - HeightEncoder::RawHeight.ZeroCount) * RESOLUTION;
-			ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_HOME_POSITION_ENABLE);
+			ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_ULS_ENABLE);
 			ACStateMachine::AC_RX->MasterState = SCState::RETURN_STROKE;
 		}
 		else

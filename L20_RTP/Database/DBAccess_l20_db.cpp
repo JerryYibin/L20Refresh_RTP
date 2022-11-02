@@ -997,10 +997,12 @@ int DBAccessL20DB::QueryDbVersion(char* buffer)
 int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
 {
     int PermissionLevel;
-    string str = ExecuteQuery("select PermissionLevel, Password from "+string(TABLE_USER_PROFILE)+";");
     int count;
 	vector<string> tmpStr;
-	UserAuthority::_UserProfilesSC.clear();
+    string str = ExecuteQuery("select PermissionLevel, Password from "+string(TABLE_USER_PROFILE)+";");
+    if(str.empty() == true)
+    	return 0;
+	UserAuthority::_UserProfilesSC->clear();
     Utility::StringToTokens(str, ',', tmpStr);
 	for(count = 0; count < tmpStr.size()/2; count++)
 	{
@@ -1026,14 +1028,16 @@ int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
 * \return  - ScreenIndex count
 *
 ******************************************************************************/
-int DBAccessL20DB::QueryBlockPrivilegeConfiguration(char* buffer)
+int DBAccessL20DB::QueryBlockPrivilegeConfigure(char* buffer)
 {
-	UserAuthority::_UserPrivilegesSC->clear();
     int ScreenIndex;
-    string str = ExecuteQuery("select ScreenIndex,PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+";");
     int count;
 	vector<string> tmpStr;
+    string str = ExecuteQuery("select ScreenIndex,PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+";");
+    if(str.empty() == true)
+    	return 0;
     Utility::StringToTokens(str, ',', tmpStr);
+	UserAuthority::_UserPrivilegesSC->clear();
 	for(count = 0; count < tmpStr.size()/2; count++)
 	{
         UserAuthority::_UserPrivilegesSC->insert(
@@ -1275,7 +1279,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 		LOGERR((char*) "Get Error.\n", 0, 0, 0);
         return ERROR;
 	}
-
+	
 	///////////////////////////////////////////////////////////////////////
 
 	struct tm timeStamp;
@@ -1394,7 +1398,7 @@ int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 	{
 	    return SQLITE_ERROR;
 	}
-
+    //TODO, handle user passwords security in future.
 	string strStore =
         "update " 	+ string(TABLE_USER_PROFILE) +
         " set Password='" + st->second+//Password

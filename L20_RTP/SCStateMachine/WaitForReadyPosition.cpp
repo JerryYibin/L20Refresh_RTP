@@ -58,17 +58,18 @@ WaitForReadyPosition::~WaitForReadyPosition() {
 void WaitForReadyPosition::Enter()
 {
 	m_bHeightEncoder = true;
-	m_iAfterBurst = 0;
-	m_iAfterBurstDelay = 0;
+	m_iABDuration = 0;
+	m_iABTimeDelay = 0;
+	m_iABAmplitude = 0;
 	ACStateMachine::AC_RX->MasterState = SCState::WAIT_FOR_READY_POSITION;
-	ACStateMachine::AC_RX->MasterEvents &= ~ BIT_MASK(ACState::CTRL_AC_MOVE_DISABLE);
-	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::HGT_ENCODER, &m_bHeightEncoder);
-	if(m_bHeightEncoder == false)
-		ACStateMachine::AC_RX->MasterEvents &= ~BIT_MASK(ACState::CTRL_HOME_POSITION_ENABLE);
-	else
-		ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_HOME_POSITION_ENABLE);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AFTER_BURST_TIME, &m_iAfterBurst);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AFTER_BURST_DELAY, &m_iAfterBurstDelay);
+	ACStateMachine::AC_RX->MasterEvents &= ~BIT_MASK(ACState::CTRL_AC_MOVE_DISABLE);
+	ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_ULS_ENABLE);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AFTER_BURST_TIME, &m_iABDuration);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AFTER_BURST_DELAY, &m_iABTimeDelay);
+	//TODO it is the option for AfterBurst in case of customer need it.
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AFTER_BURST_AMPLITUDE, &m_iABAmplitude);
+	if(m_iABDuration > 0)
+		PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_PC_SONIC_DISABLE);
 	m_Timeout = 0;
 	m_TimeDelay = 0;
 	// Set PC Master State as WAITFORREAYPOSITION.
@@ -107,13 +108,25 @@ void WaitForReadyPosition::Loop()
 	{
 	case PCState::PC_READY:
 		//If After Burst is not equal to 0, it means the after burst is enabled. 
-		if((m_iAfterBurst > 0) && (m_Timeout == 0))
+		if((m_iABDuration > 0) && (m_Timeout == 0))
 		{
 			//To make sure the horn has get away from the part before the after burst.
-			if((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_AC_MOVE_DISABLE)) == 0)
+			if(((ACStateMachine::AC_TX->AC_StatusEvent & BIT_MASK(ACState::STATUS_AC_MOVE_DISABLE)) == 0) && (m_TimeDelay == 0))
 			{
 				//There is another setting for the after burst named After burst time delay.
-				if(m_TimeDelay >= m_iAfterBurstDelay)
+				if(m_TimeDelay >= m_iABTimeDelay)
+				{
+					//If the time delay is reached out the setting, to set sonics on for after burst.
+					PCStateMachine::PC_RX->MasterEvents |= BIT_MASK(PCState::CTRL_AFTERBURST_ENABLE);
+				}
+				else
+				{
+					m_TimeDelay++;
+				}
+			}
+			else if(m_TimeDelay > 0)
+			{
+				if(m_TimeDelay >= m_iABTimeDelay)
 				{
 					//If the time delay is reached out the setting, to set sonics on for after burst.
 					PCStateMachine::PC_RX->MasterEvents |= BIT_MASK(PCState::CTRL_AFTERBURST_ENABLE);
@@ -133,7 +146,7 @@ void WaitForReadyPosition::Loop()
 		break;
 	case PCState::PC_WELD_RUN:
 		// If the PC State is PC_WELD_RUN, it means the PC is running after burst process.
-		if(m_Timeout >= m_iAfterBurst)
+		if(m_Timeout >= m_iABDuration)
 			PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_AFTERBURST_ENABLE);
 		else
 			m_Timeout++;

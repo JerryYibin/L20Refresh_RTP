@@ -18,20 +18,27 @@ class UserAuthority
 {
 public:
 	//Key is EntryScreenIndex, Value is Permission level;
-	static map<int, int>* _UserPrivilegesSC;
+	static map<int, int>* 			_UserPrivilegesSC;
 	//Key is PermissionLevel, Value is passcode;
-	static map<int, string>* _UserProfilesSC;
+	static map<int, string>*	 	_UserProfilesSC;
 	
-	static vector<USER_PRIVILEGE>* _UserPrivilegesUI;
-	static vector<USER_PROFILE>* _UserProfilesUI;
+	static vector<USER_PRIVILEGE>* 	_UserPrivilegesUI;
+	static vector<USER_PROFILE>* 	_UserProfilesUI;
 public:
-	UserAuthority();
-	virtual ~UserAuthority();
-	int CheckScreenAccessAuthority(const string passcode, const int entryScreenIndex);
-	int	UpdateUserPrivileges(const vector<USER_PRIVILEGE>*);
-	int UpdateUserProfiles(const vector<USER_PROFILE>*);
-	int	UpdateUserPrivileges(const map<int, int>*);
-	int UpdateUserProfiles(const map<int, string>*);
+	static UserAuthority*	GetInstance					();
+	virtual					 ~UserAuthority				();
+	int 					CheckScreenAccessAuthority	(const string passcode, const int entryScreenIndex) const;
+	int						UpdateUserPrivileges		(const vector<USER_PRIVILEGE>*);
+	int 					UpdateUserProfiles			(const vector<USER_PROFILE>*);
+	int						UpdateUserPrivileges		(const map<int, int>*);
+	int 					UpdateUserProfiles			(const map<int, string>*);
+	
+							UserAuthority				(const UserAuthority&) 	= delete;
+							UserAuthority& operator=	(const UserAuthority&) 	= delete;
+private:
+							UserAuthority				();
+private:
+	static UserAuthority* 			_UserAuthorityObj;
 };
 
 #endif /* USERAUTHORITY_H_ */

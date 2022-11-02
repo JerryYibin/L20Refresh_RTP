@@ -70,7 +70,10 @@ void WaitForTrigger::Enter()
 	{
 		ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_PART_CONTACT_ENABLE);
 	}
+	m_Timeout = 0;
 	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PRE_BURST, &m_iPreburst);
+	if(m_iPreburst > 0)
+		PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_PC_SONIC_DISABLE);
 	PCStateMachine::PC_RX->MasterState = SCState::WAIT_FOR_TRIGGER;
 	PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_PREBURST_ENABLE);
 }

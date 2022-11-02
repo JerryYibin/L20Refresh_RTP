@@ -33,6 +33,7 @@ SetWeldPressure::SetWeldPressure() {
 	m_Actions = SCState::INIT;
 	m_State = SCState::WELD_PRESSURE_SET;
 	m_Timeout = 0;
+	m_WPressure = 0;
 
 }
 
@@ -60,13 +61,9 @@ SetWeldPressure::~SetWeldPressure() {
 ******************************************************************************/
 void SetWeldPressure::Enter()
 {
-	UINT32 m_WPpressure;
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &m_WPpressure);
-	if (ACStateMachine::AC_RX->TargetPressure == m_WPpressure)
-		m_Actions = SCState::JUMP;
-	else
-		ACStateMachine::AC_RX->TargetPressure = m_WPpressure;
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &m_WPressure);
 	ACStateMachine::AC_RX->MasterState = SCState::WELD_PRESSURE_SET;
+	m_Timeout = 0;
 }
 
 /**************************************************************************//**
@@ -80,10 +77,15 @@ void SetWeldPressure::Enter()
 ******************************************************************************/
 void SetWeldPressure::Loop()
 {
-	if (m_Timeout < DELAY200MSEC)
-		m_Timeout++;
-	else
+	if(ACStateMachine::AC_RX->TargetPressure == m_WPressure)
 		m_Actions = SCState::JUMP;
+	else
+	{
+		if (m_Timeout < DELAY200MSEC)
+			m_Timeout++;
+		else
+			m_Actions = SCState::JUMP;
+	}
 }
 
 /**************************************************************************//**

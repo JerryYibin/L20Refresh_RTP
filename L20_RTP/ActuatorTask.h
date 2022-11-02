@@ -20,6 +20,7 @@ public:
 	{
 		/* Macro defined to UIC */
 		TO_ACT_TASK_PRESSURE_SET = 0,
+		TO_ACT_TASK_AUX_MOTION,
 	};
 	ActuatorTask();
 	virtual					~ActuatorTask();
@@ -48,6 +49,7 @@ protected:
 	static unsigned int CoreState;
 	static ActuatorTask* _ACObj;
 	static UINT32		Tick_1ms;
+	virtual	void			DoAuxMotion							(int motion) = 0;
 private:
 	int					m_DebounceCount;
 	unsigned int 		m_PB1;

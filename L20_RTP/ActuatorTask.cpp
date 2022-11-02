@@ -60,6 +60,7 @@ void ActuatorTask::ProcessTaskMessage(MESSAGE & message)
 	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
 	MESSAGE tmpMsg;
 	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
+	int motion;
 	
 	while(msgQReceive(SELF_MSG_Q_ID, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
 	{
@@ -68,6 +69,10 @@ void ActuatorTask::ProcessTaskMessage(MESSAGE & message)
 		{
 		case TO_ACT_TASK_PRESSURE_SET:
 			Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &ACStateMachine::AC_RX->TargetPressure);
+			break;
+		case TO_ACT_TASK_AUX_MOTION:
+			memcpy(&motion, message.Buffer, sizeof(int));
+			ActuatorTask::GetInstance()->DoAuxMotion(motion);
 			break;
 		default:
 			LOGERR((char*)"Actuator_T: --------Unknown Message ID----------- : %d", tmpMsg.msgID, 0, 0);

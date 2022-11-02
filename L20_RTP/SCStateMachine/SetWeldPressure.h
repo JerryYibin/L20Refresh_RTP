@@ -16,6 +16,8 @@
 #define DELAY200MSEC 200
 class SetWeldPressure: public SCState 
 {
+private:
+	unsigned int m_WPressure;
 public:
 	SetWeldPressure();
 	~SetWeldPressure();
