@@ -755,7 +755,7 @@ int DBAccessL20DB::pushWeldRecipeLib(const string str)
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryWeldRecipe(char* buffer)
+int DBAccessL20DB::QueryWeldRecipe(char* buffer)
 {
 	int RecipeID;
 	memcpy(&RecipeID, buffer, sizeof(unsigned int));
@@ -767,17 +767,14 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
         std::to_string(RecipeID)+";";
     string str = ExecuteQuery(strQuery);
     if(str.size()==0)
-        return;
+        return ERROR;
 #ifdef UNITTEST_DATABASE
-    else
+    if(str.size()>0)
         LOG("QueryWeldRecipe:\n%s\n", str.c_str());
 #endif
-
 	vector<string> data;
-	string tmp{};
-	stringstream input(str);
-	while (getline(input, tmp, ','))
-		data.push_back(tmp);
+	if (!Utility::StringToTokens(str,',',data))
+		return ERROR;
 
 	unsigned int m_Amplitude 	= stoi(data.at(6));
 	int m_WPpressure 			= stoi(data.at(8));
@@ -864,7 +861,7 @@ void DBAccessL20DB::QueryWeldRecipe(char* buffer)
             power[i].m_Order, power[i].m_StepValue, power[i].m_AmplitudeValue);
         }
 #endif
-    return;
+    return OK;
 }
 
 /**************************************************************************//**
@@ -966,10 +963,12 @@ void DBAccessL20DB::QueryHeightCalibration(char* buffer)
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryDbVersion(char* buffer)
+int DBAccessL20DB::QueryDbVersion(char* buffer)
 {
     string str = ExecuteQuery(
-                "select * from "+string(TABLE_DB_VERSION)+";");
+                "select * from "+string(TABLE_DB_VERSION)+";"); 
+    if(str.size()==0)
+        return ERROR;
 
 	vector<string> tmpStr;
     Utility::StringToTokens(str, ',', tmpStr);
@@ -984,7 +983,7 @@ void DBAccessL20DB::QueryDbVersion(char* buffer)
     LOG("Minor:%s\n", tmpStr[1].c_str());
     LOG("Build:%s\n", tmpStr[2].c_str());
 #endif
-    return;
+    return OK;
 }
 
 /**************************************************************************//**

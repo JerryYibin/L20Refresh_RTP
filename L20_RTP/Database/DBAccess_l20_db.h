@@ -63,10 +63,10 @@ public:
 
 	virtual int 	QueryBlockWeldResult(char *) 		override;
 	virtual void 	QueryWeldSignature(char *) 			override;
-	virtual void 	QueryWeldRecipe(char *) 			override;
+	virtual int 	QueryWeldRecipe(char *) 			override;
 	virtual int 	QueryBlockAlarmLog(char *) 		  	override;
 	virtual void 	QueryHeightCalibration(char *) 		override;
-	virtual void 	QueryDbVersion(char *) 				override;
+	virtual int 	QueryDbVersion(char *) 				override;
 	virtual int 	QueryBlockUserProfiles(char *) 		override;
 	virtual int 	QueryBlockPrivilegeConfiguration(char *) override;
 	virtual int 	QueryBlockPowerSupply(char *)		override;

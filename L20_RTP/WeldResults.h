@@ -1,6 +1,6 @@
 /************************************************************************** 
 
-      Copyright (c) Branson Ultrasonics Corporation, 1996-2018
+      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
  
      This program is the property of Branson Ultrasonics Corporation
      Copying of this software is expressly forbidden, without the prior
@@ -11,6 +11,12 @@
 #include <cstring>
 #ifndef WELDRESULTS_H_
 #define WELDRESULTS_H_
+#include "Common.h"
+#include "HeartBeatUI.h"
+#include "WeldResultsDefine.h"
+
+///////////////////////////////////
+
 #define L20REFRESH 							1
 #define USER_NAME_SIZE						16
 #define BARCODE_DATA_SIZE					50
@@ -107,4 +113,13 @@ using namespace std;
 #endif
 
 
-#endif /* WELDRESULTS_H_ */
+class WeldResult{
+public:
+	static WeldResults* _WeldResults;
+public:
+	WeldResult();
+	~WeldResult();
+	static int Get(HEARTBEAT*);
+};
+
+#endif

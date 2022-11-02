@@ -42,10 +42,10 @@ public:
 
 	virtual int 	QueryBlockWeldResult(char *)		= 0;
 	virtual void 	QueryWeldSignature(char *)			= 0;
-	virtual void 	QueryWeldRecipe(char *)				= 0;
+	virtual int 	QueryWeldRecipe(char *)				= 0;
 	virtual int 	QueryBlockAlarmLog(char *)		= 0;
 	virtual void 	QueryHeightCalibration(char *)		= 0;
-	virtual void 	QueryDbVersion(char *)				= 0;
+	virtual int 	QueryDbVersion(char *)				= 0;
 	virtual int 	QueryBlockUserProfiles(char *)			= 0;
 	virtual int 	QueryBlockPrivilegeConfiguration(char *)	= 0;
 	virtual int 	QueryBlockPowerSupply(char *)		= 0;
