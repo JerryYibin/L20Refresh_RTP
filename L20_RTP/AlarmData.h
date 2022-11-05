@@ -18,7 +18,6 @@
 #include <vector>
 
 #define ALARM_LOG_MAX 50
-#define TABLE_ALARMLOG_MEM                    7 /* there are 7 columns in table AlarmLog */
 
 struct ALARM_DATA
 {

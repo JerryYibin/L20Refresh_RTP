@@ -48,23 +48,13 @@ SQLiteDB::~SQLiteDB() {
 ******************************************************************************/
 int SQLiteDB::Callback(void *vPtrData, int argc, char **argv, char **azColName)
 {
-	int nIndex = 0;
-	
 	string *strData = static_cast<string*>(vPtrData);
-		
-	for(nIndex = 0; nIndex < argc; nIndex++)
+	for(int nIndex = 0; nIndex < argc; nIndex++)
 	{
-		if(argv[nIndex] != nullptr)
-		{
-			strData->append(argv[nIndex]);
-			strData->append(DB_VALUE_SEPARATOR);
-		}
-		else
-		{
-			strData->append(DB_VALUE_SEPARATOR);
-		}
+		strData->append(argv[nIndex]);
+		strData->append(DB_VALUE_SEPARATOR);
 	}
-	
+	strData->replace(strData->size() - 1, 1, DB_RECORD_SEPARATOR);
 	return 0;
 }
 
@@ -205,7 +195,7 @@ string SQLiteDB::ExecuteQuery(string strSqlStatement, int *pnStatus, int nRetryC
 		
 		if(!strOutBuffer.empty())
 		{
-			//Erase the last DB_VALUE_SEPARATOR (,) from the returned comma separated string.
+			//Erase the last SEPARATOR from the returned string.
 			strOutBuffer.erase(strOutBuffer.size() - 1);
 		}		
 	}

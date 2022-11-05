@@ -17,6 +17,8 @@
 #include "../Common.h"
 //Values read from database are separated by comma
 #define DB_VALUE_SEPARATOR	","
+//records read from database are separated by semicolon
+#define DB_RECORD_SEPARATOR	";"
 
 //Retry interval in case SQLITE_BUSY/SQLITE_LOCKED error returned.
 #define SQLITE_BUSY_RETRY_INTERVAL	FIFTY_MS_DELAY

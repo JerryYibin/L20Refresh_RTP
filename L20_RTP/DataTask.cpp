@@ -254,6 +254,9 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_SYS_CONFIG_QUERY:
         _ObjDBConn->QuerySystemConfigure(message.Buffer);
 		break;
+	case TO_DATA_TASK_ACTIVE_RECIPE_QUERY:
+        _ObjDBConn->QueryActiveRecipe(message.Buffer);
+		break;
 
 	case TO_DATA_TASK_HI_CALIB_UPDATE:
         _ObjDBConn->UpdateHeightCalibration(message.Buffer);
@@ -273,6 +276,10 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_SYS_CONFIG_UPDATE:
         _ObjDBConn->UpdateSystemConfigure(message.Buffer);
 		break;
+	case TO_DATA_TASK_ACTIVE_RECIPE_UPDATE:
+        _ObjDBConn->UpdateActiveRecipe(message.Buffer);
+		break;
+
 	case TO_DATA_TASK_WELD_RECIPE_DELETE:
         _ObjDBConn->DeleteOldest(TABLE_WELD_RECIPE);
 		break;

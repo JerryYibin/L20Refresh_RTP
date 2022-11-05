@@ -211,7 +211,10 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_TEACH_MODE_SET_UPDATE,
 
     TO_DATA_TASK_SYS_CONFIG_QUERY,
-    TO_DATA_TASK_SYS_CONFIG_UPDATE
+    TO_DATA_TASK_SYS_CONFIG_UPDATE,
+
+    TO_DATA_TASK_ACTIVE_RECIPE_QUERY,
+    TO_DATA_TASK_ACTIVE_RECIPE_UPDATE
     };
 #define DATA_TASK_EVENT 0x02
 
@@ -280,6 +283,9 @@ int main(int argc, char *argv[])
  *   b for query
  *   u for update
  * b for SystemConfigure
+ *   b for query
+ *   u for update
+ * c for ActiveRecipe
  *   b for query
  *   u for update
  *
@@ -689,6 +695,27 @@ int main(int argc, char *argv[])
                     case 'u':
                         {
                         buf.msgID = TO_DATA_TASK_SYS_CONFIG_UPDATE;
+                        break;
+                        }
+                        break;
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
+            case 'c':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'b':
+                        {
+                        buf.msgID = TO_DATA_TASK_ACTIVE_RECIPE_QUERY;
+                        break;
+                        }
+                    case 'u':
+                        {
+                        buf.msgID = TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
                         break;
                         }
                         break;

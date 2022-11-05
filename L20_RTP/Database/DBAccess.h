@@ -51,6 +51,7 @@ public:
 	virtual int 	QueryBlockPowerSupply(char *)		= 0;
 	virtual int 	QueryBlockTeachModeSetting(char *)	= 0;
 	virtual void 	QuerySystemConfigure(char *)		= 0;
+	virtual void 	QueryActiveRecipe(char *)		= 0;
 	
 	virtual void 	QueryWeldRecipeAll(char *)			= 0;
 	virtual int 	QueryWeldRecipeLatestPage()			= 0;
@@ -62,6 +63,7 @@ public:
 	virtual int 	UpdateBlockPowerSupply(char *)		= 0;
 	virtual int 	UpdateBlockTeachModeSetting(char *)	= 0;
 	virtual int 	UpdateSystemConfigure(char *)		= 0;
+	virtual int 	UpdateActiveRecipe(char *)		= 0;
 
 	virtual void 	DeleteOldest(const char *)			= 0;
 	virtual int		DeleteSpecificRecipe(const char *)	= 0;
