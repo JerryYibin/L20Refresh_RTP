@@ -324,7 +324,18 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 {
-	cout << "305 StoreWeldRecipe" << endl;
+#if UNITTEST_DATABASE
+	if(Recipe::RecipeSC == nullptr)
+    	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
+#endif
+	string str = ExecuteQuery("select RecipeName from "+string(TABLE_WELD_RECIPE)+
+                    " where RecipeName='"+Recipe::RecipeSC->m_RecipeName+"';");
+	if(str.empty()!=true)
+	{
+		LOGERR((char*) "Database_T: %s already exists in table WeldRecipe\n",
+                (int)Recipe::RecipeSC->m_RecipeName, 0, 0);
+    	return SQLITE_ERROR;
+	}
 
     WeldStepValueSetting m_EnergyStep[STEP_MAX];
     WeldStepValueSetting m_TimeStep[STEP_MAX];
@@ -354,10 +365,6 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
     int m_WeldStepMode = 0;
     char m_RecipePicPath[PIC_PATH_LEN];
 
-#if UNITTEST_DATABASE
-	if(Recipe::RecipeSC == nullptr)
-    	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
-#endif
     if(
     !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_STEP, m_EnergyStep)||
     !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::TIME_STEP, m_TimeStep)||
@@ -544,6 +551,7 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	return nErrCode;
 }
 
+#ifdef DB_RECORD_SEPARATOR
 /**************************************************************************//**
 * \brief   - Query the latest records from table Weld Result
 *
@@ -567,7 +575,6 @@ int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
 #if UNITTEST_DATABASE
     LOG("QueryBlockWeldResult:\n%s\n\n", str.c_str());
 #endif
-
     Utility::StringToTokens(str, DB_RECORD_SEPARATOR[0], tmpStr);
 	for(count = 0; count < tmpStr.size(); count++)
 	    {
@@ -608,7 +615,70 @@ int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
 	    }
     return count;
 }
+#else
+/**************************************************************************//**
+* \brief   - Query the latest records from table Weld Result
+*
+* \param   - char* buffer - ID
+*
+* \return  - int - count of records
+*
+******************************************************************************/
+int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
+{
+    int count;
+    string str;
+	vector<string> tmpStr;
+	int id = *(int* )buffer;
 
+    str = ExecuteQuery(
+                string("select * from ")+string(TABLE_WELD_RESULT)+
+                " where ID <= "+std::to_string(id)+" and ID > "+
+                std::to_string(id-RESULT_FOR_UI_MAX)+
+                " order by ID desc;");
+#if UNITTEST_DATABASE
+    LOG("QueryBlockWeldResult:\n%s\n\n", str.c_str());
+#endif
+
+    Utility::StringToTokens(str, ',', tmpStr);
+	for(count = 0; count < tmpStr.size()/TABLE_RESULT_MEM; count++)
+	    {
+        strncpy(CommonProperty::WeldResultForUI[count].PartID,
+            tmpStr[count*TABLE_RESULT_MEM+1].c_str(), BARCODE_DATA_SIZE);//PartID
+        CommonProperty::WeldResultForUI[count].RecipeNum =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+3].c_str());//RecipeID
+        CommonProperty::WeldResultForUI[count].TotalEnergy =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+4].c_str());//WeldEnergy
+        CommonProperty::WeldResultForUI[count].TriggerPressure =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+5].c_str());//TriggerPressure
+        CommonProperty::WeldResultForUI[count].WeldPressure =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+6].c_str());//WeldPressure
+        CommonProperty::WeldResultForUI[count].Amplitude =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+7].c_str());//WeldAmplitude
+        CommonProperty::WeldResultForUI[count].WeldTime =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+8].c_str());//WeldTime
+        CommonProperty::WeldResultForUI[count].PeakPower =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+9].c_str());//WeldPeakPower
+        CommonProperty::WeldResultForUI[count].PreHeight =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+10].c_str());//TriggerHeight
+        CommonProperty::WeldResultForUI[count].PostHeight =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+11].c_str());//WeldHeight
+        CommonProperty::WeldResultForUI[count].ALARMS.ALARMflags =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+12].c_str());//AlarmFlag
+        CommonProperty::WeldResultForUI[count].CycleCounter =
+            atoi(tmpStr[count*TABLE_RESULT_MEM+14].c_str());//CycleCounter
+#if UNITTEST_DATABASE
+        LOG("ID: %s\n", tmpStr[count*TABLE_RESULT_MEM].c_str());
+        LOG("PartID: %s\n", CommonProperty::WeldResultForUI[count].PartID);
+        LOG("DateTime: %s\n", tmpStr[count*TABLE_RESULT_MEM+2].c_str());
+        LOG("RecipeID: %d\n", CommonProperty::WeldResultForUI[count].RecipeNum);
+        LOG("WeldTime: %d\n", CommonProperty::WeldResultForUI[count].WeldTime);
+        LOG("\n");
+#endif
+	    }
+    return count;
+}
+#endif
 /**************************************************************************//**
 * \brief   - Query Weld Signature from DB
 *
@@ -719,6 +789,7 @@ int DBAccessL20DB::QueryWeldRecipeNextPage()
     return TRUE;
 }
 
+#ifdef DB_RECORD_SEPARATOR
 /**************************************************************************//**
 * \brief   - Split and pack data into vectors
 *
@@ -745,7 +816,38 @@ int DBAccessL20DB::pushWeldRecipeLib(const string str)
 	}
 	return TRUE;
 }
+#else
+/**************************************************************************//**
+* \brief   - Split and pack data into vectors
+*
+* \param   - const string str
+*
+* \return  - null
+*
+******************************************************************************/
+int DBAccessL20DB::pushWeldRecipeLib(const string str)
+{
+	vector<string> data;
+	WeldRecipeLibForUI WLib{};
+	if (!Utility::StringToTokens(str,',',data))
+		return FALSE;
 
+	for (int i = 0; i < data.size(); ++i)
+	{
+		if (i % 4 == 1)
+			WLib.m_RecipeID = atoi(data[i].c_str());
+		else if (i % 4 == 2)
+			memcpy(&WLib.m_RecipeName, data[i].c_str(), RECIPE_LEN);
+		else if (i % 4 == 3)
+		{
+			memcpy(&WLib.m_DateTime, data[i].c_str(), RECIPE_LEN);
+			Recipe::WeldRecipeLibraryForUI.push_back(WLib);
+		}
+	}
+	return TRUE;
+}
+
+#endif
 /**************************************************************************//**
 * \brief   - Query Specific Weld Recipe from DB
 *
@@ -864,6 +966,7 @@ int DBAccessL20DB::QueryWeldRecipe(char* buffer)
     return OK;
 }
 
+#ifdef DB_RECORD_SEPARATOR
 /**************************************************************************//**
 * \brief   - Query AlarmLog from DB
 *
@@ -928,7 +1031,70 @@ int DBAccessL20DB::QueryBlockAlarmLog(char* buffer)
         }
     return count;
 }
+#else
+/**************************************************************************//**
+* \brief   - Query AlarmLog from DB
+*
+* \param   - char* buffer - ID
+*
+* \return  - int - count of records
+*
+******************************************************************************/
+//TODO Is it temporary code for test only, because there is not any return?
+int DBAccessL20DB::QueryBlockAlarmLog(char* buffer)
+{
+    int count;
+	vector<string> tmpStr;
+    int id = *(int* )buffer;
 
+    string str = ExecuteQuery(
+                "select * from "+string(TABLE_ALARM_LOG)+
+                " where ID <= "+std::to_string(id)+" and ID > "+
+                std::to_string(id-ALARM_LOG_MAX)+
+                " order by ID desc;");
+    Utility::StringToTokens(str, ',', tmpStr);
+
+	for(count = 0; count < tmpStr.size()/TABLE_ALARMLOG_MEM; count++)
+        {
+        UI_ALARM_LOG tmpLog;
+
+        bzero(tmpLog.DateTime, 20);
+        strncpy(tmpLog.DateTime, tmpStr[count*TABLE_ALARMLOG_MEM+1].c_str(), 20);//DateTime
+        tmpLog.AlarmType = atoi(tmpStr[count*TABLE_ALARMLOG_MEM+2].c_str());//AlarmType
+
+        str = ExecuteQuery(
+                    "select RecipeName from "+string(TABLE_WELD_RECIPE)+
+                    " where ID="+ tmpStr[count*TABLE_ALARMLOG_MEM+3] +";");//RecipeID
+        bzero(tmpLog.RecipeName, RECIPE_LEN);
+        strncpy(tmpLog.RecipeName, str.c_str(), RECIPE_LEN);
+
+        tmpLog.WeldCount = atoi(tmpStr[count*TABLE_ALARMLOG_MEM+4].c_str());//WeldResultID
+
+        for(int i=0; i<AlarmDataSC::AlarmLog.size(); i++)
+            {
+            if(AlarmDataSC::AlarmLog[i].WeldCount == tmpLog.WeldCount)
+                {
+#ifdef UNITTEST_DATABASE
+                LOG("erase:%u\n", tmpLog.WeldCount);
+#endif
+                AlarmDataSC::AlarmLog.erase(AlarmDataSC::AlarmLog.begin()+i);
+                break;
+                }
+            }
+		AlarmDataSC::AlarmLog.push_back(tmpLog);
+
+#ifdef UNITTEST_DATABASE
+        LOG("ID:%s\n", tmpStr[count*TABLE_ALARMLOG_MEM].c_str());
+        LOG("WeldCount:%u\n", tmpLog.WeldCount);
+        LOG("RecipeId:%d\n", atoi(tmpStr[count*TABLE_ALARMLOG_MEM+3].c_str()));
+        LOG("RecipeName:%s\n", tmpLog.RecipeName);
+        LOG("DateTime:%s\n", tmpLog.DateTime);
+        LOG("AlarmType:%d\n\n", tmpLog.AlarmType);
+#endif
+        }
+    return count;
+}
+#endif
 /**************************************************************************//**
 * \brief   - Query HeightCalibration from DB
 *
@@ -988,6 +1154,7 @@ int DBAccessL20DB::QueryDbVersion(char* buffer)
     return OK;
 }
 
+#ifdef DB_RECORD_SEPARATOR
 /**************************************************************************//**
 * \brief   - Query PermissionLevel and Password from DB
 *
@@ -1028,7 +1195,48 @@ int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
 #endif
     return count;
 }
+#else
+/**************************************************************************//**
+* \brief   - Query PermissionLevel and Password from DB
+*
+* \param   - char* buffer - not used
+*
+* \return  - Password count
+*
+******************************************************************************/
+int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
+{
+#if UNITTEST_DATABASE
+    if(UserAuthority::_UserProfilesSC == nullptr)
+		UserAuthority::GetInstance();
+#endif
+    int PermissionLevel;
+    int count;
+	vector<string> tmpStr;
+    string str = ExecuteQuery("select PermissionLevel, Password from "+string(TABLE_USER_PROFILE)+";");
+    if(str.empty() == true)
+    	return 0;
+	UserAuthority::_UserProfilesSC->clear();
 
+    Utility::StringToTokens(str, ',', tmpStr);
+	for(count = 0; count < tmpStr.size()/2; count++)
+	    {
+        UserAuthority::_UserProfilesSC->insert(
+             pair<int, string>
+            (atoi(tmpStr[count*2].c_str()),tmpStr[count*2+1]));
+	    }
+#if UNITTEST_DATABASE
+    map<int,string>::iterator st;
+    for(st=UserAuthority::_UserProfilesSC->begin();st!=UserAuthority::_UserProfilesSC->end();st++)
+    {
+        LOG("PermissionLevel(%d) Password(%s)\n", st->first, st->second.c_str());
+    }
+#endif
+    return count;
+}
+#endif
+
+#ifdef DB_RECORD_SEPARATOR
 /**************************************************************************//**
 * \brief   - Query ScreenIndex and PermissionLevel from DB
 *
@@ -1048,8 +1256,9 @@ int DBAccessL20DB::QueryBlockPrivilegeConfigure(char* buffer)
     string str = ExecuteQuery("select ScreenIndex,PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+";");
     if(str.empty() == true)
     	return 0;
-    Utility::StringToTokens(str, DB_RECORD_SEPARATOR[0], tmpStr);
 	UserAuthority::_UserPrivilegesSC->clear();
+
+    Utility::StringToTokens(str, DB_RECORD_SEPARATOR[0], tmpStr);
 	for(count = 0; count < tmpStr.size(); count++)
 	    {
 	    vector<string> tmpStr2;
@@ -1067,7 +1276,48 @@ int DBAccessL20DB::QueryBlockPrivilegeConfigure(char* buffer)
 #endif
     return count;
 }
+#else
+/**************************************************************************//**
+* \brief   - Query ScreenIndex and PermissionLevel from DB
+*
+* \param   - char* buffer - not used
+*
+* \return  - ScreenIndex count
+*
+******************************************************************************/
+int DBAccessL20DB::QueryBlockPrivilegeConfigure(char* buffer)
+{
+#if UNITTEST_DATABASE
+    if(UserAuthority::_UserPrivilegesSC == nullptr)
+		UserAuthority::GetInstance();
+#endif
+    int ScreenIndex;
+    int count;
+	vector<string> tmpStr;
+    string str = ExecuteQuery("select ScreenIndex,PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+";");
+    if(str.empty() == true)
+    	return 0;
+	UserAuthority::_UserPrivilegesSC->clear();
 
+    Utility::StringToTokens(str, ',', tmpStr);
+	for(count = 0; count < tmpStr.size()/2; count++)
+	    {
+        UserAuthority::_UserPrivilegesSC->insert(
+             pair<int, int>
+            (atoi(tmpStr[count*2].c_str()),atoi(tmpStr[count*2+1].c_str())));
+	    }
+#if UNITTEST_DATABASE
+    map<int,int>::iterator st;
+    for(st=UserAuthority::_UserPrivilegesSC->begin();st!=UserAuthority::_UserPrivilegesSC->end();st++)
+    {
+        LOG("ScreenIndex(%d) PermissionLevel(%d)\n", st->first, st->second);
+    }
+#endif
+    return count;
+}
+#endif
+
+#ifdef DB_RECORD_SEPARATOR
 /**************************************************************************//**
 * \brief   - Query all records from table PowerSupply
 *
@@ -1105,7 +1355,47 @@ int DBAccessL20DB::QueryBlockPowerSupply(char* buffer)
 	    }
     return count;
 }
+#else
+/**************************************************************************//**
+* \brief   - Query all records from table PowerSupply
+*
+* \param   - char* buffer - not used
+*
+* \return  - int - count of records
+*
+******************************************************************************/
+int DBAccessL20DB::QueryBlockPowerSupply(char* buffer)
+{
+    int count;
+    string str;
+	vector<string> tmpStr;
 
+    str = ExecuteQuery(string("select * from ")+string(TABLE_PWR_SUPPLY)+";");
+#if UNITTEST_DATABASE
+    LOG("QueryBlockPowerSupply:\n%s\n\n", str.c_str());
+    SystemConfiguration::PowerSupplyType.clear();
+#endif
+
+    Utility::StringToTokens(str, ',', tmpStr);
+	for(count = 0; count < tmpStr.size()/TABLE_RESULT_MEM; count++)
+	    {
+	    POWER_SUPPLY_TYPE tmpPwr;
+        tmpPwr.Frequency = atoi(tmpStr[count*TABLE_RESULT_MEM+1].c_str());//Frequency
+        tmpPwr.Power = atoi(tmpStr[count*TABLE_RESULT_MEM+2].c_str());//Power
+		SystemConfiguration::PowerSupplyType.push_back(tmpPwr);
+
+#if UNITTEST_DATABASE
+        LOG("ID: %s\n", tmpStr[count*TABLE_RESULT_MEM].c_str());
+        LOG("Frequency: %d\n", tmpPwr.Frequency);
+        LOG("Power: %d\n", tmpPwr.Power);
+        LOG("\n");
+#endif
+	    }
+    return count;
+}
+#endif
+
+#ifdef DB_RECORD_SEPARATOR
 /**************************************************************************//**
 * \brief   - Query all records from table TeachModeSetting
 *
@@ -1162,7 +1452,61 @@ int DBAccessL20DB::QueryBlockTeachModeSetting(char* buffer)
 	    }
     return count;
 }
+#else
+/**************************************************************************//**
+* \brief   - Query all records from table TeachModeSetting
+*
+* \param   - char* buffer - not used
+*
+* \return  - int - count of records
+*
+******************************************************************************/
+int DBAccessL20DB::QueryBlockTeachModeSetting(char* buffer)
+{
+    int count;
+    string str;
+	vector<string> tmpStr;
 
+    str = ExecuteQuery(string("select * from ")+string(TABLE_TEACH_MODE_SET)+";");
+#if UNITTEST_DATABASE
+    LOG("QueryBlockTeachModeSetting:\n%s\n\n", str.c_str());
+    SystemConfiguration::TeachModeSetting.clear();
+#endif
+
+    Utility::StringToTokens(str, ',', tmpStr);
+	for(count = 0; count < tmpStr.size()/TABLE_TEACH_MODE_MEM; count++)
+	    {
+	    TEACH_MODE_SETTING tmpTeach;
+        tmpTeach.TeachMode = (TEACHMODE_TYPE)atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+1].c_str());//TeachModeType
+        tmpTeach.TimeRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+2].c_str());//TimePLRG
+        tmpTeach.TimeRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+3].c_str());//TimeMSRG
+        tmpTeach.PowerRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+4].c_str());//PowerPLRG
+        tmpTeach.PowerRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+5].c_str());//PowerMSRG
+        tmpTeach.PreHeightRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+6].c_str());//PreHeightPLRG
+        tmpTeach.PreHeightRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+7].c_str());//PreHeightMSRG
+        tmpTeach.PostHeightRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+8].c_str());//HeightPLRG
+        tmpTeach.PostHeightRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+9].c_str());//HeightMSRG
+        tmpTeach.Quantity = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+10].c_str());//Quantity
+		SystemConfiguration::TeachModeSetting.push_back(tmpTeach);
+
+#if UNITTEST_DATABASE
+        LOG("ID: %s\n", tmpStr[count*TABLE_TEACH_MODE_MEM].c_str());
+        LOG("TeachMode: %d\n", tmpTeach.TeachMode);
+        LOG("TimeRangePL: %d\n", tmpTeach.TimeRangePL);
+        LOG("TimeRangeMS: %d\n", tmpTeach.TimeRangeMS);
+        LOG("PowerRangePL: %d\n", tmpTeach.PowerRangePL);
+        LOG("PowerRangeMS: %d\n", tmpTeach.PowerRangeMS);
+        LOG("PreHeightRangePL: %d\n", tmpTeach.PreHeightRangePL);
+        LOG("PreHeightRangeMS: %d\n", tmpTeach.PreHeightRangeMS);
+        LOG("PostHeightRangePL: %d\n", tmpTeach.PostHeightRangePL);
+        LOG("PostHeightRangeMS: %d\n", tmpTeach.PostHeightRangeMS);
+        LOG("Quantity: %d\n", tmpTeach.Quantity);
+        LOG("\n");
+#endif
+	    }
+    return count;
+}
+#endif
 /**************************************************************************//**
 * \brief   - Query the unique record from table SystemConfigure
 *
@@ -1859,7 +2203,7 @@ int DBAccessL20DB::Vector2String(const vector<WELD_SIGNATURE>* _ptrVector, strin
 				str += std::to_string(tmpSignature.Height) + DB_VALUE_SEPARATOR;
 				break;
 			case AMPLITUDE:
-				str += std::to_string(tmpSignature.Amplitude) + DB_RECORD_SEPARATOR;
+				str += std::to_string(tmpSignature.Amplitude) + ";";
 				break;
 			default:
 				break;
@@ -1962,7 +2306,7 @@ int DBAccessL20DB::String2Vector(const string str, vector<WELD_SIGNATURE>* _ptrV
 		return ERROR;
 	vector<string> tmpStringlist;
 	vector<string> tmpStringData;
-	if (Utility::StringToTokens(str, DB_RECORD_SEPARATOR[0], tmpStringlist) == 0)
+	if (Utility::StringToTokens(str, ';', tmpStringlist) == 0)
 		return ERROR;
 
 	for (int i = 0; i < tmpStringlist.size(); i++)
@@ -2037,7 +2381,7 @@ int DBAccessL20DB::Vector2String(const vector<WeldStepValueSetting>* _ptrVector,
 				str += std::to_string(tmpStepSetting.m_StepValue) + DB_VALUE_SEPARATOR;
 				break;
 			case AMPLITUDE:
-				str += std::to_string(tmpStepSetting.m_AmplitudeValue) + DB_RECORD_SEPARATOR;
+				str += std::to_string(tmpStepSetting.m_AmplitudeValue) + ";";
 				break;
 			default:
 				break;
@@ -2071,7 +2415,7 @@ int DBAccessL20DB::String2Vector(const string str, vector<WeldStepValueSetting>*
 		return ERROR;
 	vector<string> tmpStringlist;
 	vector<string> tmpStringData;
-	if (Utility::StringToTokens(str, DB_RECORD_SEPARATOR[0], tmpStringlist) == 0)
+	if (Utility::StringToTokens(str, ';', tmpStringlist) == 0)
 		return ERROR;
 
 	for (int i = 0; i < tmpStringlist.size(); i++)

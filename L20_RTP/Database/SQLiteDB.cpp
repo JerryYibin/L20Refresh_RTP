@@ -54,7 +54,11 @@ int SQLiteDB::Callback(void *vPtrData, int argc, char **argv, char **azColName)
 		strData->append(argv[nIndex]);
 		strData->append(DB_VALUE_SEPARATOR);
 	}
+#ifdef DB_RECORD_SEPARATOR
 	strData->replace(strData->size() - 1, 1, DB_RECORD_SEPARATOR);
+#else
+	strData->replace(strData->size() - 1, 1, DB_VALUE_SEPARATOR);
+#endif
 	return 0;
 }
 

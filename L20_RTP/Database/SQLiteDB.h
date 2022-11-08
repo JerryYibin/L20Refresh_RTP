@@ -17,8 +17,16 @@
 #include "../Common.h"
 //Values read from database are separated by comma
 #define DB_VALUE_SEPARATOR	","
+
 //records read from database are separated by semicolon
 #define DB_RECORD_SEPARATOR	";"
+#undef  DB_RECORD_SEPARATOR
+#ifndef DB_RECORD_SEPARATOR
+#define TABLE_RESULT_MEM            15 /* there are 15 columns in table WeldResult */
+#define TABLE_PWR_SUP_MEM            3
+#define TABLE_TEACH_MODE_MEM        11
+#define TABLE_ALARMLOG_MEM           7 /* there are 7 columns in table AlarmLog */
+#endif
 
 //Retry interval in case SQLITE_BUSY/SQLITE_LOCKED error returned.
 #define SQLITE_BUSY_RETRY_INTERVAL	FIFTY_MS_DELAY
