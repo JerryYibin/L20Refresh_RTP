@@ -199,7 +199,7 @@ string SQLiteDB::ExecuteQuery(string strSqlStatement, int *pnStatus, int nRetryC
 		
 		if(!strOutBuffer.empty())
 		{
-			//Erase the last SEPARATOR from the returned string.
+			//Erase the last DB_VALUE_SEPARATOR (,) from the returned comma separated string.
 			strOutBuffer.erase(strOutBuffer.size() - 1);
 		}		
 	}

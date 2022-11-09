@@ -875,7 +875,7 @@ int DBAccessL20DB::QueryWeldRecipe(char* buffer)
         LOG("QueryWeldRecipe:\n%s\n", str.c_str());
 #endif
 	vector<string> data;
-	if (!Utility::StringToTokens(str,DB_VALUE_SEPARATOR[0],data))
+	if (!Utility::StringToTokens(str,',',data))
 		return ERROR;
 
 	unsigned int m_Amplitude 	= stoi(data.at(6));
@@ -1104,22 +1104,30 @@ int DBAccessL20DB::QueryBlockAlarmLog(char* buffer)
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryHeightCalibration(char* buffer)
+int DBAccessL20DB::QueryHeightCalibration(char* buffer)
 {
+	int nErrCode = SQLITE_ERROR;
+	int count;
     string str = ExecuteQuery(
-                "select * from "+string(TABLE_HI_CALIB)+";");
-
+                "select PSI, Count from "+string(TABLE_HI_CALIB)+";", &nErrCode);
+    if(str.empty() == true)
+    	return 0;
+    if(nErrCode != SQLITE_OK)
+    	return 0;
 	vector<string> tmpStr;
-    Utility::StringToTokens(str, DB_VALUE_SEPARATOR[0], tmpStr);
+    Utility::StringToTokens(str, ',', tmpStr);
+    //The expected result shall be "1, 30000, 2, 30000, ..., 20, 32261"; The first is PSI, second the height raw count.
+    for(count = 0; count < tmpStr.size() / 2; count++)
+    {
+    	HeightEncoder::HeightCalibratedMap[atoi(tmpStr[count * 2].c_str())].ZeroCount = atoi(tmpStr[count * 2 + 1].c_str());
+    }
 
-    HeightEncoder::HeightCalibratedMap[atoi(tmpStr[0].c_str())].ZeroCount = atoi(tmpStr[1].c_str());
-
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("HeightCalibration:%s\n", str.c_str());
     LOG("PSI:%s\n", tmpStr[0].c_str());
     LOG("Count:%s\n", tmpStr[1].c_str());
 #endif
-    return;
+    return count;
 }
 
 /**************************************************************************//**
@@ -1206,25 +1214,23 @@ int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
 {
-#if UNITTEST_DATABASE
-    if(UserAuthority::_UserProfilesSC == nullptr)
-		UserAuthority::GetInstance();
-#endif
     int PermissionLevel;
     int count;
 	vector<string> tmpStr;
-    string str = ExecuteQuery("select PermissionLevel, Password from "+string(TABLE_USER_PROFILE)+";");
+	int nErrCode = SQLITE_ERROR;
+    string str = ExecuteQuery("select PermissionLevel, Password from "+string(TABLE_USER_PROFILE)+";", &nErrCode);
     if(str.empty() == true)
     	return 0;
+    if(nErrCode != SQLITE_OK)
+    	return 0;
 	UserAuthority::_UserProfilesSC->clear();
-
     Utility::StringToTokens(str, ',', tmpStr);
 	for(count = 0; count < tmpStr.size()/2; count++)
-	    {
+	{
         UserAuthority::_UserProfilesSC->insert(
              pair<int, string>
             (atoi(tmpStr[count*2].c_str()),tmpStr[count*2+1]));
-	    }
+	}
 #if UNITTEST_DATABASE
     map<int,string>::iterator st;
     for(st=UserAuthority::_UserProfilesSC->begin();st!=UserAuthority::_UserProfilesSC->end();st++)
@@ -1287,25 +1293,23 @@ int DBAccessL20DB::QueryBlockPrivilegeConfigure(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::QueryBlockPrivilegeConfigure(char* buffer)
 {
-#if UNITTEST_DATABASE
-    if(UserAuthority::_UserPrivilegesSC == nullptr)
-		UserAuthority::GetInstance();
-#endif
     int ScreenIndex;
     int count;
 	vector<string> tmpStr;
-    string str = ExecuteQuery("select ScreenIndex,PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+";");
+	int nErrCode = SQLITE_ERROR;
+    string str = ExecuteQuery("select ScreenIndex,PermissionLevel from "+string(TABLE_PRIVILEGE_CONFIG)+";", &nErrCode);
     if(str.empty() == true)
     	return 0;
-	UserAuthority::_UserPrivilegesSC->clear();
-
+    if(nErrCode != SQLITE_OK)
+    	return 0;
     Utility::StringToTokens(str, ',', tmpStr);
+	UserAuthority::_UserPrivilegesSC->clear();
 	for(count = 0; count < tmpStr.size()/2; count++)
-	    {
+	{
         UserAuthority::_UserPrivilegesSC->insert(
              pair<int, int>
             (atoi(tmpStr[count*2].c_str()),atoi(tmpStr[count*2+1].c_str())));
-	    }
+	}
 #if UNITTEST_DATABASE
     map<int,int>::iterator st;
     for(st=UserAuthority::_UserPrivilegesSC->begin();st!=UserAuthority::_UserPrivilegesSC->end();st++)
@@ -1517,6 +1521,7 @@ int DBAccessL20DB::QueryBlockTeachModeSetting(char* buffer)
 ******************************************************************************/
 void DBAccessL20DB::QuerySystemConfigure(char* buffer)
 {
+    int count;
     string str;
 	vector<string> tmpStr;
 
@@ -1525,7 +1530,7 @@ void DBAccessL20DB::QuerySystemConfigure(char* buffer)
     LOG("QuerySystemConfigure:\n%s\n\n", str.c_str());
 #endif
 
-    Utility::StringToTokens(str, DB_VALUE_SEPARATOR[0], tmpStr);
+    Utility::StringToTokens(str, ',', tmpStr);
 	SYSTEMCONFIGFORUI tmpSysCon;
     tmpSysCon.bFootPedalAbort      =                 atoi(tmpStr[0].c_str()); //FootPedalAbort
     tmpSysCon.bLockOnAlarm         =                 atoi(tmpStr[1].c_str()); //LockOnAlarm
@@ -1543,7 +1548,10 @@ void DBAccessL20DB::QuerySystemConfigure(char* buffer)
 	struct tm timeStamp;
 	vxbRtcGet(&timeStamp);
     strftime(tmpSysCon.DateTime, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
-
+#if 0 // not matched
+    tmpSysCon.xxx = atoi(tmpStr[12].c_str()); //HomePositionCount
+    tmpSysCon.xxx = atoi(tmpStr[15].c_str()); //TunePoint
+#endif
     SystemConfiguration::Set(&tmpSysCon);
     return;
 }
@@ -1744,18 +1752,18 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
 {
-	int nErrCode = SQLITE_ERROR;
+	int nErrCode = ERROR;
     int PSI = *(int* )buffer;
-
-    if(1 != HeightEncoder::HeightCalibratedMap.count(PSI))
-        {
-#ifdef UNITTEST_DATABASE
+    auto iter = HeightEncoder::HeightCalibratedMap.find(PSI);
+    if(iter == HeightEncoder::HeightCalibratedMap.end())
+    {
+#if UNITTEST_DATABASE
         HeightEncoder::HeightCalibratedMap[PSI].ZeroCount = 1234;
         LOG("# set PSI(%d) with ZeroCount(%d)\n", PSI, 1234);
 #else
 	    return nErrCode;
 #endif
-        }
+    }
 
 	string strStore =
         "update " 	+ string(TABLE_HI_CALIB) +
@@ -1764,7 +1772,7 @@ int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
         +";";
 
 	nErrCode = SingleTransaction(strStore);
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("# %s\n", strStore.c_str());
 #endif
 	if(nErrCode != SQLITE_OK)
@@ -1782,11 +1790,6 @@ int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 {
-#if UNITTEST_DATABASE
-    if(UserAuthority::_UserProfilesSC == nullptr)
-		UserAuthority::GetInstance();
-#endif
-
     map<int,string>::iterator st = UserAuthority::_UserProfilesSC->find(*(int* )buffer);
     if(st == UserAuthority::_UserProfilesSC->end())
 	{
@@ -1813,10 +1816,6 @@ int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdatePrivilegeConfigure(char* buffer)
 {
-#if UNITTEST_DATABASE
-    if(UserAuthority::_UserPrivilegesSC == nullptr)
-		UserAuthority::GetInstance();
-#endif
     map<int,int>::iterator st = UserAuthority::_UserPrivilegesSC->find(*(int* )buffer);
     if(st == UserAuthority::_UserPrivilegesSC->end())
 	{
@@ -2312,7 +2311,7 @@ int DBAccessL20DB::String2Vector(const string str, vector<WELD_SIGNATURE>* _ptrV
 	for (int i = 0; i < tmpStringlist.size(); i++)
 	{
     	tmpStringData.clear();
-		if (Utility::StringToTokens(tmpStringlist[i], DB_VALUE_SEPARATOR[0], tmpStringData) > 0)
+		if (Utility::StringToTokens(tmpStringlist[i], ',', tmpStringData) > 0)
 		{
 			for (int j = 0; j < tmpStringData.size(); j++)
 			{
@@ -2421,7 +2420,7 @@ int DBAccessL20DB::String2Vector(const string str, vector<WeldStepValueSetting>*
 	for (int i = 0; i < tmpStringlist.size(); i++)
 	{
     	tmpStringData.clear();
-		if (Utility::StringToTokens(tmpStringlist[i], DB_VALUE_SEPARATOR[0], tmpStringData) > 0)
+		if (Utility::StringToTokens(tmpStringlist[i], ',', tmpStringData) > 0)
 		{
 			for (int j = 0; j < tmpStringData.size(); j++)
 			{
