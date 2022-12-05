@@ -71,13 +71,16 @@ public:
 	virtual int 	QueryBlockPrivilegeConfigure(char *) 	override;
 	virtual int 	QueryBlockPowerSupply(char *)			override;
 	virtual int 	QueryBlockTeachModeSetting(char *)		override;
-	virtual void 	QuerySystemConfigure(char *)			override;
+	virtual int 	QuerySystemConfigure(char *)			override;
 	virtual void 	QueryActiveRecipe(char *)				override;
 
+	virtual int		QueryWeldRecipeTotalNumber(char *)		override;
 	virtual void 	QueryWeldRecipeAll(char *) 				override;
 	virtual int 	QueryWeldRecipeLatestPage() 			override;
 	virtual int 	QueryWeldRecipeNextPage()				override;
 	virtual int 	UpdateWeldRecipe(char *) 				override;
+	virtual int 	RenameWeldRecipe(char *) 				override;
+	
 	virtual int 	UpdateHeightCalibration(char *) 		override;
 	virtual int 	UpdateUserProfiles(char *) 				override;
 	virtual int 	UpdatePrivilegeConfigure(char *)		override;

@@ -23,6 +23,7 @@
 #define STEP_MAX 		5
 #define PIC_PATH_LEN 	60
 #define RECIPE_LEN		20
+#define TIME_STAMP_LEN		20
 
 enum WELDMODE
 {

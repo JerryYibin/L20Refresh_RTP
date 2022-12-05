@@ -50,14 +50,17 @@ public:
 	virtual int 	QueryBlockPrivilegeConfigure(char *)	= 0;
 	virtual int 	QueryBlockPowerSupply(char *)			= 0;
 	virtual int 	QueryBlockTeachModeSetting(char *)		= 0;
-	virtual void 	QuerySystemConfigure(char *)			= 0;
+	virtual int 	QuerySystemConfigure(char *)			= 0;
 	virtual void 	QueryActiveRecipe(char *)				= 0;
 	
+	virtual int 	QueryWeldRecipeTotalNumber(char *)		= 0;
 	virtual void 	QueryWeldRecipeAll(char *)				= 0;
 	virtual int 	QueryWeldRecipeLatestPage()				= 0;
 	virtual int 	QueryWeldRecipeNextPage()				= 0;
 	virtual int 	UpdateWeldRecipe(char *)				= 0;
-	virtual int 	UpdateHeightCalibration(char *)	= 0;
+	virtual int 	RenameWeldRecipe(char *)				= 0;
+	
+	virtual int 	UpdateHeightCalibration(char *)			= 0;
 	virtual int 	UpdateUserProfiles(char *)				= 0;
 	virtual int 	UpdatePrivilegeConfigure(char *)		= 0;
 	virtual int 	UpdateBlockPowerSupply(char *)			= 0;

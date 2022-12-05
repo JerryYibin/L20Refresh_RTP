@@ -16,6 +16,7 @@ code IDs.
 #ifndef ALARM_CODE_COMMON_H_
 #define ALARM_CODE_COMMON_H_
 #include "RecipeUI.h"
+#define DATE_TIME_SZIE	20
 // alarms IDs
 enum ALARM_CODE
 {
@@ -139,6 +140,7 @@ enum ALARM_CODE
 	ALARM_RECIPE_NOT_VALID_NCA 			= 0x719,
 	ALARM_BATCH_COUNT_NCA 				= 0x71A,
 	ALARM_RECIPE_NOT_VALIDATED_NCA 		= 0x71B,
+	ALARM_HOME_POSITION_TIMEOUT_NCA		= 0x71C,
 
 	ALARM_ELC_UNKNOWN 					= 0xEF0,
 	ALARM_ELC_PB 						= 0xEF1,
@@ -154,11 +156,24 @@ enum ALARM_CODE
 
 };
 
+enum DB_ERROR_CODE
+{
+	RENAME_RECIPE_ERROR = -4,
+	DELETE_RECIPE_ERROR,
+	NEW_RECIPE_ERROR,
+	UPDATE_RECIPE_ERROR,
+	SUCCESS,
+	UPDATE_RECIPE_OK,
+	NEW_RECIPE_OK,
+	DELETE_RECIPE_OK,
+	RENAME_RECIPE_OK,
+};
+
 struct UI_ALARM_LOG
 {
-	int				WeldCount;
+	unsigned int	WeldCount;
 	char			RecipeName[RECIPE_NAME_LENGTH];
-	char			DateTime[20];
+	char			DateTime[DATE_TIME_SZIE];
 	unsigned int	AlarmType;
 };
 
