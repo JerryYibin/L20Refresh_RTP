@@ -98,6 +98,10 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		responseHeartbeat();
 		break;
 	case TO_UI_TASK_ACTIVE_RECIPE_INFO:
+		message.msgID = DataTask::TO_DATA_TASK_ACTIVE_RECIPE_QUERY;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_TASK_ACTIVE_RECIPE_INFO_RESPONSE:
 		getActiveRecipe();
 		break;
 	case TO_UI_TASK_SETUP_WELD_PARAM:
@@ -110,6 +114,12 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_SETUP_ADVANCED_PARAM:
 		updateActiveRecipeAdvancedParam(message.Buffer);
+		break;
+	case TO_UI_ACTIVE_RECIPE_VALIDATE:
+		Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC();
+		RecipeWrapper::Set(message.Buffer, Recipe::RecipeSC.get());
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	case TO_UI_TASK_SYSINFO_READ:
 		responseSystemInfo();
@@ -165,8 +175,8 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		responseWeldRecipeData();
 		break;
 	case TO_UI_INSERT_RECIPE_WRITE:
-		Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
-		RecipeWrapper::Set(message.Buffer, Recipe::RecipeSC);
+		Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC();
+		RecipeWrapper::Set(message.Buffer, Recipe::RecipeSC.get());
 		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_INSERT;
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
@@ -175,8 +185,8 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	case TO_UI_UPDATE_RECIPE:
-		Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
-		RecipeWrapper::Set(message.Buffer, Recipe::RecipeSC);
+		Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC();
+		RecipeWrapper::Set(message.Buffer, Recipe::RecipeSC.get());
 		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_UPDATE;
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
@@ -195,11 +205,73 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		sendWeldRecipeErrCode(message.Buffer);
 		break;
 	case TO_UI_SET_ACTIVE_RECIPE:
+		message.msgID = DataTask::TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		// TODO: GET ACTIVE
 		break;
 	case TO_UI_TASK_AUX_MOTION_REQ:
 		message.msgID = ActuatorTask::TO_ACT_TASK_AUX_MOTION;
 		SendToMsgQ(message, ACT_MSG_Q_ID);
+		break;
+	case TO_UI_TASK_SONICS_TEST_REQ:
+		message.msgID = ControlTask::TO_CTRL_SONICS_TEST;
+		SendToMsgQ(message, CTRL_MSG_Q_ID);
+		break;
+	case TO_UI_TASK_SONICS_100TEST_REQ:
+		message.msgID = ControlTask::TO_CTRL_SONICS_100TEST;
+		SendToMsgQ(message, CTRL_MSG_Q_ID);
+		break;
+	case TO_UI_TASK_SETUP_CLICKET_PARAM:
+		message.msgID = ActuatorTask::TO_ACT_TASK_PRESSURE_SET;
+		SendToMsgQ(message, ACT_MSG_Q_ID);
+		message.msgID = PowerSupplyTask::TO_PS_TASK_AMPLITUDE_UPDATE;
+		SendToMsgQ(message, PS_MSG_Q_ID);
+		break;
+	case TO_UI_TASK_SONICS_TEST_RESPONSE:
+		responseSonicsTest(message.Buffer);
+		break;
+	case TO_UI_TASK_DETECT_USB_DEVICE:
+		responseDetectUSBdevice();
+		break;
+	case TO_UI_TASK_FIRMWARE_UPGRADE_RESPONSE:
+		responseFirmwareUPgradeHandler();
+		break;
+	case TO_UI_TASK_FIRMWARE_UPGRADE_ERROR_MESSADE:
+	case TO_UI_TASK_FIRMWARE_UPGRADE_PROGRESS_MESSADE:
+		responseFirmwareUpgradeProgress(message.Buffer);
+		break;
+	case TO_UI_TASK_ETHERNET_CONFIG_SET:
+		setEthernetConfigData(message.Buffer);
+		break;
+	case TO_UI_TASK_ETHERNET_CONFIG_GET:
+		responseEthernetConfigData();
+		break;
+	case TO_UI_TASK_GATEWAY_SERVER_GET:
+		responseGatewayServerData();
+		break;	
+	case TO_UI_TASK_RECIPE_TOTAL_NUMBER_GET:
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_TOTAL_NUMBER;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_TASK_RECIPE_TOTAL_NUMBER_RESPONSE:
+		responseWeldRecipeTotalNumber(message.Buffer);
+		break;
+	case TO_UI_TASK_WELD_RESULT_HISTORY_LOG:
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_QUERY_LATEST_PAGE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_TASK_WELD_RESULT_HISTORY_NEXT_PAGE:
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_QUERY_NEXT_PAGE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_TASK_RESULT_LIBRARY_DATA_RESPONSE:
+		responseWeldResultLib();
+		break;
+	case TO_UI_TASK_WELD_RECIPE_RENAME:
+		Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC();
+		RecipeWrapper::Set(message.Buffer, Recipe::RecipeSC.get());
+		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_RENAME;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
@@ -249,7 +321,7 @@ void UserInterface::getActiveRecipe()
 	sendMsg.msgID	= REQ_ACTIVE_RECIPE_INFO_IDX;
 	sendMsg.rspCode = 0;
 	sendMsg.msgLen = sizeof(WeldRecipeSCForUI);
-	RecipeWrapper::Get(Recipe::ActiveRecipeSC, sendMsg.Buffer);
+	RecipeWrapper::Get(Recipe::ActiveRecipeSC.get(), sendMsg.Buffer);
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }
 
@@ -357,11 +429,6 @@ void UserInterface::responseSystemInfo()
 											FWVersion::Get(FW_VERSION_SC, VERSION_MINOR),
 											FWVersion::Get(FW_VERSION_SC, VERSION_BUILD),
 											FWVersion::Get(FW_VERSION_SC, VERSION_AUTOS));
-
-	sprintf(CommonProperty::SystemInfo.version_DB,"%d.%d.%d.%d",FWVersion::Get(FW_VERSION_PC, VERSION_MAJOR),
-											FWVersion::Get(FW_VERSION_PC, VERSION_MINOR),
-											FWVersion::Get(FW_VERSION_PC, VERSION_BUILD),
-											FWVersion::Get(FW_VERSION_PC, VERSION_AUTOS));
 
 	sprintf(CommonProperty::SystemInfo.version_HMI,"%d.%d.%d.%d",FWVersion::Get(FW_VERSION_AC, VERSION_MAJOR),
 											FWVersion::Get(FW_VERSION_AC, VERSION_MINOR),
@@ -527,16 +594,16 @@ void UserInterface::UserInterface_Task(void)
 void UserInterface::updateLastWeldResult()
 {
 	m_stHeartbeat.AlarmCode = 0;
-	m_stHeartbeat.Amplitude = CommonProperty::WeldResult.Amplitude;
-	m_stHeartbeat.CycleCounter = CommonProperty::WeldResult.CycleCounter;
-	m_stHeartbeat.PeakPower = CommonProperty::WeldResult.PeakPower;
-	m_stHeartbeat.PostHeight = CommonProperty::WeldResult.PostHeight;
-	m_stHeartbeat.PreHeight = CommonProperty::WeldResult.PreHeight;
-	m_stHeartbeat.RecipeNumber = CommonProperty::WeldResult.RecipeNum;
-	m_stHeartbeat.TotalEnergy = CommonProperty::WeldResult.TotalEnergy;
-	m_stHeartbeat.TriggerPress = CommonProperty::WeldResult.TriggerPressure;
-	m_stHeartbeat.WeldPress = CommonProperty::WeldResult.WeldPressure;
-	m_stHeartbeat.WeldTime = CommonProperty::WeldResult.WeldTime;
+	m_stHeartbeat.Amplitude = WeldResults::_WeldResults->Amplitude;
+	m_stHeartbeat.CycleCounter = WeldResults::_WeldResults->CycleCounter;
+	m_stHeartbeat.PeakPower = WeldResults::_WeldResults->PeakPower;
+	WeldResults::_WeldResults->Get(WeldResults::PARALIST::POST_HEIGHT, &m_stHeartbeat.PostHeight);
+	WeldResults::_WeldResults->Get(WeldResults::PARALIST::PRE_HEIGHT, &m_stHeartbeat.PreHeight);
+	m_stHeartbeat.RecipeNumber = WeldResults::_WeldResults->RecipeID;
+	m_stHeartbeat.TotalEnergy = WeldResults::_WeldResults->Energy;
+	WeldResults::_WeldResults->Get(WeldResults::PARALIST::TRIGGER_PRESSURE, &m_stHeartbeat.TriggerPress);
+	WeldResults::_WeldResults->Get(WeldResults::PARALIST::WELD_PRESSURE, &m_stHeartbeat.WeldPress);
+	m_stHeartbeat.WeldTime = WeldResults::_WeldResults->WeldTime;
 }
 
 /**************************************************************************//**
@@ -550,15 +617,14 @@ void UserInterface::updateLastWeldResult()
 ******************************************************************************/
 void UserInterface::responseWeldRecipeData()
 {
-	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
+	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC();
 	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
 	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
 	sendMsg.msgID = REQ_DEFAULT_RECIPE_IDX;
 	sendMsg.msgLen = sizeof(WeldRecipeSCForUI);
 	sendMsg.rspCode = 0;
-	RecipeWrapper::Get(Recipe::RecipeSC, sendMsg.Buffer);
+	RecipeWrapper::Get(Recipe::RecipeSC.get(), sendMsg.Buffer);
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
-	Recipe::RecipeSC = nullptr;
 }
 
 /**************************************************************************//**
@@ -577,9 +643,9 @@ void UserInterface::responseWeldRecipeDetails()
 	sendMsg.msgID = REQ_GET_SELECTED_RECIPE_INFO_REQ;
 	sendMsg.msgLen = sizeof(WeldRecipeSCForUI);
 	sendMsg.rspCode = 0;
-	RecipeWrapper::Get(Recipe::RecipeSC, sendMsg.Buffer);
+	RecipeWrapper::Get(Recipe::RecipeSC.get(), sendMsg.Buffer);
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
-	Recipe::RecipeSC = nullptr;
+	//Recipe::RecipeSC = nullptr;
 }
 
 /**************************************************************************//**
@@ -601,6 +667,28 @@ void UserInterface::responseWeldRecipeLib()
 	memcpy(sendMsg.Buffer, &Recipe::WeldRecipeLibraryForUI[0], sendMsg.msgLen);
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 	Recipe::WeldRecipeLibraryForUI.clear();
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Sends response to UIC for Weld Result library request. 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseWeldResultLib()
+{	
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_WELD_RESULT_HISTORY_LOG_IDX;
+	sendMsg.msgLen = WeldResult::TransformResultsVector().size() * sizeof(WeldResultsUI);
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, &WeldResult::TransformResultsVector()[0], sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+	WeldResult::WeldResultVector.clear();
+	WeldResult::TransformResultsVector().clear();
 }
 
 /**************************************************************************//**
@@ -651,7 +739,7 @@ void UserInterface::responseSystemConfig()
 	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
 	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
 
-	sendMsg.msgID	= TO_UI_TASK_SYSCONFIG_READ;
+	sendMsg.msgID	= REQ_SYSTEM_CONGIF_READ_IDX;
 	sendMsg.msgLen  = 0;
 	sendMsg.rspCode = 0;
 
@@ -675,4 +763,25 @@ void UserInterface::updateSystemConfigData(char* messagebuf)
 	SYSTEMCONFIGFORUI sysConfigUI;
 	memcpy(reinterpret_cast<char*>(&sysConfigUI), messagebuf, sizeof(SYSTEMCONFIGFORUI));
 	SystemConfiguration::Set(&sysConfigUI);
+}
+
+
+/**************************************************************************//**
+* 
+* \brief   - Response the Weld Recipe Total Number to HMI
+*
+* \param   - Total Number
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseWeldRecipeTotalNumber(char* messagebuf)
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_GET_RECIPE_TOTAL_NUMBER_IDX;
+	sendMsg.msgLen = sizeof(int);
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, messagebuf, sizeof(int));
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }

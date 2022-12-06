@@ -36,6 +36,7 @@ public:
 		TO_UI_TASK_SETUP_WELD_PARAM,
 		TO_UI_TASK_SETUP_QUALITY_PARAM,
 		TO_UI_TASK_SETUP_ADVANCED_PARAM,
+		TO_UI_ACTIVE_RECIPE_VALIDATE,
 		TO_UI_TASK_SYSINFO_READ,
 		TO_UI_TASK_SYSCONFIG_READ,
 		TO_UI_TASK_SYSCONFIG_WRITE,
@@ -46,14 +47,33 @@ public:
 	    TO_UI_TASK_HEIGHT_CALIBRATE_ACCEPT,
 	    TO_UI_TASK_USERIO_INPUT_READ,
 		TO_UI_TASK_AUX_MOTION_REQ,
+		TO_UI_TASK_SONICS_TEST_REQ,
+		TO_UI_TASK_SONICS_100TEST_REQ,
 		
+		TO_UI_TASK_SETUP_CLICKET_PARAM,
+		TO_UI_TASK_ACTIVE_RECIPE_INFO_RESPONSE,
+		TO_UI_TASK_SYSCONFIG_READ_RESPONSE,
 		TO_UI_TASK_LAST_WELD_RESULT,
 		TO_UI_TASK_HEIGHT_CALIBRATE_RESPONSE,
 		TO_UI_TASK_HEIGHT_CHECK_RESPONSE,
 		TO_UI_TASK_USER_IO_RESPONSE,
 		TO_UI_RECIPE_LIBRARY_DATA_RESPONSE,
+		TO_UI_TASK_SONICS_TEST_RESPONSE,
 		TO_UI_TASK_WELD_RECIPE_QUERY,
 		TO_UI_RECIPE_ERRCODE,
+		TO_UI_TASK_DETECT_USB_DEVICE,
+		TO_UI_TASK_FIRMWARE_UPGRADE_ERROR_MESSADE,
+		TO_UI_TASK_FIRMWARE_UPGRADE_PROGRESS_MESSADE,
+		TO_UI_TASK_FIRMWARE_UPGRADE_RESPONSE,
+		TO_UI_TASK_ETHERNET_CONFIG_SET,
+		TO_UI_TASK_ETHERNET_CONFIG_GET,
+		TO_UI_TASK_GATEWAY_SERVER_GET,
+		TO_UI_TASK_RECIPE_TOTAL_NUMBER_GET,
+		TO_UI_TASK_RECIPE_TOTAL_NUMBER_RESPONSE,
+		TO_UI_TASK_RESULT_LIBRARY_DATA_RESPONSE,
+		TO_UI_TASK_WELD_RESULT_HISTORY_LOG,
+		TO_UI_TASK_WELD_RESULT_HISTORY_NEXT_PAGE,
+		TO_UI_TASK_WELD_RECIPE_RENAME,
 	};
 	UserInterface();
 	~UserInterface();
@@ -71,7 +91,9 @@ private:
 	MSG_Q_ID	ACT_MSG_Q_ID;
 	MSG_Q_ID	OUTPUT_MSG_Q_ID;
 	MSG_Q_ID	INPUT_MSG_Q_ID;
+	MSG_Q_ID	PS_MSG_Q_ID;
 	HEARTBEAT 	m_stHeartbeat;
+	bool        bIsFWTask = false;
 private:
 	void			responseHeartbeat					();
 	void			getActiveRecipe						();
@@ -85,6 +107,7 @@ private:
 	void 			responseWeldRecipeData				();
 	void 			responseWeldRecipeDetails			();
 	void			responseWeldRecipeLib				();
+	void			responseWeldResultLib				();
 	void			sendWeldRecipeErrCode				(char* recipebuf);
 	void 			responseInitializationData 			();
 	void 			responseSystemConfig				();
@@ -92,6 +115,7 @@ private:
 	void			responseHeightCalibration			();
 	void			responseHeightCheck					();
 	void			responseUserIORequest				(char* messagebuf);
+	void			responseWeldRecipeTotalNumber		(char*);
 };
 
 #endif /* USERINTERFACE_H_ */

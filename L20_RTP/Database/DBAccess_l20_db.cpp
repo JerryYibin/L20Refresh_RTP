@@ -155,7 +155,16 @@ string DBAccessL20DB::GetWeldSignatureCSVReportHeader2()
 ******************************************************************************/
 int DBAccessL20DB::StoreWeldResult(char* buffer)
 {
-    WELD_RESULT* pData = &CommonProperty::WeldResult;
+    unsigned int TriggerPressure 	= 0;
+    unsigned int WeldPressure 		= 0;
+    unsigned int PreHeight 			= 0;
+    unsigned int PostHeight 		= 0;
+    int AlarmID 					= 0;
+    WeldResults::_WeldResults->Get(WeldResults::PARALIST::TRIGGER_PRESSURE, &TriggerPressure);
+    WeldResults::_WeldResults->Get(WeldResults::PARALIST::WELD_PRESSURE, &WeldPressure);
+    WeldResults::_WeldResults->Get(WeldResults::PARALIST::PRE_HEIGHT, &PreHeight);
+    WeldResults::_WeldResults->Get(WeldResults::PARALIST::POST_HEIGHT, &PostHeight);
+    WeldResults::_WeldResults->Get(WeldResults::PARALIST::ALARM_ID, &AlarmID);
 
 	struct tm timeStamp;
     char timeBuf[20];
@@ -168,7 +177,7 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
     LOG("vxbRtcGet took %u microseconds\n",
         (m_endTime-m_startTime)*1000000/sysTimestampFreq());
 #endif
-    strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
+    strftime(timeBuf, 20, "%Y/%m/%d %H:%M:%S", &timeStamp);
 
 	string strStore =
         "insert into " + string(TABLE_WELD_RESULT) +
@@ -176,56 +185,39 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 		"WeldAmplitude, WeldTime, WeldPeakPower, TriggerHeight, WeldHeight, " +
 		"AlarmFlag, SequenceID, CycleCounter) " +
 		"values ('"+
-		pData->PartID+"','"+//PartID
+		WeldResults::_WeldResults->PartID+"','"+//PartID
 		timeBuf+"',"+//DateTime
-		std::to_string(pData->RecipeNum)+","+//RecipeID
-		std::to_string(pData->TotalEnergy)+","+//WeldEnergy
-		std::to_string(pData->TriggerPressure)+","+//TriggerPressure
-		std::to_string(pData->WeldPressure)+","+//WeldPressure
-		std::to_string(pData->Amplitude)+","+//WeldAmplitude
-		std::to_string(pData->WeldTime)+","+//WeldTime
-		std::to_string(pData->PeakPower)+","+//WeldPeakPower
-		std::to_string(pData->PreHeight)+","+//TriggerHeight
-		std::to_string(pData->PostHeight)+","+//WeldHeight
-		std::to_string(pData->ALARMS.ALARMflags)+","+//AlarmFlag
+		std::to_string(Recipe::ActiveRecipeSC->m_RecipeID/*pData->RecipeNumber*/)+","+//RecipeID
+		std::to_string(WeldResults::_WeldResults->Energy)+","+//WeldEnergy
+		std::to_string(TriggerPressure)+","+//TriggerPressure
+		std::to_string(WeldPressure)+","+//WeldPressure
+		std::to_string(WeldResults::_WeldResults->Amplitude)+","+//WeldAmplitude
+		std::to_string(WeldResults::_WeldResults->WeldTime)+","+//WeldTime
+		std::to_string(WeldResults::_WeldResults->PeakPower)+","+//WeldPeakPower
+		std::to_string(PreHeight)+","+//TriggerHeight
+		std::to_string(PostHeight)+","+//WeldHeight
+		std::to_string(AlarmID)+","+//AlarmFlag
 		std::to_string(0)+","+//SequenceID
-		std::to_string(pData->CycleCounter)+");";//CycleCounter
+		std::to_string(WeldResults::_WeldResults->CycleCounter)+");";//CycleCounter
 
 	int nErrCode = SingleTransaction(strStore);
-    int WeldResultID;
-    getLatestID(TABLE_WELD_RESULT, &WeldResultID);
-	if(nErrCode == SQLITE_OK)
+    int id = ERROR;
+    getLatestID(TABLE_WELD_RESULT, &id);
+
+	if(nErrCode == 0)
 	{
-#ifdef UNITTEST_DATABASE
-        LOG("# store WeldResult to ID %u\n", WeldResultID);
+#if UNITTEST_DATABASE
+        LOG("# store WeldResult to ID %llu\n", id);
+        LOG("# %s\n", strStore.c_str());
 #endif
-        if(WeldResultID > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
+        if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
         	DeleteOldest(TABLE_WELD_RESULT);
 		}
-
-#ifdef UNITTEST_DATABASE
-        ALARM_DATA* pAlarm = &AlarmDataSC::AlarmData;
-        pAlarm->AlarmType = 123;
-        pAlarm->AlarmSubType = 456;
-        pAlarm->WeldResultID = WeldResultID;
-        pAlarm->WeldRecipeID = pData->RecipeNum;
-        pAlarm->UserID = 789;
-        LOG("\n#try to StoreAlarmLog with WeldResultID(%u) WeldRecipeID(%u)\n",
-                WeldResultID, pData->RecipeNum);
-#endif
-        StoreAlarmLog(nullptr);
-
-#ifdef UNITTEST_DATABASE
-        LOG("\n#try to StoreWeldSignature with WeldResultID(%u)\n",
-                WeldResultID);
-#endif
-        StoreWeldSignature((char* )&WeldResultID);
 	}
 	else
 	{
-		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %u\n",
-                nErrCode, WeldResultID, 0);
+		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %llu\n", nErrCode, id, 0);
 	}
 	return nErrCode;
 }
@@ -557,6 +549,119 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	return nErrCode;
 }
 
+/**************************************************************************//**
+* \brief   - Query latest Weld Result records from DB
+*
+* \param   - null
+*
+* \return  - error code
+*
+******************************************************************************/
+int DBAccessL20DB::QueryWeldResultLatestPage(char* buffer)
+{
+	sendDataNum = ONE_RESULT_PAGE_NUM;
+	string strQuery = "select * from " + string(TABLE_WELD_RESULT)
+			+ " order by DateTime DESC limit " + std::to_string(sendDataNum)
+			+ ";";
+	string str = ExecuteQuery(strQuery);
+	if (str.empty()) {
+		return ERROR;
+	}
+
+	assignWeldResult(str);
+
+	return OK;
+}
+
+int DBAccessL20DB::QueryWeldResultNextPage(char* buffer)
+{
+	string strQuery = "select * from " + string(TABLE_WELD_RESULT)
+			+ " order by DateTime DESC limit " + std::to_string(sendDataNum)
+			+ ", " + std::to_string(ONE_RESULT_PAGE_NUM) + ";";
+	string str = ExecuteQuery(strQuery);
+
+	assignWeldResult(str);
+
+	sendDataNum += ONE_PAGE_NUM;
+
+	return OK;
+}
+
+void DBAccessL20DB::assignWeldResult(const string& buffer)
+{
+	vector<string> tmpStr, data;
+    Utility::StringToTokens(buffer, ',', tmpStr);
+	for(int count = 0; count < tmpStr.size()/TABLE_RESULT_MEM; count++)
+	{
+		shared_ptr<WeldResults> ptr_WeldResults = WeldResults::GetWeldResults();
+		strncpy(ptr_WeldResults->PartID, tmpStr[count*TABLE_RESULT_MEM+1].c_str(), BARCODE_DATA_SIZE);
+		strncpy(ptr_WeldResults->DateTime, tmpStr[count*TABLE_RESULT_MEM+2].c_str(), WELD_TIME_SIZE);
+		ptr_WeldResults->RecipeID = atoi(tmpStr[count*TABLE_RESULT_MEM+3].c_str());//RecipeID
+		
+	    string strQuery =
+	        "select * from "+string(TABLE_WELD_RECIPE)+
+	        " where ID="+
+	        std::to_string(ptr_WeldResults->RecipeID)+";";
+	    string str = ExecuteQuery(strQuery);
+	    if(str.empty()){
+	    	strncpy(ptr_WeldResults->RecipeName, "N/A", USER_NAME_SIZE);
+	    }
+	    else{
+	    	Utility::StringToTokens(str, ',', data);
+	    	
+	    	unsigned int m_AmplitudeSetting = stoi(data.at(6));	
+	    	int m_WPpressureSetting 		= stoi(data.at(8));
+	    	int m_TPpressureSetting			= stoi(data.at(9));
+	    	int m_TimeMax 					= stoi(data.at(10));
+	    	int m_TimeMin 					= stoi(data.at(11));
+	    	unsigned int m_PeakPowerMax		= stoi(data.at(12));
+	    	unsigned int m_PeakPowerMin		= stoi(data.at(13));
+	    	int m_PreHeightMax				= stoi(data.at(14));
+	    	int m_PreHeightMin				= stoi(data.at(15));
+	    	int m_HeightMax					= stoi(data.at(16));
+	    	int m_HeightMin 				= stoi(data.at(17));
+	    	ptr_WeldResults->WeldMode 		= stoi(data.at(18));
+	    	unsigned int m_EnergySetting 	= stoi(data.at(19));
+	    	
+	    	strncpy(ptr_WeldResults->RecipeName, data[1].c_str(), USER_NAME_SIZE);//RecipeName
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::AMPLITUDE_SETTING, &m_AmplitudeSetting);	//AmplitudeSetting
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::W_PRESSURE_SETTING, &m_WPpressureSetting);	//WPpressureSetting
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::T_PRESSURE_SETTING, &m_TPpressureSetting);	//TPpressureSetting
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_WELD_TIME, &m_TimeMax);
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_WELD_TIME, &m_TimeMin);
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_POWER, &m_PeakPowerMax);
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_POWER, &m_PeakPowerMin);
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_PRE_HEIGHT, &m_PreHeightMax);
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_PRE_HEIGHT, &m_PreHeightMin);
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_POST_HEIGHT, &m_HeightMax);
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_POST_HEIGHT, &m_HeightMin);
+	    	ptr_WeldResults->Set(WeldResults::PARALIST::ENERGY_SETTING, &m_EnergySetting);  //EnergySetting
+	    	data.clear();
+	    }
+		
+		ptr_WeldResults->Energy = atoi(tmpStr[count*TABLE_RESULT_MEM+4].c_str());//WeldEnergy
+		int TriggerPressure = atoi(tmpStr[count*TABLE_RESULT_MEM+5].c_str());
+		ptr_WeldResults->Set(WeldResults::PARALIST::TRIGGER_PRESSURE, &TriggerPressure);//TriggerPressure
+		int WeldPressure = atoi(tmpStr[count*TABLE_RESULT_MEM+6].c_str());
+		ptr_WeldResults->Set(WeldResults::PARALIST::WELD_PRESSURE, &WeldPressure);//WeldPressure
+		ptr_WeldResults->Amplitude = atoi(tmpStr[count*TABLE_RESULT_MEM+7].c_str());//WeldAmplitude
+		ptr_WeldResults->WeldTime = atoi(tmpStr[count*TABLE_RESULT_MEM+8].c_str());//WeldTime
+		ptr_WeldResults->PeakPower = atoi(tmpStr[count*TABLE_RESULT_MEM+9].c_str());//WeldPeakPower
+		int PreHeight = atoi(tmpStr[count*TABLE_RESULT_MEM+10].c_str());
+		ptr_WeldResults->Set(WeldResults::PARALIST::TRIGGER_PRESSURE, &PreHeight);//TriggerHeight
+		int PostHeight = atoi(tmpStr[count*TABLE_RESULT_MEM+11].c_str());
+		ptr_WeldResults->Set(WeldResults::PARALIST::WELD_PRESSURE, &PostHeight);//WeldHeight
+		int AlarmFlag = atoi(tmpStr[count*TABLE_RESULT_MEM+12].c_str());
+		ptr_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlag);//AlarmID
+		ptr_WeldResults->CycleCounter = atoi(tmpStr[count*TABLE_RESULT_MEM+14].c_str());//CycleCounter
+		WeldResult::WeldResultVector.push_back(ptr_WeldResults);
+#if UNITTEST_DATABASE
+    if(str.size()>0)
+        LOG("assignWeldResult:\n%s\n", str.c_str());
+#endif
+	}
+}
+
 #ifdef DB_RECORD_SEPARATOR
 /**************************************************************************//**
 * \brief   - Query the latest records from table Weld Result
@@ -623,7 +728,7 @@ int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
 }
 #else
 /**************************************************************************//**
-* \brief   - Query the latest records from table Weld Result
+* \brief   - Query the latest records from table Weld Result(Out of use)
 *
 * \param   - char* buffer - ID
 *
@@ -647,41 +752,41 @@ int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
 #endif
 
     Utility::StringToTokens(str, ',', tmpStr);
-	for(count = 0; count < tmpStr.size()/TABLE_RESULT_MEM; count++)
-	    {
-        strncpy(CommonProperty::WeldResultForUI[count].PartID,
-            tmpStr[count*TABLE_RESULT_MEM+1].c_str(), BARCODE_DATA_SIZE);//PartID
-        CommonProperty::WeldResultForUI[count].RecipeNum =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+3].c_str());//RecipeID
-        CommonProperty::WeldResultForUI[count].TotalEnergy =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+4].c_str());//WeldEnergy
-        CommonProperty::WeldResultForUI[count].TriggerPressure =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+5].c_str());//TriggerPressure
-        CommonProperty::WeldResultForUI[count].WeldPressure =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+6].c_str());//WeldPressure
-        CommonProperty::WeldResultForUI[count].Amplitude =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+7].c_str());//WeldAmplitude
-        CommonProperty::WeldResultForUI[count].WeldTime =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+8].c_str());//WeldTime
-        CommonProperty::WeldResultForUI[count].PeakPower =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+9].c_str());//WeldPeakPower
-        CommonProperty::WeldResultForUI[count].PreHeight =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+10].c_str());//TriggerHeight
-        CommonProperty::WeldResultForUI[count].PostHeight =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+11].c_str());//WeldHeight
-        CommonProperty::WeldResultForUI[count].ALARMS.ALARMflags =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+12].c_str());//AlarmFlag
-        CommonProperty::WeldResultForUI[count].CycleCounter =
-            atoi(tmpStr[count*TABLE_RESULT_MEM+14].c_str());//CycleCounter
-#if UNITTEST_DATABASE
-        LOG("ID: %s\n", tmpStr[count*TABLE_RESULT_MEM].c_str());
-        LOG("PartID: %s\n", CommonProperty::WeldResultForUI[count].PartID);
-        LOG("DateTime: %s\n", tmpStr[count*TABLE_RESULT_MEM+2].c_str());
-        LOG("RecipeID: %d\n", CommonProperty::WeldResultForUI[count].RecipeNum);
-        LOG("WeldTime: %d\n", CommonProperty::WeldResultForUI[count].WeldTime);
-        LOG("\n");
-#endif
-	    }
+//	for(count = 0; count < tmpStr.size()/TABLE_RESULT_MEM; count++)
+//	    {
+//        strncpy(CommonProperty::WeldResultForUI[count].PartID,
+//            tmpStr[count*TABLE_RESULT_MEM+1].c_str(), BARCODE_DATA_SIZE);//PartID
+//        CommonProperty::WeldResultForUI[count].RecipeNumber =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+3].c_str());//RecipeID
+//        CommonProperty::WeldResultForUI[count].TotalEnergy =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+4].c_str());//WeldEnergy
+//        CommonProperty::WeldResultForUI[count].TriggerPressure =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+5].c_str());//TriggerPressure
+//        CommonProperty::WeldResultForUI[count].WeldPressure =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+6].c_str());//WeldPressure
+//        CommonProperty::WeldResultForUI[count].Amplitude =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+7].c_str());//WeldAmplitude
+//        CommonProperty::WeldResultForUI[count].WeldTime =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+8].c_str());//WeldTime
+//        CommonProperty::WeldResultForUI[count].PeakPower =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+9].c_str());//WeldPeakPower
+//        CommonProperty::WeldResultForUI[count].PreHeight =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+10].c_str());//TriggerHeight
+//        CommonProperty::WeldResultForUI[count].PostHeight =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+11].c_str());//WeldHeight
+//        CommonProperty::WeldResultForUI[count].ALARMS.ALARMflags =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+12].c_str());//AlarmFlag
+//        CommonProperty::WeldResultForUI[count].CycleNumber =
+//            atoi(tmpStr[count*TABLE_RESULT_MEM+14].c_str());//CycleCounter
+//#if UNITTEST_DATABASE
+//        LOG("ID: %s\n", tmpStr[count*TABLE_RESULT_MEM].c_str());
+//        LOG("PartID: %s\n", CommonProperty::WeldResultForUI[count].PartID);
+//        LOG("DateTime: %s\n", tmpStr[count*TABLE_RESULT_MEM+2].c_str());
+//        LOG("RecipeID: %d\n", CommonProperty::WeldResultForUI[count].RecipeNum);
+//        LOG("WeldTime: %d\n", CommonProperty::WeldResultForUI[count].WeldTime);
+//        LOG("\n");
+//#endif
+//	    }
     return count;
 }
 #endif
@@ -961,7 +1066,6 @@ int DBAccessL20DB::QueryWeldRecipe(char* buffer)
         " where ID="+
         std::to_string(RecipeID)+";";
     str = ExecuteQuery(strQuery);
-
     WeldStepValueSetting energy[STEP_MAX];
     vector<WeldStepValueSetting> vectorEnergy;
     String2Vector(str, &vectorEnergy);
@@ -1626,7 +1730,7 @@ void DBAccessL20DB::QueryActiveRecipe(char* buffer)
     vector<string> tmpStr;
     Utility::StringToTokens(str, DB_VALUE_SEPARATOR[0], tmpStr);
 
-	CommonProperty::WeldResult.CycleCounter = atoi(tmpStr[0].c_str()); //CycleNumber
+    WeldResults::_WeldResults->CycleCounter = atoi(tmpStr[0].c_str()); //TODO CycleNumber
 	int BatchSize = atoi(tmpStr[1].c_str()); //BatchSize
 	Recipe::ActiveRecipeSC->Set(&BatchSize, WeldRecipeSC::PARALIST::BATCH_SIZE);
 	Recipe::ActiveRecipeSC->m_RecipeID = atoi(tmpStr[3].c_str()); //RecipeID
@@ -1909,7 +2013,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
 		return UPDATE_RECIPE_ERROR;
 	}
-	
+    
     string str = ExecuteQuery(
 			"select * from " + string(TABLE_ACTIVE_RECIPE)
 					+ " where RecipeID = "
@@ -1917,13 +2021,12 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
     if(!str.empty())
     {
     	unsigned int m_BatchSize = 0;
-    	strStore = nullptr;
+    	strStore = "";
     	Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::BATCH_SIZE, &m_BatchSize);
     	strStore = 
-    			"UPDATE " + string(TABLE_WELD_RECIPE) + 
-    			" SET BatchSize = '" + std::to_string(m_BatchSize) +
-    			"' where ID = " + std::to_string(Recipe::RecipeSC->m_RecipeID) + ";";
-
+    			"UPDATE " + string(TABLE_ACTIVE_RECIPE) + 
+    			" SET BatchSize = " + std::to_string(m_BatchSize) +
+    			" where RecipeID = " + std::to_string(Recipe::RecipeSC->m_RecipeID) + ";";
     	nErrCode = SingleTransaction(strStore);
     	if(nErrCode != SQLITE_OK)
     	{
@@ -2195,7 +2298,7 @@ int DBAccessL20DB::UpdateActiveRecipe(char* buffer)
 	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::BATCH_SIZE, &BatchSize);
 	string strStore =
         "update " 			+ string(TABLE_ACTIVE_RECIPE) +
-        " set CycleNumber=" + std::to_string(CommonProperty::WeldResult.CycleCounter)+
+        " set CycleNumber=" + std::to_string(WeldResults::_WeldResults->CycleCounter)+
         ", BatchSize=" 		+ std::to_string(BatchSize)+
         ", RecipeID=" 		+ std::to_string(RecipeID)+
         ";";

@@ -18,8 +18,6 @@
 /* static initializations */
 CommonProperty*							CommonProperty::m_CPObj							= nullptr;
 const char*								CommonProperty::cTaskName[TOTAL_NUM_OF_TASK]	= {0};
-WELD_RESULT								CommonProperty::WeldResult;
-WELD_RESULT				                CommonProperty::WeldResultForUI[RESULT_FOR_UI_MAX];
 SYSTEM_INFO								CommonProperty::SystemInfo;
 vector<WELD_SIGNATURE>					CommonProperty::WeldSignatureVector;
 HMI_WELD_SIGNATURE_POINTS	            CommonProperty::WeldSignatureForUI[RESULT_FOR_UI_MAX];

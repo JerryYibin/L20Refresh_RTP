@@ -23,11 +23,13 @@
 
 #define	ONE_PAGE_NUM			10
 #define FIRST_SEND_DATA_NUM		10
+#define ONE_RESULT_PAGE_NUM		4
 
 class DBAccessL20DB: public DBAccess 
 {
 private:
 	int sendDataNum;
+    void assignWeldResult(const string&);
     int getLatestID(const string table, int* _id);
     int Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr);
     int JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray);
@@ -61,6 +63,8 @@ public:
 	virtual int 	StoreWeldRecipe(char* buffer) 			override;
 	virtual int 	StoreAlarmLog(char* buffer)				override;
 
+	virtual int 	QueryWeldResultLatestPage(char *)		override;
+	virtual int 	QueryWeldResultNextPage(char *)			override;
 	virtual int 	QueryBlockWeldResult(char *) 			override;
 	virtual void 	QueryWeldSignature(char *) 				override;
 	virtual int 	QueryWeldRecipe(char *) 				override;

@@ -16,10 +16,28 @@
 #include "SystemType.h"
 #include "commons.h"
 
+/**************************************************************************//**
+* 
+* \brief   - Constructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 WeldRecipeSC::WeldRecipeSC()
 {
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Destructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 WeldRecipeSC::~WeldRecipeSC()
 {
 }
@@ -132,11 +150,29 @@ std::shared_ptr<WeldRecipeAC> WeldRecipeAC::GetWeldRecipeAC()
 	return ptrWeldRecipeAC;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Constructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 L20_WeldRecipeSC::L20_WeldRecipeSC()
 {
-	InitialWeldRecipe();
+	Init();
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Destructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 L20_WeldRecipeSC::~L20_WeldRecipeSC()
 {}
 
@@ -153,6 +189,15 @@ int L20_WeldRecipeSC::Size()
 	return sizeof(L20_WeldRecipeSC);
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Set data to L20 Weld RecipeSC.
+*
+* \param   - Index: data index; _data: Input data pointer.
+*
+* \return  - If there is any error happened, it will return ERROR; else it will return OK.
+*
+******************************************************************************/
 int L20_WeldRecipeSC::Set(void* para, int indlx)
 {
 	int iResult = TRUE;
@@ -267,6 +312,15 @@ int L20_WeldRecipeSC::Set(void* para, int indlx)
 	return iResult;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Get data to L20 Weld RecipeSC.
+*
+* \param   - Index: data index; _data: Input data pointer.
+*
+* \return  - If there is any error happened, it will return ERROR; else it will return OK.
+*
+******************************************************************************/
 int L20_WeldRecipeSC::Get(int indlx, void* para)
 {
 	int iResult = TRUE;
@@ -381,65 +435,173 @@ int L20_WeldRecipeSC::Get(int indlx, void* para)
 	return iResult;
 }
 
-void L20_WeldRecipeSC::InitialWeldRecipe()
+/**************************************************************************//**
+* 
+* \brief   - Initialize the data members of L20 Weld Recipe.
+*
+* \param   - None.
+*
+* \return  - None.
+******************************************************************************/
+void L20_WeldRecipeSC::Init()
 {
-	m_WeldParameter.m_EnergySetting = 100;
-	m_WeldParameter.m_Amplitude = 10;
-	m_WeldParameter.m_TPressure = 30000;
-	m_WeldParameter.m_WPressure = 30000;
-	m_AdvancedSetting.m_WeldStepMode = STEP_NO_MODE;
-	m_QualityWindowSetting.m_PreHeightMin = 0;
-	m_QualityWindowSetting.m_PreHeightMax = 15000;
-	m_QualityWindowSetting.m_HeightMin = 0;
-	m_QualityWindowSetting.m_HeightMax = 15000;
-	m_QualityWindowSetting.m_PeakPowerMin = 0;
-	m_QualityWindowSetting.m_PeakPowerMax = 4800;
-	m_QualityWindowSetting.m_TimeMin = 0;
-	m_QualityWindowSetting.m_TimeMax = 5000;
-	m_AdvancedSetting.m_WeldMode = ENERGY_MODE;
-	m_BatchSize = 999999;
-	char tmpName[] = "NewRecipe";
+	m_IsTeachMode							= 0;
+	m_BatchSize								= 0;
+	m_WeldParameter.m_EnergySetting 		= ENERGY_SETTING_NUM;
+	m_WeldParameter.m_Amplitude 			= AMPLITUDE_NUM;
+	m_WeldParameter.m_TPressure 			= TPRESSURE_NUM;
+	m_WeldParameter.m_WPressure 			= WPRESSURE_NUM;
+	m_AdvancedSetting.m_WeldStepMode 		= WELD_STEP_MODE_NUM;
+	m_QualityWindowSetting.m_PreHeightMin 	= PRE_HEIGHT_MIN_NUM;
+	m_QualityWindowSetting.m_PreHeightMax 	= PRE_HEIGHT_MAX_NUM;
+	m_QualityWindowSetting.m_HeightMin 		= HEIGHT_MIN_NUM;
+	m_QualityWindowSetting.m_HeightMax 		= HEIGHT_MAX_NUM;
+	m_QualityWindowSetting.m_PeakPowerMin 	= PEAK_POWER_MIN_NUM;
+	m_QualityWindowSetting.m_PeakPowerMax 	= PEAK_POWER_MAX_NUM;
+	m_QualityWindowSetting.m_TimeMin 		= TIME_MIN_NUM;
+	m_QualityWindowSetting.m_TimeMax 		= TIME_MAX_NUM;
+	m_AdvancedSetting.m_WeldMode 			= WELD_MODE_NUM;
+	m_AdvancedSetting.m_AfterBurstAmplitude	= 0;
+	m_AdvancedSetting.m_AfterBurstDelay		= 0;
+	m_AdvancedSetting.m_AfterBurstTime		= 0;
+	m_AdvancedSetting.m_DisplayedHeightOffset = 0;
+	m_AdvancedSetting.m_HoldTime			= 0;
+	m_AdvancedSetting.m_MeasuredHeightOffset = 0;
+	m_AdvancedSetting.m_PreBurst			= 0;
+	m_AdvancedSetting.m_SqueezeTime			= 0;
+	m_AdvancedSetting.m_Trigger.m_TriggerType			= TRIGGER_DISTANCE_MODE;
+	m_AdvancedSetting.m_Trigger.m_PreTriggerDistance	= 0;
+	m_AdvancedSetting.m_Trigger.m_PreTriggerForce		= 0;
+	m_AdvancedSetting.m_Trigger.m_PreTriggerTime		= 0;
+	m_AdvancedSetting.m_WeldMode			= 0;
+	m_AdvancedSetting.m_WeldStepMode		= 0;
+	m_BatchSize 							= BATCH_SIZE_NUM;
+	char tmpName[] 							= DEFINE_NAME;
 	memcpy(m_RecipeName, tmpName, sizeof(tmpName));
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Constructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 P1_WeldRecipeSC::P1_WeldRecipeSC()
 {}
 
+/**************************************************************************//**
+* 
+* \brief   - Destructor.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 P1_WeldRecipeSC::~P1_WeldRecipeSC()
 {}
 
+/**************************************************************************//**
+* 
+* \brief   - Size of P1_WeldRecipeSC structure.
+*
+* \param   - None.
+*
+* \return  - Size of structure.
+******************************************************************************/
 int P1_WeldRecipeSC::Size()
 {
 	return sizeof(P1_WeldRecipeSC);
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Set data to P1 Weld RecipeSC.
+*
+* \param   - Index: data index; _data: Input data pointer.
+*
+* \return  - If there is any error happened, it will return ERROR; else it will return OK.
+*
+******************************************************************************/
 int P1_WeldRecipeSC::Set(void* para, int indlx)
 {
 	return OK;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Get data to P1 Weld RecipeSC.
+*
+* \param   - Index: data index; _data: Input data pointer.
+*
+* \return  - If there is any error happened, it will return ERROR; else it will return OK.
+*
+******************************************************************************/
 int P1_WeldRecipeSC::Get(int indlx, void* para)
 {
 	return OK;
 }
 
-void P1_WeldRecipeSC::InitialWeldRecipe()
+/**************************************************************************//**
+* 
+* \brief   - Initialize the data members of P1 Weld Recipe.
+*
+* \param   - None.
+*
+* \return  - None.
+******************************************************************************/
+void P1_WeldRecipeSC::Init()
 {
 	
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Size of L20_WeldRecipeAC structure.
+*
+* \param   - None.
+*
+* \return  - Size of structure.
+******************************************************************************/
 int L20_WeldRecipeAC::Size(){
 	return sizeof(L20_WeldRecipeAC);
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Size of P1_WeldRecipeAC structure.
+*
+* \param   - None.
+*
+* \return  - Size of structure.
+******************************************************************************/
 int P1_WeldRecipeAC::Size(){
 	return sizeof(P1_WeldRecipeAC);
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Size of L20_WeldRecipePC structure.
+*
+* \param   - None.
+*
+* \return  - Size of structure.
+******************************************************************************/
 int L20_WeldRecipePC::Size(){
 	return sizeof(L20_WeldRecipePC);
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Size of P1_WeldRecipePC structure.
+*
+* \param   - None.
+*
+* \return  - Size of structure.
+******************************************************************************/
 int P1_WeldRecipePC::Size(){
 	return sizeof(P1_WeldRecipePC);
 }

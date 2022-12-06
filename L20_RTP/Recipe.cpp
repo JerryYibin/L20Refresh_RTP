@@ -13,11 +13,11 @@
  **********************************************************************************************************/
 #include "Recipe.h"
 #include "CommonProperty.h"
-WeldRecipeSC* Recipe::ActiveRecipeSC =  WeldRecipeSC::GetWeldRecipeSC().get();
-WeldRecipeSC* Recipe::RecipeSC = nullptr;
+shared_ptr<WeldRecipeSC> Recipe::ActiveRecipeSC = WeldRecipeSC::GetWeldRecipeSC();
+shared_ptr<WeldRecipeSC> Recipe::RecipeSC = nullptr;
 vector<WeldRecipeLibForUI>				Recipe::WeldRecipeLibraryForUI;
 Recipe::Recipe() {
-		ActiveRecipeSC->InitialWeldRecipe();
+		ActiveRecipeSC->Init();
 }
 
 Recipe::~Recipe() {

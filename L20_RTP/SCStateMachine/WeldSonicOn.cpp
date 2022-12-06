@@ -76,7 +76,8 @@ void WeldSonicOn::Enter()
 	m_EnergyTarget = Utility::Energy2HEX(m_EnergySetting);
 	CommonProperty::WeldSignatureVector.clear();
 	ClearWeldData();
-	CommonProperty::WeldResult.PreHeight = ACStateMachine::AC_TX->ActualHeight;
+	//CommonProperty::WeldResult.PreHeight = ACStateMachine::AC_TX->ActualHeight;
+	WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &ACStateMachine::AC_TX->ActualHeight);
 	//TODO Need to consider to move cooling control to the specific actuator task.
 	CoolAirControl(0, 0);
 //	if (SysConfig.m_SystemInfo.HeightEncoder == true)
@@ -126,7 +127,9 @@ void WeldSonicOn::Loop()
 		
 	if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
 	{
-		CommonProperty::WeldResult.ALARMS.AlarmFlags.Overload = 1;
+		//CommonProperty::WeldResult.ALARMS.AlarmFlags.Overload = 1;
+		int AlarmFlags = 1;
+		WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
 		m_Actions = SCState::FAIL;
 	}
 
@@ -246,14 +249,20 @@ void WeldSonicOn::Loop()
 ******************************************************************************/
 void WeldSonicOn::Exit()
 {
+	int TriggerPressure = 0;
+	int WeldPressure = 0;
 	PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
-	CommonProperty::WeldResult.TotalEnergy = Utility::HEX2Energy(m_EnergyAccumulator);
-	CommonProperty::WeldResult.WeldTime = m_WeldTime;
-	CommonProperty::WeldResult.PostHeight = ACStateMachine::AC_TX->ActualHeight;
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &CommonProperty::WeldResult.TriggerPressure);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &CommonProperty::WeldResult.WeldPressure);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &CommonProperty::WeldResult.Amplitude);
-	CommonProperty::WeldResult.PeakPower = Utility::HEX2Power(m_PeakPower);
+	WeldResults::_WeldResults->Energy = Utility::HEX2Energy(m_EnergyAccumulator);
+	WeldResults::_WeldResults->WeldTime = m_WeldTime;
+	//CommonProperty::WeldResult.PostHeight = ACStateMachine::AC_TX->ActualHeight;
+	WeldResults::_WeldResults->Set(WeldResults::PARALIST::POST_HEIGHT, &ACStateMachine::AC_TX->ActualHeight);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &TriggerPressure);
+	WeldResults::_WeldResults->Set(WeldResults::PARALIST::TRIGGER_PRESSURE, &TriggerPressure);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &WeldPressure);
+	WeldResults::_WeldResults->Set(WeldResults::PARALIST::WELD_PRESSURE, &WeldPressure);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &WeldResults::_WeldResults->Amplitude/*CommonProperty::WeldResult.Amplitude*/);
+	//CommonProperty::WeldResult.PeakPower = Utility::HEX2Power(m_PeakPower);
+	WeldResults::_WeldResults->PeakPower = Utility::HEX2Power(m_PeakPower);
 	
 //		if (SysConfig.m_SystemInfo.CoolingType == WelderSystem::SECOND_PER_100JOULE)
 //		{
@@ -274,9 +283,6 @@ void WeldSonicOn::Exit()
 //		{
 		CoolAirControl(0, 0);
 //		}
-	//TODO need to move them to Control task.
-	CommonProperty::WeldResult.CycleCounter += 1;
-	CommonProperty::SystemInfo.psLifeCounter += 1;
 	LOG("m_StepIndex: Weld Sonics Loop - Result Update! Weld Time = %d Timeout = %d\n", m_WeldTime, m_Timeout);
 	SendMsgToUIMsgQ();
 	SendMsgToCtrlMsgQ();

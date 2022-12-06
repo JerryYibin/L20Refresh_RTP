@@ -13,8 +13,11 @@
 ***************************************************************************/
 #include <iostream>
 #include "WeldResultsDefine.h"
+#include "WeldResults.h"
 #include "SystemType.h"
 #include "commons.h"
+
+std::shared_ptr<WeldResults> WeldResults::_WeldResults =  WeldResults::GetWeldResults();
 
 /**************************************************************************//**
 * 
@@ -86,9 +89,6 @@ int L20_WeldResults::Set(int indlx, void *para) {
 	int iResult = OK;
 	if (nullptr != para) {
 		switch (indlx) {
-		case WeldResults::PARALIST::ACTUAL_WIDTH:
-			memcpy(&this->ActualWidth, para, sizeof(int));
-			break;
 		case WeldResults::PARALIST::TRIGGER_PRESSURE:
 			memcpy(&this->TriggerPressure, para, sizeof(int));
 			break;
@@ -101,8 +101,44 @@ int L20_WeldResults::Set(int indlx, void *para) {
 		case WeldResults::PARALIST::POST_HEIGHT:
 			memcpy(&this->PostHeight, para, sizeof(int));
 			break;
-		case WeldResults::PARALIST::ALARM_FLAGS:
-			memcpy(&this->AlarmFlags, para, sizeof(int));
+		case WeldResults::PARALIST::ALARM_ID:
+			memcpy(&this->AlarmID, para, sizeof(int));
+			break;
+		case ENERGY_SETTING:
+			memcpy(&this->EnergySetting, para, sizeof(int));
+			break;
+		case AMPLITUDE_SETTING:
+			memcpy(&this->AmplitudeSetting, para, sizeof(int));
+			break;
+		case T_PRESSURE_SETTING:
+			memcpy(&this->TPressureSetting, para, sizeof(int));
+			break;
+		case W_PRESSURE_SETTING:
+			memcpy(&this->WPressureSetting, para, sizeof(int));
+			break;
+		case MAX_WELD_TIME:
+			memcpy(&this->MaxWeldTime, para, sizeof(int));
+			break;
+		case MIN_WELD_TIME:
+			memcpy(&this->MinWeldTime, para, sizeof(int));
+			break;
+		case MAX_POWER:
+			memcpy(&this->MaxPower, para, sizeof(int));
+			break;
+		case MIN_POWER:
+			memcpy(&this->MinPower, para, sizeof(int));
+			break;
+		case MAX_PRE_HEIGHT:
+			memcpy(&this->MaxPreHeight, para, sizeof(int));
+			break;
+		case MIN_PRE_HEIGHT:
+			memcpy(&this->MinPreHeight, para, sizeof(int));
+			break;
+		case MAX_POST_HEIGHT:
+			memcpy(&this->MaxPostHeight, para, sizeof(int));
+			break;
+		case MIN_POST_HEIGHT:
+			memcpy(&this->MinPostHeight, para, sizeof(int));
 			break;
 		default:
 			iResult = ERROR;
@@ -127,9 +163,6 @@ int L20_WeldResults::Get(int indlx, void *para) {
 	int iResult = OK;
 	if (nullptr != para) {
 		switch (indlx) {
-		case WeldResults::PARALIST::ACTUAL_WIDTH:
-			memcpy(para, &this->ActualWidth, sizeof(int));
-			break;
 		case WeldResults::PARALIST::TRIGGER_PRESSURE:
 			memcpy(para, &this->TriggerPressure, sizeof(int));
 			break;
@@ -142,8 +175,44 @@ int L20_WeldResults::Get(int indlx, void *para) {
 		case WeldResults::PARALIST::POST_HEIGHT:
 			memcpy(para, &this->PostHeight, sizeof(int));
 			break;
-		case WeldResults::PARALIST::ALARM_FLAGS:
-			memcpy(para, &this->AlarmFlags, sizeof(int));
+		case WeldResults::PARALIST::ALARM_ID:
+			memcpy(para, &this->AlarmID, sizeof(int));
+			break;
+		case ENERGY_SETTING:
+			memcpy(para, &this->EnergySetting, sizeof(int));
+			break;
+		case AMPLITUDE_SETTING:
+			memcpy(para, &this->AmplitudeSetting, sizeof(int));
+			break;
+		case T_PRESSURE_SETTING:
+			memcpy(para, &this->TPressureSetting, sizeof(int));
+			break;
+		case W_PRESSURE_SETTING:
+			memcpy(para, &this->WPressureSetting, sizeof(int));
+			break;
+		case MAX_WELD_TIME:
+			memcpy(para, &this->MaxWeldTime, sizeof(int));
+			break;
+		case MIN_WELD_TIME:
+			memcpy(para, &this->MinWeldTime, sizeof(int));
+			break;
+		case MAX_POWER:
+			memcpy(para, &this->MaxPower, sizeof(int));
+			break;
+		case MIN_POWER:
+			memcpy(para, &this->MinPower, sizeof(int));
+			break;
+		case MAX_PRE_HEIGHT:
+			memcpy(para, &this->MaxPreHeight, sizeof(int));
+			break;
+		case MIN_PRE_HEIGHT:
+			memcpy(para, &this->MinPreHeight, sizeof(int));
+			break;
+		case MAX_POST_HEIGHT:
+			memcpy(para, &this->MaxPostHeight, sizeof(int));
+			break;
+		case MIN_POST_HEIGHT:
+			memcpy(para, &this->MinPostHeight, sizeof(int));
 			break;
 		default:
 			iResult = ERROR;

@@ -1,25 +1,28 @@
 /************************************************************************** 
 
-      Copyright (c) Branson Ultrasonics Corporation, 1996-2022
+ Copyright (c) Branson Ultrasonics Corporation, 1996-2022
  
-     This program is the property of Branson Ultrasonics Corporation
-     Copying of this software is expressly forbidden, without the prior
-     written consent of Branson Ultrasonics Corporation.
+ This program is the property of Branson Ultrasonics Corporation
+ Copying of this software is expressly forbidden, without the prior
+ written consent of Branson Ultrasonics Corporation.
+ ---------------------------- MODULE DESCRIPTION ----------------------------
+    
  
-***************************************************************************/
-#include <stdio.h>
-#include <cstring>
+ 
+ ***************************************************************************/
+
 #ifndef WELDRESULTS_H_
 #define WELDRESULTS_H_
 #include "Common.h"
 #include "HeartBeatUI.h"
 #include "WeldResultsDefine.h"
-
+#include <vector>
 ///////////////////////////////////
 
 #define L20REFRESH 							1
 #define USER_NAME_SIZE						16
 #define BARCODE_DATA_SIZE					50
+#define TABLE_RESULT_MEM                    15 /* there are 15 columns in table WeldResult */
 using namespace std;
 #if GSX
 	struct WELD_RESULT
@@ -54,71 +57,12 @@ using namespace std;
 		char 	PartID[BARCODE_DATA_SIZE];
 	};
 #elif L20REFRESH
-	enum WELD_STATUS
-	{
-		WELDABORT 	= -1,
-		WELDDONE 	= 0
-	};
-	
-	struct WELD_RESULT
-	{
-		UINT32	RecipeNum;
-		char 	PartID[BARCODE_DATA_SIZE];
-		char	UserName[USER_NAME_SIZE];
-		UINT32  CycleCounter;
-		UINT32  RecipeNumber;
-		UINT32  RecipeRevNumber;
-		UINT32	WeldStatus;
-		UINT32	TotalEnergy;
-		UINT32	ActualWidth;
-		UINT32	Amplitude;
-		UINT32	TriggerPressure;
-		UINT32	WeldPressure;
-		UINT32	WeldTime;
-		UINT32	PeakPower;
-		UINT32	PreHeight;
-		UINT32	PostHeight;
-		union
-		{
-			UINT32	ALARMflags;
-			/* There is a little endian for structure bit field alignment for alarm */
-			struct
-			{
-				UINT32	Overload			: 1; //bit 0
-				UINT32	HeightSystemFailure	: 1; //bit 1
-				UINT32	WeldAborted			: 1; //bit 2
-				
-				UINT32	TimeMin				: 1; //bit 3
-				UINT32	PowerMin			: 1; //bit 4
-				UINT32	PreHeightMin		: 1; //bit 5
-				UINT32	PostHeightMin		: 1; //bit 6
-				
-				UINT32	TimeMax				: 1; //bit 7
-				UINT32	PowerMax			: 1; //bit 8
-				UINT32	PreHeightMax		: 1; //bit 9
-				UINT32	PostHeightMax		: 1; //bit 10
-				
-				UINT32	HeightEncoderBad	: 1; //bit 11
-				UINT32	FootPedalAbort		: 1; //bit 12
-				UINT32	SafetySwitch		: 1; //bit 13
-				UINT32	WidthError			: 1; //bit 14
-				
-				UINT32	CutterSwitch		: 1; //bit 15
-				
-				
-			} AlarmFlags;
-		} ALARMS;
-	};
-#endif
 
-
-class WeldResult{
-public:
-	static WeldResults* _WeldResults;
-public:
-	WeldResult();
-	~WeldResult();
-	static int Get(HEARTBEAT*);
+struct WeldResult{
+	static std::vector<shared_ptr<WeldResults>> WeldResultVector;
+    static std::vector<WeldResultsUI> TransformResultsVector();
 };
+
+#endif
 
 #endif

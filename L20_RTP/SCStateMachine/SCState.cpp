@@ -88,8 +88,10 @@ bool SCState::DefeatWeldAbortHandler()
 		if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_HIGH || vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_HIGH)
 		{
 			abortWeld();
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.WeldAborted = 1;
-			CommonProperty::WeldResult.ALARMS.AlarmFlags.FootPedalAbort = 1;
+			//CommonProperty::WeldResult.ALARMS.AlarmFlags.WeldAborted = 1;
+			//CommonProperty::WeldResult.ALARMS.AlarmFlags.FootPedalAbort = 1;
+			int AlarmFlags = 1;
+			WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
 			isAbort = true;
 		}
 //	}
@@ -107,7 +109,9 @@ bool SCState::DefeatWeldAbortHandler()
 bool SCState::ProcessAlarmHandler(void)
 {
 	bool isReset = false;
-	if(CommonProperty::WeldResult.ALARMS.AlarmFlags.WeldAborted != 0)
+	int AlarmFlags = 0;
+	WeldResults::_WeldResults->Get(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
+	if(AlarmFlags != 0)
 	{
 		if(m_Timeout < ALARMBEEPDELAY)
 		{

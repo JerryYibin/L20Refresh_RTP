@@ -40,6 +40,8 @@ public:
 	virtual int 	StoreWeldRecipe(char* buffer)			= 0;
 	virtual int 	StoreAlarmLog(char* buffer)				= 0;
 
+	virtual int 	QueryWeldResultLatestPage(char *)		= 0;
+	virtual int 	QueryWeldResultNextPage(char *)			= 0;
 	virtual int 	QueryBlockWeldResult(char *)			= 0;
 	virtual void 	QueryWeldSignature(char *)				= 0;
 	virtual int 	QueryWeldRecipe(char *)					= 0;

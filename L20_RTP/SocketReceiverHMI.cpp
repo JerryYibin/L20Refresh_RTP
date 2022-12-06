@@ -91,6 +91,9 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_SETUP_ADVANCED_PARAM_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_SETUP_ADVANCED_PARAM;
 		break;
+	case REQ_ACTIVE_RECIPE_VALIDATE_IDX:
+		message.msgID = UserInterface::TO_UI_ACTIVE_RECIPE_VALIDATE;
+		break;
 	case REQ_SYSTEM_CONGIF_READ_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_SYSCONFIG_READ;
 		break;
@@ -139,8 +142,37 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_GET_SELECTED_RECIPE_INFO_REQ:
 		message.msgID = UserInterface::TO_UI_RECIPE_DETAILS_GET;
 		break;
+	case REQ_DETECT_SC_USB_DEVICE:
+		message.msgID = UserInterface::TO_UI_TASK_DETECT_USB_DEVICE;
+		break;
+	case REQ_EXCUTE_FIRMWARE_UPGRADE_FROM_USB:
+		message.msgID = UserInterface::TO_UI_TASK_FIRMWARE_UPGRADE_RESPONSE;
+		break;
+	case REQ_SET_ETHERNET_CONFIG_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_ETHERNET_CONFIG_SET;
+		break;
+	case REQ_GET_ETHERNET_CONFIG_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_ETHERNET_CONFIG_GET;
+		break;
+	case REQ_GET_GATEWAY_SERVER_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_GATEWAY_SERVER_GET;
+		break;	
+	case REQ_GET_RECIPE_TOTAL_NUMBER_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_RECIPE_TOTAL_NUMBER_GET;
+		break;
+	case REQ_EXIT_SETUP_SCREEN_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_ACTIVE_RECIPE_INFO;
+		break;
+	case REQ_WELD_RESULT_HISTORY_LOG_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_WELD_RESULT_HISTORY_LOG;
+		break;
+	case REQ_WELD_RESULT_HISTORY_NEXT_PAGE_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_WELD_RESULT_HISTORY_NEXT_PAGE;
+		break;
+	case REQ_WELD_RECIPE_RENAME_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_WELD_RECIPE_RENAME;
+		break;
 	default:
-		message.msgID = UserInterface::TO_UI_TASK_HEART_BEAT;
 		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);
 		break;
 	}

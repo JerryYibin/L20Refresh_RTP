@@ -16,6 +16,23 @@
 #include <memory>
 #include "RecipeUI.h"
 
+#define ENERGY_SETTING_NUM		100
+#define	AMPLITUDE_NUM			10
+#define	TPRESSURE_NUM			30000
+#define	WPRESSURE_NUM			30000
+#define	WELD_STEP_MODE_NUM		-1
+#define	PRE_HEIGHT_MIN_NUM		0
+#define	PRE_HEIGHT_MAX_NUM		15000
+#define	HEIGHT_MIN_NUM			0
+#define	HEIGHT_MAX_NUM			15000
+#define	PEAK_POWER_MIN_NUM		0
+#define	PEAK_POWER_MAX_NUM		4800
+#define	TIME_MIN_NUM			0
+#define	TIME_MAX_NUM			5000
+#define	WELD_MODE_NUM			0
+#define	BATCH_SIZE_NUM			999999
+#define	DEFINE_NAME				"NewRecipe"
+
 struct WeldRecipeSC
 {
 	WeldRecipeSC();
@@ -67,7 +84,7 @@ struct WeldRecipeSC
     virtual int	Size() = 0;
     virtual int Set(void*, int) = 0;
     virtual int Get(int, void*) = 0;
-    virtual void InitialWeldRecipe() = 0;
+    virtual void Init() 		= 0;
     static std::shared_ptr<WeldRecipeSC> GetWeldRecipeSC();
 };
 
@@ -107,7 +124,7 @@ struct L20_WeldRecipeSC : public WeldRecipeSC
     int Size() 						override;
     int Set(void*, int) 			override;
     int Get(int, void*) 			override;
-    void InitialWeldRecipe()		override;
+    void Init()						override;
 };
 
 struct P1_WeldRecipeSC : public WeldRecipeSC
@@ -117,7 +134,7 @@ struct P1_WeldRecipeSC : public WeldRecipeSC
     int Size() 						override;
     int Set(void*, int) 			override;
     int Get(int, void*) 			override;
-    void InitialWeldRecipe()		override;
+    void Init()						override;
 };
 
 struct L20_WeldRecipeAC : public WeldRecipeAC

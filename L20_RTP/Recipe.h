@@ -25,8 +25,8 @@ public:
 		AMPLITUDE,
 		TOTAL
 	};
-	static WeldRecipeSC* ActiveRecipeSC;
-	static WeldRecipeSC* RecipeSC;
+	static shared_ptr<WeldRecipeSC> ActiveRecipeSC;
+	static shared_ptr<WeldRecipeSC> RecipeSC;
 	static vector<WeldRecipeLibForUI>	WeldRecipeLibraryForUI;
 public:
 	Recipe();

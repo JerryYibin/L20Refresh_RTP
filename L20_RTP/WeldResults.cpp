@@ -11,61 +11,53 @@
 ***************************************************************************/
 #include "WeldResults.h"
 
-WeldResults* WeldResult::_WeldResults =  WeldResults::GetWeldResults().get();
+
+std::vector<shared_ptr<WeldResults>>				WeldResult::WeldResultVector;
 
 /**************************************************************************//**
-* 
-* \brief   - Constructor.
+* \brief   - Convert the Vector to a Vector available to the UI
 *
-* \param   - None.
+* \param   - Nullptr
 *
-* \return  - None.
-*
-******************************************************************************/
-WeldResult::WeldResult(){
-	
-}
-
-/**************************************************************************//**
-* 
-* \brief   - Destructor.
-*
-* \param   - None.
-*
-* \return  - None.
+* \return  - vector<WeldResultsUI> - The vector that is sent to the UI
 *
 ******************************************************************************/
-WeldResult::~WeldResult(){
-	// TODO Auto-generated destructor stub
-}
-
-/**************************************************************************//**
-* 
-* \brief   - Get SC Weld Results  to UI Weld Results 
-*
-* \param   - HEARTBEAT.
-*
-* \return  - if there is any error happened during the data setting, 
-* 			 it will return ERROR; else it will return OK.
-*
-******************************************************************************/
-int WeldResult::Get(HEARTBEAT* _sysHearBeat)
+std::vector<WeldResultsUI> WeldResult::TransformResultsVector()
 {
-	if(_sysHearBeat == nullptr)
-		return ERROR;
-	
-	_sysHearBeat->RecipeNumber = _WeldResults->RecipeNumber;
-	_sysHearBeat->CycleCounter = _WeldResults->CycleCounter;
-	_sysHearBeat->TotalEnergy = _WeldResults->CycleCounter;
-	_sysHearBeat->WeldTime = _WeldResults->WeldTime;
-	_sysHearBeat->PeakPower = _WeldResults->PeakPower;
-	_sysHearBeat->Amplitude = _WeldResults->Amplitude;
-	
-	_WeldResults->Get(WeldResults::PARALIST::ALARM_FLAGS, 		(void*)(&_sysHearBeat->AlarmCode));
-	_WeldResults->Get(WeldResults::PARALIST::TRIGGER_PRESSURE, 	(void*)(&_sysHearBeat->TriggerPress));
-	_WeldResults->Get(WeldResults::PARALIST::WELD_PRESSURE, 	(void*)(&_sysHearBeat->WeldPress));
-	_WeldResults->Get(WeldResults::PARALIST::PRE_HEIGHT, 		(void*)(&_sysHearBeat->PreHeight));
-	_WeldResults->Get(WeldResults::PARALIST::POST_HEIGHT, 		(void*)(&_sysHearBeat->PostHeight));
-	
-	return OK;
+	std::vector<WeldResultsUI> WeldResultsUIVector;
+	WeldResultsUI _sysWeldResult;
+	for(auto& i : WeldResult::WeldResultVector)
+	{
+		strncpy(_sysWeldResult.RecipeName,i->RecipeName, USER_NAME_SIZE);
+		strncpy(_sysWeldResult.DateTime,i->DateTime, WELD_TIME_SIZE);
+		i->Get(WeldResults::PARALIST::ALARM_ID, &_sysWeldResult.AlarmID);
+		i->Get(WeldResults::PARALIST::ENERGY_SETTING, &_sysWeldResult.EnergySetting);
+    	i->Get(WeldResults::PARALIST::AMPLITUDE_SETTING, &_sysWeldResult.AmplitudeSetting);	//AmplitudeSetting
+    	i->Get(WeldResults::PARALIST::W_PRESSURE_SETTING, &_sysWeldResult.WPressureSetting);	//WPpressureSetting
+    	i->Get(WeldResults::PARALIST::T_PRESSURE_SETTING, &_sysWeldResult.TPressureSetting);	//TPpressureSetting
+    	i->Get(WeldResults::PARALIST::MAX_WELD_TIME, &_sysWeldResult.MaxWeldTime);
+    	i->Get(WeldResults::PARALIST::MIN_WELD_TIME, &_sysWeldResult.MinWeldTime);
+    	i->Get(WeldResults::PARALIST::MAX_POWER, &_sysWeldResult.MaxPower);
+    	i->Get(WeldResults::PARALIST::MIN_POWER, &_sysWeldResult.MinPower);
+    	i->Get(WeldResults::PARALIST::MAX_PRE_HEIGHT, &_sysWeldResult.MaxPreHeight);
+    	i->Get(WeldResults::PARALIST::MIN_PRE_HEIGHT, &_sysWeldResult.MinPreHeight);
+    	i->Get(WeldResults::PARALIST::MAX_POST_HEIGHT, &_sysWeldResult.MaxPostHeight);
+    	i->Get(WeldResults::PARALIST::MIN_POST_HEIGHT, &_sysWeldResult.MinPostHeight);
+    	
+    	_sysWeldResult.WeldMode = i->WeldMode;//WeldMode
+    	_sysWeldResult.Energy = i->Energy;//WeldEnergy
+		i->Get(WeldResults::PARALIST::WELD_PRESSURE, &_sysWeldResult.WPressure);//WeldPressure
+		_sysWeldResult.Amplitude = i->Amplitude;//WeldAmplitude
+		_sysWeldResult.WeldTime = i->WeldTime;//WeldTime
+		_sysWeldResult.Power = i->PeakPower;//WeldPeakPower
+		i->Get(WeldResults::PARALIST::TRIGGER_PRESSURE, &_sysWeldResult.TPressure);//TriggerPressure
+		i->Get(WeldResults::PARALIST::WELD_PRESSURE, &_sysWeldResult.WPressure);//WeldHeight
+		i->Get(WeldResults::PARALIST::ALARM_ID, &_sysWeldResult.AlarmID);//AlarmID
+		i->Get(WeldResults::PARALIST::TRIGGER_PRESSURE, &_sysWeldResult.PreHeight);//TriggerHeight
+		i->Get(WeldResults::PARALIST::WELD_PRESSURE, &_sysWeldResult.PostHeight);//WeldHeight
+		_sysWeldResult.CycleCounter = i->CycleCounter;//CycleCounter
+		
+		WeldResultsUIVector.push_back(_sysWeldResult);;
+	}
+	return WeldResultsUIVector;
 }

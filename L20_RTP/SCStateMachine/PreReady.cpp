@@ -83,7 +83,9 @@ void PreReady::Loop()
 	{
 		//TODO Record Database alarm table
 		//TODO In reply to Code Review Issue 13, there is the work item 8373 for the CommonProperty clean up.
-		CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
+		//CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
+		int AlarmFlags = 1;
+		WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
 		m_Actions = SCState::FAIL;
 	}
 }
