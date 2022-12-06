@@ -18,6 +18,7 @@
 #include "SystemConfigDefine.h"
 #include "SystemType.h"
 #include "commons.h"
+#include "Utility.h"
 
 /**************************************************************************//**
 * 
@@ -335,6 +336,8 @@ void L20_SYSTEMCONFIG::Init()
 	TeachMode.PreHeight_Lower	= 0;
 	TeachMode.PostHeight_Upper	= 0;
 	TeachMode.PostHeight_Lower	= 0;
+	
+	MaxAmplitude				= AMPLITUDE_MAX;
 }
 
 /**************************************************************************//**

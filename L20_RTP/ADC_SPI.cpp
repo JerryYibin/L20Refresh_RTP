@@ -72,7 +72,7 @@ int ADC_AD7689::InitADConverter()
 	
 	m_Descriptor.chipSelect 	= SPI_SLAVE_0;
 	m_Descriptor.bitWidth 		= NUM_BITS_PERTRANSFER_16;
-	m_Descriptor.devFreq 		= 40000000;
+	m_Descriptor.devFreq 		= 4000000;
 	m_Descriptor.mode 			= SPI_MODE_3 | SPI_FULL_DUPLEX;
 	m_Descriptor.dataLines 		= 1;
 	return OK;
@@ -105,7 +105,7 @@ int ADC_AD7689::RunADCSample()
 	}
 
 	
-	for(int ch = 0; ch < CH_MAX; ch++)
+	for(int ch = 0; ch < CH_7; ch++)
 	{
 		dummy 				= 0;
 		recvData 			= 0;

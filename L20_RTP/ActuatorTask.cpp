@@ -71,7 +71,7 @@ void ActuatorTask::ProcessTaskMessage(MESSAGE & message)
 			Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &ACStateMachine::AC_RX->TargetPressure);
 			break;
 		case TO_ACT_TASK_AUX_MOTION:
-			memcpy(&motion, message.Buffer, sizeof(int));
+			memcpy(&motion, tmpMsg.Buffer, sizeof(int));
 			ActuatorTask::GetInstance()->DoAuxMotion(motion);
 			break;
 		default:

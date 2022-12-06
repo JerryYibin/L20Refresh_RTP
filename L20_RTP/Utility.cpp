@@ -30,12 +30,12 @@ UINT32 Utility::HEX2Power(UINT16 hexadcimal)
 UINT32 Utility::HEX2Energy(UINT32 hexadcimal)
 {
 	float tmp = (float)(hexadcimal / POWER_FACTOR);
-	return  tmp * (float)(POWER_MAX / 1000); 
+	return  tmp * (float)(POWER_MAX * 10.0 / 1000.0); 
 }
 
 UINT32 Utility::HEX2Frequency(UINT16 hexadcimal)
 {
-	return 0;
+	return (FREQ_MAX - hexadcimal * FREQ_FACTOR); 
 }
 
 UINT32 Utility::HEX2Amplitude(UINT16 hexadcimal)
@@ -82,7 +82,7 @@ UINT16 Utility::Pressure2HEX(UINT32 physical)
 
 UINT32 Utility::Energy2HEX(UINT32 physical)
 {
-	float tmp = physical * (float)(1000.00 / POWER_MAX);
+	float tmp = physical * (float)(1000.0 / (POWER_MAX * 10.0));
 	return tmp * (float)POWER_FACTOR;
 }
 

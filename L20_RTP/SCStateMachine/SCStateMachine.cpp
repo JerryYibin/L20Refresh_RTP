@@ -22,6 +22,8 @@
 #include "SetWeldPressure.h"
 #include "SqueezeTime.h"
 #include "HoldTime.h"
+#include "TestSonicOn.h"
+#include "Alarm.h"
 #include "../PCStateMachine.h"
 #include "../ACStateMachine.h"
 #include "../Logger.h"
@@ -35,6 +37,7 @@ extern "C"
 SCStateMachine* SCStateMachine::m_StateMachineObj = nullptr;
 SCState* SCStateMachine::m_objState = nullptr;
 SEM_ID SCStateMachine::m_semaphoreMutex = SEM_ID_NULL;
+unsigned int SCStateMachine::CoreState = 0;
 /**************************************************************************//**
 * \brief   - Constructor -
 *
@@ -132,8 +135,8 @@ void SCStateMachine::initStateMap()
 	_objStateMap->insert(pair<SCState::STATE, int>(SCState::WAIT_FOR_READY_POSITION, 	TRUE));
 	_objStateMap->insert(pair<SCState::STATE, int>(SCState::CALIBRATE,					FALSE));	
 	_objStateMap->insert(pair<SCState::STATE, int>(SCState::READY_FOR_TRIGGER,			TRUE));
-	
-	
+	_objStateMap->insert(pair<SCState::STATE, int>(SCState::TEST_SONIC_ON,	 			TRUE));
+	_objStateMap->insert(pair<SCState::STATE, int>(SCState::ALARM,			 			TRUE));
 }
 
 /**************************************************************************//**
@@ -210,7 +213,7 @@ void SCStateMachine::RunStateMachine()
 	case SCState::ABORT:
 		m_objState->Exit();
 		m_objState->m_Actions = SCState::INIT;
-		m_StateIndex = 0;
+		m_StateIndex = _objStateList->size() - 1; //Directly go to alarm state.
 		LOG("Abort\n");
 		break;
 	case SCState::PUSH:
@@ -303,7 +306,12 @@ int SCStateMachine::LoadStatesHandler(int operation)
 		case BATCH_WELD:
 			SelectWeldSequence();
 			break;
+		case TEST:
+			SelectSonicsTestSequence();
+			break;
 		default:
+			m_objState = new Alarm();
+			_objStateList->push_back(m_objState);
 			break;
 		}
 		iResult = OK;
@@ -351,6 +359,9 @@ void SCStateMachine::SelectWeldSequence(void)
 	
 	m_objState = new WaitForReadyPosition();
 	_objStateList->push_back(m_objState);
+	
+	m_objState = new Alarm();
+	_objStateList->push_back(m_objState);
 
 }
 
@@ -372,7 +383,38 @@ void SCStateMachine::SelectHeightCalibrateSequence(void)
 	
 	m_objState = new HeightCalibrate();
 	_objStateList->push_back(m_objState);
+	
+	m_objState = new Alarm();
+	_objStateList->push_back(m_objState);
 }
+
+/**************************************************************************//**
+* 
+* \brief   - State Machine Loop for Sonics test.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void SCStateMachine::SelectSonicsTestSequence(void)
+{
+	m_objState = nullptr;
+	m_objState = new ReadyForTrigger();
+	_objStateList->push_back(m_objState);
+	addActionToMap(m_objState->m_State, m_objState);
+	
+	m_objState = new SeekSonicOn(SeekSonicOn::TEST_SEEK_ON);
+	_objStateList->push_back(m_objState);
+	
+	m_objState = new TestSonicOn();
+	_objStateList->push_back(m_objState);
+	addActionToMap(m_objState->m_State, m_objState);
+	
+	m_objState = new Alarm();
+	_objStateList->push_back(m_objState);
+}
+
 
 /**************************************************************************//**
 * 
@@ -397,6 +439,8 @@ int	SCStateMachine::ExecuteStateAction(SCState::STATE stateIdx)
 		case SCState::READY_FOR_TRIGGER:
 			iResult = ReadyForTrigger::Execute(_action);
 			break;
+		case SCState::TEST_SONIC_ON:
+			iResult = TestSonicOn::Execute(_action);
 		default:
 			break;
 		}
@@ -436,6 +480,21 @@ void SCStateMachine::XTickTock()
 			vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_HIGH);
 
 	}
+}
+
+unsigned int SCStateMachine::GetCoreState()
+{
+	return CoreState;;
+}
+
+void SCStateMachine::SetCoreState(unsigned int coreState)
+{
+	CoreState |= coreState;
+}
+
+void SCStateMachine::ClearCoreState(unsigned int coreState)
+{
+	CoreState &= ~coreState;
 }
 
 /**************************************************************************//**

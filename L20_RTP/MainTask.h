@@ -12,6 +12,7 @@
 #define MAINTASK_H_
 #include "commons.h"
 #include "SCTask.h"
+#include "FirmwareUpgrade.h"
 
 /* Message queue OFFSETS */
 #define MAX_MSG					1000 
@@ -19,7 +20,7 @@
 #define MSG_Q_FIFO				0x00
 
 /* No of task going to create in Supervisory Controller */
-#define NUM_OF_BL_TASK			14
+#define NUM_OF_BL_TASK			18
 #define SHUTDOWN_STATUS			1
 
 /* Priority of tasks in Supervisory Controller */
@@ -42,32 +43,30 @@ enum TASK_PRIORITY
 	DGTIN_T_PRIORITY,
 	DGTOUT_T_PRIORITY,
 //	WEBSERVICE_T_PRIORITY,
-	DIG_SOCKET_T_PRIORITY,
 	BARCODE_READER_T_PRIORITY,
-	MAINTENANCE_T_PRIORITY
+	MAINTENANCE_T_PRIORITY,
+	EXTERANL_SOCKET_T_PRIORITY
 };
 
 /* Stack size of tasks in Supervisory Controller */
 #define CONSOLE_T_STACK_SIZE			(1024 * 6)
 #define CTRL_T_STACK_SIZE				(1024 * 6)
+#define ACT_SOCKET_T_STACK_SIZE			(1024 * 8)
 #define ACT_PROCESS_T_STACK_SIZE		(1024 * 6)
 #define PS_T_STACK_SIZE					(1024 * 6)
 #define ACT_SYSTEM_T_STACK_SIZE			(1024 * 6)
-#define SDO_T_STACK_SIZE				(1024 * 6)
-#define ALARM_T_STACK_SIZE				(1024 * 6)
-#define UI_T_STACK_SIZE					(1024 * 10)
-#define INTERFACE_T_STACK_SIZE			(1024 * 20)
+#define UI_T_STACK_SIZE					(1024 * 20)
 #define DATA_T_STACK_SIZE				(1024 * 20)
+#define FW_UPGRADE_T_STACK_SIZE			(1024 * 8)
+#define INTERFACE_T_STACK_SIZE			(1024 * 20)
 #define HMI_SOCKET_T_STACK_SIZE			(1024 * 10)
 #define CAN_SOCKET_T_STACK_SIZE			(1024 * 4)
-#define ACT_SOCKET_T_STACK_SIZE			(1024 * 8)
-#define DIG_SOCKET_T_STACK_SIZE			(1024 * 10)
-#define FW_UPGRADE_T_STACK_SIZE			(1024 * 8)
+#define ALARM_T_STACK_SIZE				(1024 * 6)
 #define DGTIN_T_STACK_SIZE				(1024 * 4)
 #define DGTOUT_T_STACK_SIZE				(1024 * 4)
 #define BARCODE_READER_T_STACK_SIZE		(1024 * 2)
 #define MAINTENANCE_T_STACK_SIZE		(1024 * 8)
-#define GATEWAY_SOCKET_T_STACK_SIZE		(1024 * 8)
+#define EXTERNAL_SOCKET_T_STACK_SIZE	(1024 * 10)
 
 /* Shared data object size for PDO data */
 #define SD_SIZE					512
@@ -92,8 +91,6 @@ void BarcodeReader_Task		(void);
 void Maintenance_Task		(void);
 void Actuator_Process_Task	(void);
 
-void ScDgtOutput_Task 		(void);
-void ScDgtInput_Task		(void);
 
 //void Socket_Gateway_Task	(void);
 

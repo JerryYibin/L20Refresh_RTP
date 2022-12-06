@@ -73,8 +73,11 @@ void SqueezeTime::Loop()
 	{
 		if (m_Timeout < m_iSqueezeTime)
 			m_Timeout++;
-		else	
+		else
+		{
+			LOG("SQUEEZE TIME = %d\n", m_Timeout);
 			m_Actions = SCState::JUMP;
+		}
 	}
 }
 

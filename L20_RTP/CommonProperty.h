@@ -45,13 +45,12 @@ public:
 		MAINTENANCE_T,
 		
 		CONSOLE_T,
-		MAIN_T,
 		HMI_SOCKET_T,
 		ACT_SOCKET_T,
-		DIG_SOCKET_T,
 		CAN_SOCKET_T,
 		FWUPGRADE_T,
-		
+		EXTERNAL_SOCKET_T,
+		MAIN_T,
 		END_OF_TASKS
 	};
 
@@ -73,12 +72,7 @@ public:						/* Public member data */
 
 	bool					m_bTaskRun;
 	// static member for global access
-	static WELD_RESULT				WeldResult;
-	static WELD_RESULT				WeldResultForUI[RESULT_FOR_UI_MAX];
 	static SYSTEM_INFO				SystemInfo;
-	static vector<WELD_SIGNATURE> 	WeldSignatureVector;
-	
-	static HMI_WELD_SIGNATURE_POINTS	WeldSignatureForUI[RESULT_FOR_UI_MAX];
 	
 private:					/* Private member functions */
 	

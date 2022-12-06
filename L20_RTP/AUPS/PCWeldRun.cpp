@@ -125,6 +125,7 @@ void PCWeldRun::Exit()
 	}
 	
 	// turn off sonics
+	vxbGpioSetValue(GPIO::O_TEST_PSI, GPIO_VALUE_LOW);
 	vxbGpioSetValue(GPIO::O_RUN_PSI, GPIO_VALUE_LOW);
 	vxbGpioSetValue(GPIO::O_SONICS_ON, GPIO_VALUE_LOW);
 	LOG("\n PowerSupply_T: _PC_WELD_RUN_TIMEOUT = %d\n", m_Timeout);

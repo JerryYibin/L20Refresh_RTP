@@ -28,7 +28,7 @@ public:
 		UINT32	msgID;
 		UINT32  msgLen;
 		UINT32	rspCode;
-		char	Buffer[MAX_SIZE_OF_MSG_BUFF];
+		char	Buffer[MAX_SIZE_OF_CLIENT_MSG_SEND_BUFFER];
 		UINT32  crc32;
 	};
 public:

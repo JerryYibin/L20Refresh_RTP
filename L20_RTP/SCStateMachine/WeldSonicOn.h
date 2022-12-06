@@ -39,12 +39,9 @@ public:
 	virtual void Exit() override;
 	virtual void Fail() override;
 private:
-	void 			CaptureWeldData		();
 	void 			ClearWeldData		();
 	unsigned int 	GetFilteredPower	(void);
 	void 			CoolAirControl		(unsigned int delay, unsigned duration);
-	void 			SendMsgToUIMsgQ		();
-	void			SendMsgToCtrlMsgQ	();
 };
 
 #endif /* WELDSONICON_H_ */

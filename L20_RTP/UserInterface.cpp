@@ -25,11 +25,18 @@ UserInterface owned using the class object pointer.
 #include "HeightEncoder.h"
 #include "HeightCalibrationUI.h"
 #include "ActuatorTask.h"
+#include "PowerSupplyTask.h"
 #include "DataTask.h"
 #include "RecipeWrapper.h"
 #include "ScDgtInput.h"
 #include "SystemConfiguration.h"
 #include "SystemConfigurationUI.h"
+#include "SonicsTestUI.h"
+#include "Connectivity.h"
+#include "ExternalEthernet.h"
+#include "RecipeUI.h"
+#include "WeldResultSignature.h"
+#include "AlarmManager.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -49,6 +56,7 @@ UserInterface::UserInterface()
 	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 	ACT_MSG_Q_ID  = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]);
+	PS_MSG_Q_ID   = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]);
 	// Load the data message Q name
 	string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
 	DATA_MSG_Q_ID_CTRL = CP->getMsgQId (Data_Task + "/Control");
@@ -108,6 +116,8 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		updateActiveRecipeGeneralParam(message.Buffer);
 		message.msgID = ActuatorTask::TO_ACT_TASK_PRESSURE_SET;
 		SendToMsgQ(message, ACT_MSG_Q_ID);
+		message.msgID = PowerSupplyTask::TO_PS_TASK_AMPLITUDE_UPDATE;
+		SendToMsgQ(message, PS_MSG_Q_ID);
 		break;
 	case TO_UI_TASK_SETUP_QUALITY_PARAM:
 		updateActiveRecipeQualityParam(message.Buffer);
@@ -128,10 +138,16 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		updateLastWeldResult();
 		break;
 	case TO_UI_TASK_SYSCONFIG_READ:
+		message.msgID = DataTask::TO_DATA_TASK_SYS_CONFIG_QUERY;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);	
+		break;
+	case TO_UI_TASK_SYSCONFIG_READ_RESPONSE:
 		responseSystemConfig();
 		break;
 	case TO_UI_TASK_SYSCONFIG_WRITE:
 		updateSystemConfigData(message.Buffer);
+		message.msgID = DataTask::TO_DATA_TASK_SYS_CONFIG_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	case TO_UI_TASK_INITIALIZATION:
 		responseInitializationData();
@@ -273,6 +289,21 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		message.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_RENAME;
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
+	case TO_UI_TASK_READ_POWER_GRAPH_RESPONSE:
+		responseReadPowerGraphRequest();
+		break;
+	case TO_UI_TASK_READ_HEIGHT_GRAPH_RESPONSE:
+		responseReadHeightGraphRequest();
+		break;
+	case TO_UI_TASK_READ_FREQUENCY_GRAPH_RESPONSE:
+		responseReadFrquencyGraphRequest();
+		break;
+	case TO_UI_TASK_GET_CURRENT_ALARM_IDX:
+		responseCurrentAlarmEventRequest();
+		break;
+	case TO_UI_TASK_RESET_CURRENT_ALARM_IDX:
+		responseCurrentAlarmEventReset();
+		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
 		break;
@@ -297,7 +328,7 @@ void UserInterface::responseHeartbeat()
 	sendMsg.msgID	= REQ_HEART_BEAT_IDX;
 	sendMsg.msgLen  = 0;
 	sendMsg.rspCode = 0;
-	
+	m_stHeartbeat.AlarmCode = AlarmManager::GetInstance()->GetAlarmType();
 	memcpy(sendMsg.Buffer, &m_stHeartbeat, sizeof(HEARTBEAT));
 	sendMsg.msgLen = sizeof(HEARTBEAT);
 	
@@ -549,6 +580,28 @@ void UserInterface::responseUserIORequest(char* messagebuf)
 
 /**************************************************************************//**
 * 
+* \brief   - response Sonics Test current Power and Frequency 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseSonicsTest(char* messagebuf)
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+
+	sendMsg.msgID	= REQ_MAINTAIN_SONICS_TEST_IDX;
+	sendMsg.msgLen  = 0;
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, messagebuf, sizeof(SONICS_TEST));
+	sendMsg.msgLen = sizeof(SONICS_TEST);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
 * \brief   - Processing the User data.
 *
 * \param   - None.
@@ -765,6 +818,168 @@ void UserInterface::updateSystemConfigData(char* messagebuf)
 	SystemConfiguration::Set(&sysConfigUI);
 }
 
+/**************************************************************************//**
+ * \brief   - Excute usb detect request
+ *
+ * \param   - None
+ *
+ * \return  - None
+ *
+ ******************************************************************************/
+void UserInterface::responseDetectUSBdevice()
+{
+	int iUSBdetectRes = USB_DETECT_FAIL;
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	
+	iUSBdetectRes = FirmwareUpgrade::USBDetect();
+	sendMsg.msgID	= REQ_DETECT_SC_USB_DEVICE;
+	sendMsg.msgLen  = 0;
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, &iUSBdetectRes, sizeof(int));
+	sendMsg.msgLen = sizeof(int);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* \brief   - Response to UI Firware upgrade progress.  
+*
+* \param   - Message buffer
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseFirmwareUpgradeProgress(char* messagebuf)
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+
+	sendMsg.msgID	= REQ_EXCUTE_FIRMWARE_UPGRADE_FROM_USB;
+	sendMsg.msgLen  = 0;
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, messagebuf, sizeof(int));
+	sendMsg.msgLen = sizeof(int);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+ * \brief   - Create Message Queue and spaw Firmwrae Upgrade task
+ *
+ * \param   - None
+ *
+ * \return  - None
+ *
+ ******************************************************************************/
+void UserInterface::firmWareUpgradeHandler() 
+{
+	/* Create message Queue */
+	MSG_Q_ID 		FW_TID;
+	MSG_Q_ID 		FW_MSG_Q_ID;
+	FW_MSG_Q_ID = msgQCreate(MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO);
+	if(MSG_Q_ID_NULL != FW_MSG_Q_ID) 
+	{
+		
+		CP->setMsgQId(CommonProperty::cTaskName[CommonProperty::FWUPGRADE_T], FW_MSG_Q_ID);
+	}
+	else
+	{
+		LOGERR("HMISocket_T: FirmWareUpgradeHandler: FW upgrade message queue failed",0,0,0);
+	}
+
+	//Spawn Firmware Task
+	FW_TID = taskSpawn((char *)CommonProperty::cTaskName[CommonProperty::FWUPGRADE_T],FW_UPGRADE_T_PRIORITY, 0, FW_UPGRADE_T_STACK_SIZE,(FUNCPTR)FirmwareUpgrade::FW_Upgrade_Task, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	if(TASK_ID_NULL != FW_TID) 
+	{
+		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::FWUPGRADE_T], FW_TID);
+		bIsFWTask = true;
+	}
+	else
+	{
+		LOGERR("HMISocket_T: FirmWareUpgradeHandler: FW upgrade task spawn failed",0,0,0);
+	}
+}
+
+/**************************************************************************//**
+ * \brief   - Excute firmware upgrade request
+ *
+ * \param   - None
+ *
+ * \return  - None
+ *
+ ******************************************************************************/
+void UserInterface::responseFirmwareUPgradeHandler()
+{
+	int iExcuteFirmwareStatus = 1;
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	
+	if(!bIsFWTask)
+	{
+		firmWareUpgradeHandler();
+	}
+	
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID	= REQ_EXCUTE_FIRMWARE_UPGRADE_FROM_USB;
+	sendMsg.msgLen  = 0;
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, &iExcuteFirmwareStatus, sizeof(int));
+	sendMsg.msgLen = sizeof(int);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+	bIsFWTask = false;
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Write Configure for the External Ethernet
+*
+* \param   - Message buffer
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::setEthernetConfigData(char* messagebuf)
+{
+	memcpy(&Connectivity::EthernetConfig, messagebuf, sizeof(ETHERNET));
+}
+
+
+/**************************************************************************//**
+* 
+* \brief   - Response the Current Configuration of Ethernet to HMI
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseEthernetConfigData()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_GET_ETHERNET_CONFIG_IDX;
+	sendMsg.msgLen = sizeof(ETHERNET);
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, &Connectivity::EthernetConfig, sizeof(ETHERNET));
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response the list of possible DIG Server to HMI
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseGatewayServerData()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_GET_GATEWAY_SERVER_IDX;
+	sendMsg.msgLen = Connectivity::_DIGMachinesUI->size()*sizeof(GATEWAY_MACHINE);
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, &Connectivity::_DIGMachinesUI->front(), Connectivity::_DIGMachinesUI->size()*sizeof(GATEWAY_MACHINE));
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
 
 /**************************************************************************//**
 * 
@@ -783,5 +998,109 @@ void UserInterface::responseWeldRecipeTotalNumber(char* messagebuf)
 	sendMsg.msgLen = sizeof(int);
 	sendMsg.rspCode = 0;
 	memcpy(sendMsg.Buffer, messagebuf, sizeof(int));
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response the power graph points to HMI
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseReadPowerGraphRequest()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_READ_POWER_GRAPH;
+	sendMsg.rspCode = 0;
+	WeldResultSignature::GetInstance()->SelectGraphCurvePointsHandler(GRAPH_POWER);
+	sendMsg.msgLen = WeldResultSignature::GetInstance()->L20PowerGraphCurvePointVector.size() * sizeof(GraphCurvePoint);
+	memcpy(sendMsg.Buffer, &WeldResultSignature::GetInstance()->L20PowerGraphCurvePointVector[0], sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response the height graph points to HMI
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseReadHeightGraphRequest()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_READ_HEIGHT_GRAPH;
+	sendMsg.rspCode = 0;
+	WeldResultSignature::GetInstance()->SelectGraphCurvePointsHandler(GRAPH_HEIGHT);
+	sendMsg.msgLen = WeldResultSignature::GetInstance()->L20HeightGraphCurvePointVector.size() * sizeof(GraphCurvePoint);
+	memcpy(sendMsg.Buffer, &WeldResultSignature::GetInstance()->L20HeightGraphCurvePointVector[0], sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response the frquency graph points to HMI
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseReadFrquencyGraphRequest()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_READ_FREQUENCY_GRAPH;
+	sendMsg.rspCode = 0;
+	WeldResultSignature::GetInstance()->SelectGraphCurvePointsHandler(GRAPH_FRQUENCY);
+	sendMsg.msgLen = WeldResultSignature::GetInstance()->L20FrquencyGraphCurvePointVector.size() * sizeof(GraphCurvePoint);
+	memcpy(sendMsg.Buffer, &WeldResultSignature::GetInstance()->L20FrquencyGraphCurvePointVector[0], sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response UIController request for the current alarm events getting.
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseCurrentAlarmEventRequest()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	AlarmManager::GetInstance()->SyncUIAlarmList();
+	sendMsg.msgID = REQ_GET_CURRENT_ALARM_IDX;
+	sendMsg.msgLen = AlarmManager::_AlarmListUI->size() * sizeof(UI_ALARM_LOG);
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, &AlarmManager::_AlarmListUI->front(), sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response UIController request for the current alarm events reset.
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseCurrentAlarmEventReset()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	AlarmManager::GetInstance()->ClearAlarmList();
+	sendMsg.msgID = REQ_RESET_CURRENT_ALARM_IDX;
+	sendMsg.msgLen = 0;
+	sendMsg.rspCode = 0;
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }

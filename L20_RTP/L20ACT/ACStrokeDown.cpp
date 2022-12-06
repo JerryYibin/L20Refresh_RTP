@@ -90,7 +90,8 @@ void ACStrokeDown::Loop()
 	{
 		//Reset bit Status_AC_MOVE_DISABLE in AC_StatusEvent, because the horn is moving.
 		ACStateMachine::AC_TX->AC_StatusEvent &= ~BIT_MASK(STATUS_AC_MOVE_DISABLE);
-		if((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(CTRL_PART_CONTACT_ENABLE)) == BIT_MASK(CTRL_PART_CONTACT_ENABLE))
+		if(((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(CTRL_PART_CONTACT_ENABLE)) == BIT_MASK(CTRL_PART_CONTACT_ENABLE)) ||
+				((ACStateMachine::AC_RX->MasterEvents & BIT_MASK(CTRL_PREBURST_ENABLE)) == BIT_MASK(CTRL_PREBURST_ENABLE)))
 		{
 			if(ActuatorTask::GetInstance()->IsMoving() == false)
 			{

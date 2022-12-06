@@ -14,7 +14,7 @@
 #include "commons.h"
 SYSTEMCONFIG* SystemConfiguration::_SystemConfig = SYSTEMCONFIG::GetSystemConfig().get();
 vector<POWER_SUPPLY_TYPE> SystemConfiguration::PowerSupplyType;
-vector<TEACH_MODE_SETTING> SystemConfiguration::TeachModeSetting;
+vector<TEACHMODE> SystemConfiguration::TeachModeSetting;
 
 /**************************************************************************//**
 * \brief   - Constructor - 

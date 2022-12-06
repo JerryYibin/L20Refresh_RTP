@@ -72,14 +72,21 @@ STATUS SCTask::SendToMsgQ (MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks
 			if(eventSend (CP->getTaskId(CommonProperty::cTaskName[CommonProperty::DATA_T]), DATA_TASK_EVENT) == OK)
 				status = OK;
 			else
-				LOGERR((char *) "SCTask : SendToMsgQ: eventSend Error\n",0,0,0);
+				LOGERR((char *) "Data Task : SendToMsgQ: eventSend Error\n",0,0,0);
 		}
 		else if(msgQID == CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]))
 		{
 			if(eventSend (CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_QEVENT) == OK)
 				status = OK;
 			else
-				LOGERR((char *) "SCTask : SendToMsgQ: eventSend Error\n",0,0,0);
+				LOGERR((char *) "Actuator Task : SendToMsgQ: eventSend Error\n",0,0,0);
+		}
+		else if(msgQID == CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]))
+		{
+			if(eventSend (CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_QEVENT) == OK)
+				status = OK;
+			else
+				LOGERR((char *) "PowerSupply Task : SendToMsgQ: eventSend Error\n",0,0,0);
 		}
 		else
 			status = OK;

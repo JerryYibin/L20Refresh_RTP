@@ -18,6 +18,7 @@
 #include "SCStateMachine/SCStateMachine.h"
 #include "GPIO.h"
 #include "HeightEncoder.h"
+#include "ExternalEthernet.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"	
@@ -91,12 +92,15 @@ void AuxClockTask::AuxClock_Task(void* _obj)
 #endif
 	AuxClockTask* auxClockObj = (AuxClockTask*)_obj;
 	SCStateMachine::getInstance()->RunStateMachine();
+	ExternalEthernet* EthernetObj = ExternalEthernet::GetInstance();
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_RX_EVENT | PS_TASK_TX_EVENT | PS_TASK_1MS_EVENT) != OK)
 		LOGERR((char*) "AUX_T: Power supply eventSend: Error\n", 0, 0, 0);
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_RX_EVENT | ACT_TASK_TX_EVENT | ACT_TASK_1MS_EVENT) != OK)
 		LOGERR((char*) "AUX_T: Actuator eventSend: Error\n", 0, 0, 0);
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::DGTIN_T]), CTRL_1MS) != OK)
 		LOGERR((char*) "AUX_T: System 1ms eventSend: Error\n", 0, 0, 0);
+	if(EthernetObj->Update()!= OK)
+		LOGERR((char*) "AUX_T: External Ethernet Update: Error\n", 0, 0, 0);
 //	auxClockObj->debugFlipGPIOLevel();
 }
 

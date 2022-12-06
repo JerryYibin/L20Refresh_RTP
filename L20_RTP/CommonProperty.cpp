@@ -19,8 +19,6 @@
 CommonProperty*							CommonProperty::m_CPObj							= nullptr;
 const char*								CommonProperty::cTaskName[TOTAL_NUM_OF_TASK]	= {0};
 SYSTEM_INFO								CommonProperty::SystemInfo;
-vector<WELD_SIGNATURE>					CommonProperty::WeldSignatureVector;
-HMI_WELD_SIGNATURE_POINTS	            CommonProperty::WeldSignatureForUI[RESULT_FOR_UI_MAX];
 
 /**************************************************************************//**
 * \brief   - Constructor - Read default recipe and load into MAP.
@@ -90,7 +88,10 @@ void CommonProperty::setMsgQId(string TaskName, MSG_Q_ID mid)
 ******************************************************************************/
 TASK_ID	CommonProperty::getTaskId(string TaskName)
 {
+	if(m_TaskIdMap.find(TaskName)!= m_TaskIdMap.end())
 	return m_TaskIdMap.find(TaskName)->second;
+	else
+		return NULL;
 }
 
 /**************************************************************************//**

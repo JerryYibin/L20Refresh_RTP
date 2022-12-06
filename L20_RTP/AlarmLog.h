@@ -6,36 +6,23 @@
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
  ---------------------------- MODULE DESCRIPTION ----------------------------
- 
- The AlarmData is for the AlarmData process only.
+    
  
 ***************************************************************************/
-
-#ifndef ALARMDATA_H_
-#define ALARMDATA_H_
+#ifndef ALARM_H_
+#define ALARM_H_
+#include "AlarmDefine.h"
 #include "AlarmCodeUI.h"
-#include <iostream>
-#include <vector>
+#include "CommonProperty.h"
 
-#define ALARM_LOG_MAX 50
-
-struct ALARM_DATA
-{
-	unsigned int 	AlarmType;
-	unsigned int	AlarmSubType;
-	unsigned int	WeldResultID;
-	unsigned int	WeldRecipeID;
-	unsigned int	UserID;
-};
-using namespace std;
-class AlarmDataSC 
-{
+class AlarmLog{
 public:
-	static ALARM_DATA AlarmData;
-	static vector<UI_ALARM_LOG> AlarmLog;
+	static AlarmLogDefine* _ptrAlarm;
 public:
-	AlarmDataSC();
-	virtual ~AlarmDataSC();
+	AlarmLog();
+	~AlarmLog();
+	static int Set(const UI_ALARM_LOG*);
+	static int Get(UI_ALARM_LOG*);
 };
 
-#endif /* ALARMDATA_H_ */
+#endif

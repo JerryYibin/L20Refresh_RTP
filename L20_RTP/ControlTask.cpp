@@ -22,8 +22,12 @@ The SC state machine shall run the generic work flow.
 #include "SCStateMachine/SCState.h"
 #include "ACStateMachine.h"
 #include "HeightCalibrateWorkFlow.h"
+#include "TestSonicsWorkFlow.h"
+#include "WeldWorkFlow.h"
 #include "UserInterface.h"
 #include "DataTask.h"
+#include "Recipe.h"
+#include "SystemConfiguration.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -87,15 +91,25 @@ void ControlTask::updateWorkFlow(char* buff)
 	case HEIGHT_CALIBRATION_SCREEN:
 		tmpOperationMode = SCStateMachine::HEIGHT_CALIBRATE_READY;
 		break;
+	case MAINTAIN_SCREEN:
+		//Intentional fall through
+	case AMPLITUDE_CALIBRATINON_SCREEN:
+		tmpOperationMode = SCStateMachine::TEST;
+		break;
 	default:
 		tmpOperationMode = SCStateMachine::NO_OPERATION;
 		break;
 	}
-	if(((m_OperationMode == SCStateMachine::BATCH_WELD) && (tmpOperationMode == SCStateMachine::WELD)) || 
-			((m_OperationMode == SCStateMachine::WELD) && (tmpOperationMode == SCStateMachine::BATCH_WELD)))
+	if((m_OperationMode == SCStateMachine::BATCH_WELD) || (m_OperationMode == SCStateMachine::WELD)) 
 	{
-		m_OperationMode = tmpOperationMode;
-		return;
+		if((tmpOperationMode == SCStateMachine::WELD) || (tmpOperationMode == SCStateMachine::BATCH_WELD))
+		{
+			if(SCStateMachine::getInstance()->GetStateMachineState() == false)
+				m_OperationMode = SCStateMachine::NO_OPERATION;
+			else
+				m_OperationMode = tmpOperationMode;
+			return;
+		}
 	}
 	
 	if(tmpOperationMode < SCStateMachine::END_OPERATION)
@@ -113,6 +127,17 @@ void ControlTask::updateWorkFlow(char* buff)
 				{
 				case SCStateMachine::HEIGHT_CALIBRATE_READY:
 					_WorkFlowObj = new HeightCalibrateWorkFlow();
+					break;
+				case SCStateMachine::TEST:
+					_WorkFlowObj = new TestSonicsWorkFlow();
+					break;
+				case SCStateMachine::WELD:
+					_WorkFlowObj = new WeldWorkFlow();
+					((WeldWorkFlow*)_WorkFlowObj)->SetOperationMode(WeldWorkFlow::SETUP);
+					break;
+				case SCStateMachine::BATCH_WELD:
+					_WorkFlowObj = new WeldWorkFlow();
+					((WeldWorkFlow*)_WorkFlowObj)->SetOperationMode(WeldWorkFlow::BATCH);
 					break;
 				default:
 					_WorkFlowObj = nullptr;
@@ -138,9 +163,8 @@ void ControlTask::updateWorkFlow(char* buff)
 * \return  - None.
 *
 ******************************************************************************/
-void ControlTask::responseStateMachineProcess()
+void ControlTask::responseStateMachineProcess(MESSAGE& message)
 {
-	MESSAGE message;
 	HeightCalibrateWorkFlow* _HeightCalibrateProcess = nullptr;
 	if(_WorkFlowObj != nullptr)
 	{
@@ -153,35 +177,62 @@ void ControlTask::responseStateMachineProcess()
 				_HeightCalibrateProcess = (HeightCalibrateWorkFlow*)_WorkFlowObj;
 				if(_HeightCalibrateProcess->GetOperationMode() == HeightCalibrateWorkFlow::HEIGHT_CALIBRATE)
 					message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CALIBRATE_RESPONSE;
-				else if(_HeightCalibrateProcess->GetOperationMode() == HeightCalibrateWorkFlow::HEIGHT_CHECK)
+				else 
 					message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CHECK_RESPONSE;
-				else
-				{
-					
-				}
+				SendToMsgQ(message, UI_MSG_Q_ID);
+				break;
+			case SCStateMachine::TEST:
+				message.msgID = UserInterface::TO_UI_TASK_SONICS_TEST_RESPONSE;
+				SendToMsgQ(message, UI_MSG_Q_ID);
+				break;
+			case SCStateMachine::WELD:
+				_WorkFlowObj->UpdateResult();
+				message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
 				SendToMsgQ(message, UI_MSG_Q_ID);
 				break;
 			case SCStateMachine::BATCH_WELD:
-				//TODO reserved port
+				_WorkFlowObj->UpdateResult();
+				message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_INSERT;
+				SendToMsgQ(message,DATA_MSG_Q_ID_CTRL);
+				message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
+				SendToMsgQ(message, UI_MSG_Q_ID);
 				break;
 			default:
+				
 				break;
 			}
 		}
 		else if(status == WorkFlow::ONGOING)
 		{
-			_WorkFlowObj->TriggerProcess();
+			switch(m_OperationMode)
+			{
+			case SCStateMachine::HEIGHT_CALIBRATE_READY:
+				_WorkFlowObj->TriggerProcess();
+				break;
+			case SCStateMachine::TEST:
+				message.msgID = UserInterface::TO_UI_TASK_SONICS_TEST_RESPONSE;
+				SendToMsgQ(message, UI_MSG_Q_ID);
+				break;
+			case SCStateMachine::WELD:
+				_WorkFlowObj->UpdateResult();
+				message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
+				SendToMsgQ(message, UI_MSG_Q_ID);
+				break;
+			case SCStateMachine::BATCH_WELD:
+				_WorkFlowObj->UpdateResult();
+				message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_INSERT;
+				SendToMsgQ(message,DATA_MSG_Q_ID_CTRL);
+				message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
+				SendToMsgQ(message, UI_MSG_Q_ID);
+				break;
+			default:
+				break;
+			}
 		}
 		else
 		{
 			
 		}
-	}
-	else
-	{
-		//TODO Only welding results are inserted into the database test, so that some important information can be inserted into the database through code
-		message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_INSERT;
-		SendToMsgQ(message,DATA_MSG_Q_ID_CTRL);
 	}
 }
 
@@ -229,8 +280,26 @@ void ControlTask::ProcessTaskMessage(MESSAGE& message)
 			_HeightCalibrateProcess->UpdateResult();
 		}
 		break;
+	case TO_CTRL_SONICS_TEST:
+		if(_WorkFlowObj != nullptr)
+		{
+			TestSonicsWorkFlow* _TestSonicsProcess = (TestSonicsWorkFlow*)_WorkFlowObj;
+			Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AMPLITUDE, &tmp);
+			_TestSonicsProcess->SetAmplitude(tmp);
+			_TestSonicsProcess->TriggerProcess();
+		}
+		break;
+	case TO_CTRL_SONICS_100TEST:
+		if(_WorkFlowObj != nullptr)
+		{
+			TestSonicsWorkFlow* _TestSonicsProcess = (TestSonicsWorkFlow*)_WorkFlowObj;
+			SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::MAX_AMPLITUDE, &tmp);
+			_TestSonicsProcess->SetAmplitude(tmp);
+			_TestSonicsProcess->TriggerProcess();
+		}
+		break;
 	case TO_CTRL_SC_RESPONSE:
-		responseStateMachineProcess();
+		responseStateMachineProcess(message);
 		break;
 	default:
 		LOGERR((char *)"CTRL_T : ----------Unknown Message ID------------- : %d",message.msgID, 0, 0);

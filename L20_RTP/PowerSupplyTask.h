@@ -15,6 +15,11 @@
 class PowerSupplyTask: public SCTask 
 {
 public:
+	enum MESSAGE_IDENTIFY
+	{
+		/* Macro defined to PS */
+		TO_PS_TASK_AMPLITUDE_UPDATE = 0,
+	};
 	enum PS_TX_STATUS
 	{
 		SONICS_ON_OFF_STATUS,
@@ -36,6 +41,7 @@ public:
 	
 	static unsigned int			GetCoreState					();
 	static void					SetCoreState					(unsigned int coreState);
+	static void					ClearCoreState					(unsigned int coreState);
 	
 	static PowerSupplyTask*		GetInstance						();
 	

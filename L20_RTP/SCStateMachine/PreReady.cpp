@@ -116,7 +116,6 @@ void PreReady::Exit()
 ******************************************************************************/
 void PreReady::Fail()
 {
-	if (ProcessAlarmHandler() == true)
-		m_Actions = SCState::ABORT;
+	m_Actions = SCState::ABORT;
 	LOG("Pre-Ready Alarm process!\n");
 }

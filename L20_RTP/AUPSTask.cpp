@@ -45,7 +45,6 @@ PCStateMachine::RxPDO_PC AUPSTask::RXBackup;
 AUPSTask::AUPSTask() {
 	// TODO Auto-generated constructor stub
 	RXBackup.TargetAmplitude = 0;
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &PCStateMachine::PC_RX->TargetAmplitude);
 }
 
 /**************************************************************************//**

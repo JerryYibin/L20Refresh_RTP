@@ -90,6 +90,7 @@ protected:
 private:
     int 		ConnectDB					();
     int 		CloseDB						(); 
+    int			InitData					();
     void		sendErrorCode				(int ErrCode);
     void		sendTotalNumber				(int Number);
     

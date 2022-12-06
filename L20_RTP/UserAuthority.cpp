@@ -11,8 +11,8 @@
 #include "UserAuthority.h"
 //Key is EntryScreenIndex, Value is premission Level;
 map<int, int>* UserAuthority::_UserPrivilegesSC 			= nullptr;
-//Key is PermissionLevel, Value is passcode;
-map<int, string>* UserAuthority::_UserProfilesSC 			= nullptr;
+//Key is PermissionLevel, Value is User instance;
+map<int, User*>* UserAuthority::_UserProfilesSC 				= nullptr;
 vector<USER_PRIVILEGE>* UserAuthority::_UserPrivilegesUI 	= nullptr;
 vector<USER_PROFILE>* UserAuthority::_UserProfilesUI 		= nullptr;
 UserAuthority* UserAuthority::_UserAuthorityObj				= nullptr;
@@ -28,11 +28,19 @@ UserAuthority* UserAuthority::_UserAuthorityObj				= nullptr;
 UserAuthority::UserAuthority() 
 {
 	_UserPrivilegesSC 	= new map<int, int>();
-	_UserProfilesSC		= new map<int, string>();
+	_UserProfilesSC		= new map<int, User*>();
 	_UserPrivilegesUI	= new vector<USER_PRIVILEGE>();
 	_UserProfilesUI		= new vector<USER_PROFILE>();
 	
-
+	m_Admin.m_Level     = EXECUTIVE;
+	m_Admin.m_Password  = "000000";
+	_UserProfilesSC->insert(pair<int, User*>(m_Admin.m_Level, &m_Admin));
+	m_Techician.m_Level	= TECHNICIAN;
+	m_Techician.m_Password = "111111";
+	_UserProfilesSC->insert(pair<int, User*>(m_Techician.m_Level, &m_Techician));
+	m_Open.m_Level		= OPERATOR;
+	m_Open.m_Password	= "";
+	_UserProfilesSC->insert(pair<int, User*>(m_Open.m_Level, &m_Open));
 }
 
 /**************************************************************************//**
@@ -49,6 +57,10 @@ UserAuthority::~UserAuthority()
 	_UserPrivilegesSC->clear();
 	delete _UserPrivilegesSC;
 	
+	for(auto iter = _UserProfilesSC->begin(); iter != _UserProfilesSC->end(); iter++)
+	{
+		delete iter->second;
+	}
 	_UserProfilesSC->clear();
 	delete _UserProfilesSC;
 	

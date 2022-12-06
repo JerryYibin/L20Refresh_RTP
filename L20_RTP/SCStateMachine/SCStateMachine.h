@@ -52,7 +52,11 @@ public:
 	
 	void 					SelectWeldSequence(void);
 	void					SelectHeightCalibrateSequence(void);
+	void					SelectSonicsTestSequence(void);
 	void 					XTickTock();
+	unsigned int			GetCoreState						();
+	void					SetCoreState						(unsigned int coreState);
+	void					ClearCoreState						(unsigned int coreState);
 private:
 	SCStateMachine();
 	void deleteAll();
@@ -70,6 +74,7 @@ private:
 	static SCState* 				m_objState;
 	static SCStateMachine* 			m_StateMachineObj;
 	static SEM_ID m_semaphoreMutex; /* ID of mutex semaphore*/
+	static unsigned int 			CoreState;
 };
 
 #endif /* SCSTATEMACHINE_H_ */

@@ -122,13 +122,13 @@ int CommunicationInterface_HMI::ErrorHandling()
 ******************************************************************************/
 int CommunicationInterface_HMI::Sending(const void* data)
 {
-	char 	tmpBuffer[MAX_SIZE_OF_MSG_LENGTH] 	= {0};
+	char 	tmpBuffer[MAX_SIZE_OF_CLIENT_MSG_SEND_BUFFER] 	= {0};
 	int 	tmpBufLen							= 0;
 	int		iResult								= ERROR;
 	if(data == nullptr)
 		return iResult;
 	semTake(m_semaphoreMutex, WAIT_FOREVER); //lock sending
-	if(((CLIENT_MESSAGE*)data)->msgLen >= MAX_SIZE_OF_MSG_BUFF)
+	if(((CLIENT_MESSAGE*)data)->msgLen >= MAX_SIZE_OF_CLIENT_MSG_SEND_BUFFER)//MAX_SIZE_OF_MSG_BUFF
 	{
 		LOGERR( (char *)"HMI Socket SendMessageToClient, Socket message length exceeded : %d", ((CLIENT_MESSAGE*)data)->msgLen, 0, 0);
 	}
@@ -320,7 +320,7 @@ bool CommunicationInterface_HMI::parseProtocolPackage(const char* buffer, const 
 bool CommunicationInterface_HMI::buildProtocolPackage(const CLIENT_MESSAGE* ptrMsg, char* buffer, int* buflen)
 {
 	bool bResult = false;
-	char onePackage[MAX_SIZE_OF_MSG_LENGTH] = {0};
+	char onePackage[MAX_SIZE_OF_CLIENT_MSG_SEND_BUFFER] = {0};
 	UINT32 crcResult = 0;
 	int offset = 0, msglen = 0;
 	if(ptrMsg == nullptr)

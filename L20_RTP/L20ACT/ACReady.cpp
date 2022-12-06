@@ -53,6 +53,7 @@ ACReady::~ACReady() {
 ******************************************************************************/
 void ACReady::Enter()
 {
+	vxbGpioSetValue(GPIO::O_HORN, GPIO_VALUE_LOW);
 	ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(CTRL_AC_MOVE_DISABLE);
 	ACStateMachine::AC_TX->AC_StatusEvent |= BIT_MASK(STATUS_AC_MOVE_DISABLE);
 }

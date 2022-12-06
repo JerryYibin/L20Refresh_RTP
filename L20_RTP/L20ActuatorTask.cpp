@@ -79,22 +79,18 @@ void L20ActuatorTask::PDOUploadRequest()
 	if((Tick_1ms % 1000) != 0)
 		return;
 	else
-//	if(RXBackup.TargetPressure != ACStateMachine::AC_RX->TargetPressure)
+	if(RXBackup.TargetPressure != ACStateMachine::AC_RX->TargetPressure)
 	{
 		tmpPressure.DAC_Pressure = Utility::Pressure2HEX(ACStateMachine::AC_RX->TargetPressure);
-#if INCLUDE_TI_AM5708_JN
 		iResult = _ObjDCan->Sending(&tmpPressure);
-#elif INCLUDE_TI_AM5708_BRANSON
-		//TODO It is the temporarily approach for the pressure setting on Branson level 1 board only. 
-		iResult = DAC_TLV5604::SetPressure(tmpPressure.DAC_Pressure);
-#else
-		iResult = OK;
-#endif
+
 		if(iResult == ERROR)	
 			SetCoreState(ERR_PRESSURE_SET);
 		else
+		{
 			ClearCoreState(ERR_PRESSURE_SET);
-//		RXBackup.TargetPressure = ACStateMachine::AC_RX->TargetPressure;
+			RXBackup.TargetPressure = ACStateMachine::AC_RX->TargetPressure;
+		}
 	}
 }
 

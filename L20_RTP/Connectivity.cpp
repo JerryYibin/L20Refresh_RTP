@@ -14,8 +14,8 @@ The file is used to define all the Ethernet settings.
 
 #include "Connectivity.h"
 struct ETHERNET Connectivity::EthernetConfig;
-vector<struct GATEWAY_SERVER>* Connectivity::_DIGServersUI = nullptr;
-map<int, struct GATEWAY_SERVER>* Connectivity::_DIGServersSC = nullptr;
+vector<struct GATEWAY_MACHINE>* Connectivity::_DIGMachinesUI = nullptr;
+map<int, struct GATEWAY_MACHINE>* Connectivity::_DIGMachinesSC = nullptr;
 Connectivity* Connectivity::_ConnectivityObj = nullptr;	
 /**************************************************************************//**
 * \brief   - Constructor - Initialize _DIGServersUI,_DIGServersSC and EthernetConfig.
@@ -28,9 +28,9 @@ Connectivity* Connectivity::_ConnectivityObj = nullptr;
 ******************************************************************************/
 Connectivity::Connectivity() 
 {
-	_DIGServersUI = new vector<struct GATEWAY_SERVER>;
-	_DIGServersSC = new map<int, GATEWAY_SERVER>;
-	EthernetConfig.EthernetType = TCP_IP;
+	_DIGMachinesUI = new vector<struct GATEWAY_MACHINE>;
+	_DIGMachinesSC = new map<int, GATEWAY_MACHINE>;
+	EthernetConfig.EthernetType = INVALID_TYPE;
 	EthernetConfig.TCP_RemoteSignature = true;
 	EthernetConfig.TCP_ServerPort = 4000;
 	memcpy(EthernetConfig.TCP_ServerIP, "192.168.0.100", IP_ADD_LEN);
@@ -38,8 +38,8 @@ Connectivity::Connectivity()
 	EthernetConfig.DIG_SysConfigure = false;
 	EthernetConfig.DIG_WeldRecipe = false;
 	EthernetConfig.DIG_Signature = false;
-	EthernetConfig.DIG_ServerID = 0;
-	struct GATEWAY_SERVER server[DIG_SERVERS] = {{"Machine 01", 65100, "150.150.150.10"},
+	EthernetConfig.DIG_MachineID = 0;
+	struct GATEWAY_MACHINE machine[DIG_SERVERS] = {{"Machine 01", 65100, "150.150.150.10"},
 												{"Machine 02", 65101, "150.150.150.11"},
 												{"Machine 03", 65102, "150.150.150.12"},
 												{"Machine 04", 65103, "150.150.150.13"},
@@ -49,12 +49,12 @@ Connectivity::Connectivity()
 												{"Machine 08", 65107, "150.150.150.17"},
 												{"Machine 09", 65108, "150.150.150.18"},
 												{"Machine 10", 65109, "150.150.150.19"}};
-	_DIGServersUI->clear();
-	_DIGServersSC->clear();
+	_DIGMachinesUI->clear();
+	_DIGMachinesSC->clear();
 	for(int i = 0; i < DIG_SERVERS; i++)
 	{
-		_DIGServersUI->push_back(server[i]);
-		_DIGServersSC->insert(pair<int, struct GATEWAY_SERVER>(i, server[i]));
+		_DIGMachinesUI->push_back(machine[i]);
+		_DIGMachinesSC->insert(pair<int, struct GATEWAY_MACHINE>(i, machine[i]));
 	}
 	
 	
@@ -70,12 +70,12 @@ Connectivity::Connectivity()
 *
 ******************************************************************************/
 Connectivity::~Connectivity() {
-	_DIGServersUI->clear();
-	_DIGServersSC->clear();
-	if(_DIGServersUI != nullptr)
-		delete _DIGServersUI;
-	if(_DIGServersSC != nullptr)
-		delete _DIGServersSC;
+	_DIGMachinesUI->clear();
+	_DIGMachinesSC->clear();
+	if(_DIGMachinesUI != nullptr)
+		delete _DIGMachinesUI;
+	if(_DIGMachinesSC != nullptr)
+		delete _DIGMachinesSC;
 	delete _ConnectivityObj;
 }
 

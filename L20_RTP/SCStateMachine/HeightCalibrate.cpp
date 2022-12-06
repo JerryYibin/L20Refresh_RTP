@@ -20,7 +20,6 @@ Height Check Process: 		Manually put a height-known shim on, do Horn down/Hold/H
 #include "HeightCalibrate.h"
 #include "../ACStateMachine.h"
 #include "../PCStateMachine.h"
-#include "../ControlTask.h"
 #include "../HeightEncoder.h"
 #include "SCStateMachine.h"
 
@@ -154,8 +153,7 @@ void HeightCalibrate::Exit()
 	MESSAGE message;
 	m_Actions = SCState::INIT; 
 	HeightEncoder::RawHeight.Calibrated = true;
-	message.msgID = ControlTask::TO_CTRL_SC_RESPONSE;
-	SendToMsgQ(message, CTL_MSG_Q_ID);
+	SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_SC_RESPONSE);
 }
 
 /**************************************************************************//**
@@ -169,7 +167,6 @@ void HeightCalibrate::Exit()
 ******************************************************************************/
 void HeightCalibrate::Fail()
 {
-	if (ProcessAlarmHandler() == true)
-		m_Actions = SCState::ABORT;
+	m_Actions = SCState::ALJUMPNORM;
 	LOG("Height Calibrate Check Alarm process!\n");
 }

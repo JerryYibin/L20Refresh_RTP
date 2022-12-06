@@ -252,9 +252,9 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->QueryWeldSignature(message.Buffer);
 		break;
 	case TO_DATA_TASK_ALARM_LOG_QUERY:
-        _ObjDBConn->QueryBlockAlarmLog(message.Buffer);
-		break;
-	case TO_DATA_TASK_HI_CALIB_QUERY:
+        _ObjDBConn->QueryAlarmLog(message.Buffer);
+        break;
+	case TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY:
         _ObjDBConn->QueryHeightCalibration(message.Buffer);
 		break;
 	case TO_DATA_TASK_DB_VERSION_QUERY:
@@ -350,6 +350,28 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 
 /**************************************************************************//**
 * 
+* \brief   - Initialize the data required for startup.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+int DataTask::InitData()
+{
+    if(_ObjDBConn == nullptr)
+    {
+    	LOGERR((char* )"DataTask: --------Init Data Error--- : ", 0, 0, 0);
+        return ERROR;
+    }
+    return (_ObjDBConn->QueryDbVersion(nullptr) 
+    		&& _ObjDBConn->QuerySystemConfigure(nullptr)
+			&& _ObjDBConn->QueryBlockTeachModeSetting(nullptr)
+			&& _ObjDBConn->QueryBlockPowerSupply(nullptr));
+}
+
+/**************************************************************************//**
+* 
 * \brief   - Processing the Database Data.
 *
 * \param   - None.
@@ -359,47 +381,49 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 ******************************************************************************/
 void DataTask::Data_Task(void)
 {
-	MESSAGE		ProcessBuffer;	
-	UINT32		events;
-	bool		isRunning = true;
-	
-	char		MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0x00};	
+	MESSAGE ProcessBuffer;
+	UINT32 events;
+	bool isRunning = true;
 
-	DataTask* DBInit = new(nothrow) DataTask();
-	if(NULL != DBInit)
+	char MsgQBuffer[MAX_SIZE_OF_MSG_LENGTH] = { 0x00 };
+
+	DataTask *DBInit = new (nothrow) DataTask();
+	if (NULL != DBInit)
 	{
-		while(DBInit->bIsTaskRunStatus())
+		if (!DBInit->InitData())
 		{
-			// wait for any one event
-			if(eventReceive(DATA_TASK_EVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
+			while (DBInit->bIsTaskRunStatus())
 			{
-				isRunning = true;
-				do{
-					if(msgQReceive(DBInit->SELF_MSG_Q_ID_CTRL, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-					{
-						DBInit->Decode(MsgQBuffer, ProcessBuffer);
-						DBInit->ProcessTaskMessage(ProcessBuffer);
-					}
-					else if(msgQReceive(DBInit->SELF_MSG_Q_ID_DATA, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-					{
-						DBInit->Decode(MsgQBuffer, ProcessBuffer);
-						DBInit->ProcessTaskMessage(ProcessBuffer);
-					}
-					else if(msgQReceive(DBInit->SELF_MSG_Q_ID_REQUEST, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
-					{
-						DBInit->Decode(MsgQBuffer, ProcessBuffer);
-						DBInit->ProcessTaskMessage(ProcessBuffer);
-					}
-					else
-						isRunning = false;
-				
-				}while(isRunning);
+				// wait for any one event
+				if (eventReceive(DATA_TASK_EVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
+				{
+					isRunning = true;
+					do {
+						if (msgQReceive(DBInit->SELF_MSG_Q_ID_CTRL, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+						{
+							DBInit->Decode(MsgQBuffer, ProcessBuffer);
+							DBInit->ProcessTaskMessage(ProcessBuffer);
+						}
+						else if (msgQReceive(DBInit->SELF_MSG_Q_ID_DATA, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+						{
+							DBInit->Decode(MsgQBuffer, ProcessBuffer);
+							DBInit->ProcessTaskMessage(ProcessBuffer);
+						}
+						else if (msgQReceive(DBInit->SELF_MSG_Q_ID_REQUEST, MsgQBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+						{
+							DBInit->Decode(MsgQBuffer, ProcessBuffer);
+							DBInit->ProcessTaskMessage(ProcessBuffer);
+						}
+						else
+							isRunning = false;
+
+					} while (isRunning);
+				}
 			}
-		}
+		} else
+			LOGERR((char* )"DATA_T : ----------------Init Data failed----------------", 0, 0, 0);//TODO Need to notify UI
 		delete DBInit;
-	}
-	else
-	{
+	} else {
 		LOGERR((char* )"DATA_T : ----------------Memory allocation failed----------------", 0, 0, 0);
 	}
 	DBInit = NULL;

@@ -54,7 +54,10 @@ void PCSeekRun::Enter()
 		// additional control bytes or settings to the SM here...
 		
 		// turn on sonics
-		vxbGpioSetValue(GPIO::O_EXT_SEEK_PSI, GPIO_VALUE_HIGH);
+		if((PCStateMachine::PC_RX->MasterEvents & BIT_MASK(CTRL_WELDTEST_ENABLE)) == BIT_MASK(CTRL_WELDTEST_ENABLE))
+			vxbGpioSetValue(GPIO::O_TEST_PSI, GPIO_VALUE_HIGH);
+		else
+			vxbGpioSetValue(GPIO::O_EXT_SEEK_PSI, GPIO_VALUE_HIGH);
 	}
 	m_Timeout = 0;
 }
@@ -108,7 +111,8 @@ void PCSeekRun::Exit()
 	}
 	
 	// turn off sonics
-	vxbGpioSetValue(GPIO::O_EXT_SEEK_PSI, GPIO_VALUE_LOW);
+	if((PCStateMachine::PC_RX->MasterEvents & BIT_MASK(CTRL_WELDTEST_ENABLE)) == 0)
+		vxbGpioSetValue(GPIO::O_EXT_SEEK_PSI, GPIO_VALUE_LOW);
 	PowerSupplyTask::GetInstance()->CalculateStartFrequency();
 	LOG("\n PowerSupply_T: _PC_SEEK_TIMEOUT = %d\n", m_Timeout);
 }

@@ -22,7 +22,6 @@
 SCState::SCState() {
 	// TODO Auto-generated constructor stub
 	CP = CommonProperty::getInstance();
-	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	CTL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 	DGTOUT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DGTOUT_T]);
 }
@@ -37,98 +36,6 @@ SCState::SCState() {
 ******************************************************************************/
 SCState::~SCState() {
 	// TODO Auto-generated destructor stub
-}
-
-/**************************************************************************//**
-* 
-* \brief   - Abort Weld.
-*
-* \param   - None.
-*
-* \return  - None.
-*
-******************************************************************************/
-//TODO Consider to not directly call hardware function here
-void SCState::abortWeld(void)
-{
-	///* Clear outputs and panel data */
-	vxbGpioSetValue(GPIO::O_BUZZ, GPIO_VALUE_LOW);
-	///* Clear SONICSRUN, SONICSRESET and SONICSTEST */
-	vxbGpioSetValue(GPIO::O_RUN_PSI, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_OL_RST_PSI, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_TEST_PSI, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_SONICS_ON, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_ALARM, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_GATHER, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_CLAMP, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_HORN, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_READY, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_SEEK, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_SAFETY, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_OUT0, GPIO_VALUE_LOW);
-	vxbGpioSetValue(GPIO::O_OUT1, GPIO_VALUE_LOW);
-}
-
-/**************************************************************************//**
-* 
-* \brief   - Abort Weld.
-*
-* \param   - None.
-*
-* \return  - bool.
-*
-******************************************************************************/
-//TODO This will need to be polymorphic
-bool SCState::DefeatWeldAbortHandler()
-{
-	bool isAbort = false;
-//	if (SysConfig.m_SystemInfo.FootPedalAbort == true)
-//	{
-		if(vxbGpioGetValue(GPIO::I_PB1) == GPIO_VALUE_HIGH || vxbGpioGetValue(GPIO::I_PB2) == GPIO_VALUE_HIGH)
-		{
-			abortWeld();
-			//CommonProperty::WeldResult.ALARMS.AlarmFlags.WeldAborted = 1;
-			//CommonProperty::WeldResult.ALARMS.AlarmFlags.FootPedalAbort = 1;
-			int AlarmFlags = 1;
-			WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
-			isAbort = true;
-		}
-//	}
-	return isAbort;
-}
-/**************************************************************************//**
-* 
-* \brief   - Abort Weld.
-*
-* \param   - Process Alarm
-*
-* \return  - bool.
-*
-******************************************************************************/
-bool SCState::ProcessAlarmHandler(void)
-{
-	bool isReset = false;
-	int AlarmFlags = 0;
-	WeldResults::_WeldResults->Get(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
-	if(AlarmFlags != 0)
-	{
-		if(m_Timeout < ALARMBEEPDELAY)
-		{
-			m_Timeout++;
-		}
-		else
-		{
-			if(vxbGpioGetValue(GPIO::O_BUZZ) == GPIO_VALUE_HIGH)
-				vxbGpioSetValue(GPIO::O_BUZZ, GPIO_VALUE_LOW);
-			else
-				vxbGpioSetValue(GPIO::O_BUZZ, GPIO_VALUE_HIGH);
-			m_Timeout = 0;
-		}
-	}
-	else
-		isReset = true;
-	return isReset;
 }
 
 /**************************************************************************//**
@@ -182,3 +89,22 @@ void SCState::ChangeExtDgtOutput(const ScDgtOutputTask::MESSAGE_IDENTIFY msgID)
 	SendToMsgQ(message, DGTOUT_MSG_Q_ID);
 }
 
+/**************************************************************************//**
+*
+* \brief   - Send Message to Control Task MessageQueue
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+void SCState::SendMsgToCtrlMsgQ(const ControlTask::MESSAGE_IDENTIFY msgID, int alarmType)
+{
+	MESSAGE message;
+	message.msgID = msgID;
+	if(alarmType != 0)
+	{
+		memcpy(message.Buffer, &alarmType, sizeof(int));
+	}
+	SendToMsgQ(message, CTL_MSG_Q_ID);
+}

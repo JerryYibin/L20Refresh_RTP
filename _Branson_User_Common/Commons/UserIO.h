@@ -28,5 +28,13 @@ enum USER_IO_BIT
 	BITS_SIZE
 };
 
+enum USER_IO_OUTPUT
+{
+	READY = 0,
+	SONICS,
+	ALARM
+};
+
+
 
 #endif

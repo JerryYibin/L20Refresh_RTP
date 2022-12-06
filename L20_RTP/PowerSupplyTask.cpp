@@ -14,6 +14,7 @@
 #include "DSPTask.h"
 #include "PCState.h"
 #include "Utils.h"
+#include "Recipe.h"
 /* Static member variables are initialized */
 unsigned int PowerSupplyTask::CoreState = 0;
 PowerSupplyTask* PowerSupplyTask::_PCObj = nullptr;
@@ -64,6 +65,9 @@ void PowerSupplyTask::ProcessTaskMessage(MESSAGE& message)
 		Decode(tmpMsgBuffer, tmpMsg);
 		switch(tmpMsg.msgID)
 		{
+		case TO_PS_TASK_AMPLITUDE_UPDATE:
+			Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &PCStateMachine::PC_RX->TargetAmplitude);
+			break;
 		default:
 			LOGERR((char *)"Power Supply_T : --------Unknown Message ID----------- : ", tmpMsg.msgID, 0, 0);
 			break;
@@ -95,6 +99,19 @@ unsigned int PowerSupplyTask::GetCoreState()
 void PowerSupplyTask::SetCoreState(unsigned int coreState)
 {
 	CoreState = coreState;
+}
+
+/**************************************************************************//**
+* \brief  	- Clear specific actuator core status
+*
+* \param	- uint32_t
+*
+* \return 	- None
+*
+******************************************************************************/
+void PowerSupplyTask::ClearCoreState(unsigned int coreState)
+{
+	CoreState &= ~coreState;
 }
 
 /**************************************************************************//**

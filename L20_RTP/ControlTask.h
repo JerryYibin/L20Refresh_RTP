@@ -27,6 +27,8 @@ public:
 		TO_CTRL_TRIGGER_HEIGHT_CALIBRATE,
 		TO_CTRL_TRIGGER_HEIGHT_CHECK,
 		TO_CTRL_HEIGHT_CORRECT,
+		TO_CTRL_SONICS_TEST,
+		TO_CTRL_SONICS_100TEST,
 		TO_CTRL_SC_RESPONSE
 	};
 	
@@ -48,7 +50,7 @@ private:
 	void			updateWorkFlow					(char*);
 	void 			initHeightCalibrateProcess		(void);
 	void			triggerHeightCalibrateProcess 	(unsigned int pressure);
-	void			responseStateMachineProcess		(void);
+	void			responseStateMachineProcess		(MESSAGE& message);
 	void			updateHeightMapProcess			(void);
 	void			calculateHeightPoint			(unsigned int min, unsigned int max, unsigned int start, unsigned int end);
 };

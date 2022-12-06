@@ -17,12 +17,15 @@
 #include <vector>
 using namespace std;
 
+#define TABLE_PWR_SUP_MEM 3
+#define TABLE_TEACH_MODE_MEM 11
+
 class SystemConfiguration 
 {
 public:
 	static SYSTEMCONFIG* _SystemConfig;
 	static vector<POWER_SUPPLY_TYPE> PowerSupplyType;
-	static vector<TEACH_MODE_SETTING> TeachModeSetting;
+	static vector<TEACHMODE> TeachModeSetting;
 public:
 	SystemConfiguration();
 	virtual ~SystemConfiguration();

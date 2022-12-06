@@ -13,6 +13,8 @@
 
 #include "SCTask.h"
 #include "HeartBeatUI.h"
+#include "FirmwareUpgrdeUI.h"
+#include "MainTask.h"
 
 /*
  *
@@ -74,6 +76,12 @@ public:
 		TO_UI_TASK_WELD_RESULT_HISTORY_LOG,
 		TO_UI_TASK_WELD_RESULT_HISTORY_NEXT_PAGE,
 		TO_UI_TASK_WELD_RECIPE_RENAME,
+		TO_UI_TASK_READ_POWER_GRAPH_RESPONSE,
+		TO_UI_TASK_READ_HEIGHT_GRAPH_RESPONSE,
+		TO_UI_TASK_READ_FREQUENCY_GRAPH_RESPONSE,
+		TO_UI_TASK_GET_CURRENT_ALARM_IDX,
+		TO_UI_TASK_RESET_CURRENT_ALARM_IDX
+		
 	};
 	UserInterface();
 	~UserInterface();
@@ -115,7 +123,21 @@ private:
 	void			responseHeightCalibration			();
 	void			responseHeightCheck					();
 	void			responseUserIORequest				(char* messagebuf);
+	void 			responseSonicsTest					(char* messagebuf);
+	
+	void            responseDetectUSBdevice             ();
+	void            firmWareUpgradeHandler              ();
+	void 			responseFirmwareUPgradeHandler        ();
+	void 			responseFirmwareUpgradeProgress     (char* messagebuf);
+	void 			setEthernetConfigData               (char* messagebuf);
+	void 			responseEthernetConfigData			();
+	void 			responseGatewayServerData			();
 	void			responseWeldRecipeTotalNumber		(char*);
+	void 			responseReadPowerGraphRequest       ();
+	void 			responseReadHeightGraphRequest	    ();
+	void 			responseReadFrquencyGraphRequest    ();
+	void			responseCurrentAlarmEventRequest	();
+	void			responseCurrentAlarmEventReset		();
 };
 
 #endif /* USERINTERFACE_H_ */

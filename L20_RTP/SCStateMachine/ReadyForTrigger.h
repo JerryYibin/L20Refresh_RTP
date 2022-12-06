@@ -26,10 +26,7 @@ public:
 	virtual void 	Loop() 		override;
 	virtual void 	Exit() 		override;
 	virtual void 	Fail() 		override;
-//	virtual int 	Execute()	override;
 	static int		Execute(void* _obj);
-private:
-	bool	m_IsTrigger;
 };
 
 

@@ -149,7 +149,22 @@ struct WeldRecipeLibForUI
 {
 	int                   m_RecipeID;
 	char		          m_RecipeName[RECIPE_LEN];
-	char				  m_DateTime[RECIPE_LEN];
+	char				  m_DateTime[TIME_STAMP_LEN];
+};
+
+struct GraphCurvePoint
+{
+	int m_pointX;
+	int m_pointY;
+};
+
+enum GraphType
+{
+  GRAPH_FRQUENCY = 0,
+  GRAPH_POWER,
+  GRAPH_HEIGHT,
+  GRAPH_AMLITUDE,
+  GRAPH_DUMMY
 };
 
 #endif // WELDRECIPEDEF_H

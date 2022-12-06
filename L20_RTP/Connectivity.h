@@ -27,8 +27,8 @@ private:
 							Connectivity	();
 public:
 	static struct ETHERNET 						EthernetConfig;
-	static vector<struct GATEWAY_SERVER>* 		_DIGServersUI;
-	static map<int, struct GATEWAY_SERVER>* 	_DIGServersSC;
+	static vector<struct GATEWAY_MACHINE>* 		_DIGMachinesUI;
+	static map<int, struct GATEWAY_MACHINE>* 	_DIGMachinesSC;
 	virtual 				~Connectivity	();
 	static Connectivity*	GetInstance		();
 	

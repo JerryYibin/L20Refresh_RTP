@@ -72,7 +72,10 @@ void HoldTime::Loop()
 		if (m_Timeout < m_iHoldTime)
 			m_Timeout++;
 		else
+		{
+			LOG("HOLD TIME = %d\n", m_Timeout);
 			m_Actions = SCState::JUMP;
+		}
 	}
 }
 

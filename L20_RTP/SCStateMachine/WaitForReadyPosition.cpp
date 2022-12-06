@@ -122,6 +122,7 @@ void WaitForReadyPosition::Loop()
 				{
 					//If the time delay is reached out the setting, to set sonics on for after burst.
 					PCStateMachine::PC_RX->MasterEvents |= BIT_MASK(PCState::CTRL_AFTERBURST_ENABLE);
+					LOG("AB Time Delay = %d\n", m_TimeDelay);
 				}
 				else
 				{
@@ -134,6 +135,7 @@ void WaitForReadyPosition::Loop()
 				{
 					//If the time delay is reached out the setting, to set sonics on for after burst.
 					PCStateMachine::PC_RX->MasterEvents |= BIT_MASK(PCState::CTRL_AFTERBURST_ENABLE);
+					LOG("AB Time Delay = %d\n", m_TimeDelay);
 				}
 				else
 				{

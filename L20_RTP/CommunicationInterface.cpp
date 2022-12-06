@@ -11,7 +11,6 @@
 #include "CommunicationInterface.h"
 #include "EmrsnSocket.h"
 #include "EmrsnDCan.h"
-
 /**************************************************************************//**
 * 
 * \brief   - Constructor Instantiate the specific implementor object 
@@ -31,7 +30,7 @@ CommunicationInterface::CommunicationInterface(int type)
 		break;
 	case CommunicationInterface::ACT_SOCKET_CONNECTION:
 		break;
-	case CommunicationInterface::EXT_SOCKET_CONNECTION:
+	case CommunicationInterface::TCP_SOCKET_CONNECTION:
 		m_objImplementor = new EmrsnSocket();
 		break;
 	case CommunicationInterface::DIG_SOCKET_CONNECTION:
@@ -78,3 +77,31 @@ CommunicationImplementer* CommunicationInterface::GetCommunicationImp()
 	else
 		return nullptr;
 }
+
+
+/**************************************************************************//**
+*
+* \brief   - Close Socket
+*
+* \param   - None.
+*
+* \return  - if the link connection is successful, it will return 0; else it will return -1;
+******************************************************************************/
+void CommunicationInterface::Close()
+{
+
+}
+
+/**************************************************************************//**
+*
+* \brief   - Get the current step of the Communication Socket LINK 
+*
+* \param   - None.
+*
+* \return  - return the COMMUNICATION_LINK ID
+******************************************************************************/
+int CommunicationInterface::GetLinkStepIndex()
+{
+	return OK;
+}
+

@@ -33,15 +33,15 @@ struct ETHERNET
 	bool			DIG_SysConfigure;
 	bool			DIG_WeldRecipe;
 	bool			DIG_Signature;
-	unsigned int	DIG_ServerID;
+	unsigned int	DIG_MachineID;
 	
 };
 
-struct GATEWAY_SERVER
+struct GATEWAY_MACHINE
 {
-	char			DIG_ServerName[SERVER_NAME_LEN];
-	unsigned int	DIG_ServerPort;
-	char			DIG_ServerIP[IP_ADD_LEN];
+	char			DIG_MachineName[SERVER_NAME_LEN];
+	unsigned int	DIG_MachinePort;
+	char			DIG_MachineIP[IP_ADD_LEN];
 };
 
 #endif

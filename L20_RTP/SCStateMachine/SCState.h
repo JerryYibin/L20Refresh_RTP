@@ -16,14 +16,28 @@
 #include "../Logger.h"
 #include "../Utility.h"
 #include "../ScDgtOutput.h"
+#include "../ControlTask.h"
+#include "../DataTask.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"	
 }
+
+#define NO_ERROR				0
+#define ERR_OVERLOAD			BIT(1)
+#define ERR_TIME_MS				BIT(2)
+#define ERR_TIME_PL				BIT(3)
+#define ERR_POWER_MS			BIT(4)
+#define ERR_POWER_PL			BIT(5)
+#define ERR_PRE_HEIGHT_MS		BIT(6)
+#define ERR_PRE_HEIGHT_PL		BIT(7)
+#define ERR_POST_HEIGHT_MS		BIT(8)
+#define ERR_POST_HEIGHT_PL		BIT(9)
+
+
 //TODO SC should be a interface class so every function should be true virtual.
 //TODO variable stateType should be private attribute for each child object so it should be initilized in constructor.
 //TODO GetStatetType is the true virtual function as well.
-#define ALARMBEEPDELAY 1000
 class SCState {
 public:
 	enum STATE
@@ -44,7 +58,10 @@ public:
 		HEIGHTCORRECT,
 		READY_FOR_TRIGGER,
 		DOWN_STROKE,
-		RETURN_STROKE
+		RETURN_STROKE,
+		TEST_SONIC_ON,
+		ALARM,
+		ESTOP
 	};
 	enum ACTIONS
 	{
@@ -71,18 +88,15 @@ public:
 	virtual void Exit() = 0;	/* Function to call on exit           */
 	virtual void Fail() = 0;	/* Function to call on alarm handling */
 	
-	//virtual bool SendToMsgQ(MESSAGE& msgBuffer, const int& msgQID);
-	bool 					DefeatWeldAbortHandler	(void);
-	bool 					ProcessAlarmHandler		(void);
-	virtual STATUS			SendToMsgQ 				(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks_t waitType = NO_WAIT);
+	void					SendMsgToCtrlMsgQ		(const ControlTask::MESSAGE_IDENTIFY msgID, int alarmType = 0);
 	void 					ChangeExtDgtOutput		(const ScDgtOutputTask::MESSAGE_IDENTIFY msgID);
+	STATUS					SendToMsgQ 				(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks_t waitType = NO_WAIT);
 private:
-	void abortWeld(void);
 	CommonProperty*							CP;
 protected:
-	MSG_Q_ID	UI_MSG_Q_ID;
 	MSG_Q_ID	CTL_MSG_Q_ID;
 	MSG_Q_ID	DGTOUT_MSG_Q_ID;
+	MSG_Q_ID 	DATA_MSG_Q_ID_CTRL;
 };
 
 #endif /* SCSTATE_H_ */

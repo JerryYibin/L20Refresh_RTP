@@ -118,6 +118,12 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_MAINTAIN_ACTUATOR_MOTION_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_AUX_MOTION_REQ;
 		break;
+	case REQ_MAINTAIN_SONICS_TEST_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_SONICS_TEST_REQ;
+		break;
+	case REQ_MAINTAIN_SONICS_100TEST_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_SONICS_100TEST_REQ;
+		break;
 	case REQ_USER_IO_INPUT_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_USERIO_INPUT_READ;
 		break;
@@ -171,6 +177,21 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case REQ_WELD_RECIPE_RENAME_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_WELD_RECIPE_RENAME;
+		break;
+	case REQ_READ_POWER_GRAPH:
+		message.msgID = UserInterface::TO_UI_TASK_READ_POWER_GRAPH_RESPONSE;
+		break;
+	case REQ_READ_HEIGHT_GRAPH:
+		message.msgID = UserInterface::TO_UI_TASK_READ_HEIGHT_GRAPH_RESPONSE;
+		break;
+	case REQ_READ_FREQUENCY_GRAPH:
+		message.msgID = UserInterface::TO_UI_TASK_READ_FREQUENCY_GRAPH_RESPONSE;
+		break;
+	case REQ_GET_CURRENT_ALARM_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_GET_CURRENT_ALARM_IDX;
+		break;
+	case REQ_RESET_CURRENT_ALARM_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_RESET_CURRENT_ALARM_IDX;
 		break;
 	default:
 		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);

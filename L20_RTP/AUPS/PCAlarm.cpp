@@ -76,7 +76,8 @@ void PCAlarm::Loop()
 {
 	// wait for alarm clear from AUSP
 	if (PowerSupplyTask::GetCoreState() == NO_ERROR)
-	{		
+	{	
+		vxbGpioSetValue(GPIO::O_OL_RST_PSI, GPIO_VALUE_HIGH);
 		ChangeState(PC_READY);
 		PCStateMachine::PC_RX->MasterEvents |= BIT_MASK(CTRL_PC_CLEAR_ALARMS);
 	}

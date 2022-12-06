@@ -116,18 +116,4 @@ struct POWER_SUPPLY_TYPE
 	unsigned int Power;
 };
 
-struct TEACH_MODE_SETTING
-{
-	TEACHMODE_TYPE	TeachMode;
-	unsigned int	TimeRangePL;
-	unsigned int	TimeRangeMS;
-	unsigned int	PowerRangePL;
-	unsigned int	PowerRangeMS;
-	unsigned int	PreHeightRangePL;
-	unsigned int	PreHeightRangeMS;
-	unsigned int	PostHeightRangePL;
-	unsigned int	PostHeightRangeMS;
-	unsigned int	Quantity;
-};
-
 #endif

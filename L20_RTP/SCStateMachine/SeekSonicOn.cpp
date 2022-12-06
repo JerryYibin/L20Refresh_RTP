@@ -24,10 +24,13 @@
 * \return  - None.
 *
 ******************************************************************************/
-SeekSonicOn::SeekSonicOn() {
+SeekSonicOn::SeekSonicOn(SEEK_TYPE Type) 
+{
 	m_Actions = SCState::INIT;
 	m_State = SCState::SEEK_SONIC_ON;
 	m_Timeout = 0;
+	m_SeekTime = 0;
+	m_SeekType = Type;
 }
 
 /**************************************************************************//**
@@ -57,8 +60,19 @@ SeekSonicOn::~SeekSonicOn() {
 void SeekSonicOn::Enter()
 {
 	PCStateMachine::PC_RX->MasterState = SCState::SEEK_SONIC_ON;
-	PCStateMachine::PC_RX->MasterEvents &= ~ BIT_MASK(PCState::CTRL_PC_SONIC_DISABLE);
+	PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_PC_SONIC_DISABLE);
+	PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_WELDTEST_ENABLE);
 	m_Timeout = 0;
+	if(m_SeekType == TEST_SEEK_ON)
+	{
+		PCStateMachine::PC_RX->MasterEvents |= BIT_MASK(PCState::CTRL_WELDTEST_ENABLE);
+		m_SeekTime = TEST_SEEK_ON_TIME;
+	}
+	else
+	{
+		PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_WELDTEST_ENABLE);
+		m_SeekTime = WELD_SEEK_ON_TIME;
+	}
 }
 
 /**************************************************************************//**
@@ -72,19 +86,19 @@ void SeekSonicOn::Enter()
 ******************************************************************************/
 void SeekSonicOn::Loop()
 {
-	if (m_Timeout < DELAY25MSEC)
+	if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
+	{	
+		m_Actions = SCState::FAIL;
+		return;
+	}
+	
+	if (m_Timeout < m_SeekTime)
 	{
-		if (m_Timeout % 5 == 0)
-		{
-			if (DefeatWeldAbortHandler() == true)
-				m_Actions = SCState::ABORT;
-		}
-		
-		if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
-		{	
-			m_Actions = SCState::FAIL;
-		}
-		
+//		if (m_Timeout % 5 == 0)
+//		{
+//			if (DefeatWeldAbortHandler() == true)
+//				m_Actions = SCState::ABORT;
+//		}
 		m_Timeout++;
 	}
 	else

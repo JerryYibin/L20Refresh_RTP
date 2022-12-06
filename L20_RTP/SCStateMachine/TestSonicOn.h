@@ -6,22 +6,29 @@
      Copying of this software is expressly forbidden, without the prior
      written consent of Branson Ultrasonics Corporation.
  ---------------------------- MODULE DESCRIPTION ----------------------------
- 
-	The AlarmData is for the AlarmData process only.   
+    
  
 ***************************************************************************/
 
-#include "AlarmData.h"
-ALARM_DATA AlarmDataSC::AlarmData;
-vector<UI_ALARM_LOG> AlarmDataSC::AlarmLog;
-AlarmDataSC::AlarmDataSC() 
+#ifndef TESTSONICON_H_
+#define TESTSONICON_H_
+#include "SCState.h"
+#include "SonicsTestUI.h"
+#define DEDAULT_WELD_TIME	500
+using namespace std;
+class TestSonicOn: public SCState 
 {
-	// TODO Auto-generated constructor stub
+private:
+	SONICS_TEST 	m_TestResult;
+public:
+	TestSonicOn();
+	virtual ~TestSonicOn();
+public:
+	virtual void 	Enter() override;
+	virtual void 	Loop() override;
+	virtual void 	Exit() override;
+	virtual void 	Fail() override;
+	static 	int		Execute(void* _obj);
+};
 
-}
-
-AlarmDataSC::~AlarmDataSC() 
-{
-	// TODO Auto-generated destructor stub
-}
-
+#endif /* TESTSONICON_H_ */

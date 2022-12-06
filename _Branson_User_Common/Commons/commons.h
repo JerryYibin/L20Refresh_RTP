@@ -24,7 +24,8 @@ database directory and alarm index.
 #define SOCKET_DBG					0
 #define LOGIN_DBG					0
 #define HEIGHT_CALIBRATE_DBG		1
-#define INCLUDE_TI_AM5708_BRANSON	1
+#define INCLUDE_TI_AM5708_BRANSON_LEVEL1	1
+#define INCLUDE_TI_AM5708_BRANSON	0
 #define INCLUDE_TI_AM5708_JN		0
 #define UNITTEST_DATABASE			0
 

@@ -16,12 +16,20 @@
 
 class CommunicationInterface
 {
+public:
+	enum COMMUNICATION_LINK
+	{
+		LINK_ERROR = -1,
+		LINK_CONFIG,
+		LINK_TCPIP,
+		LINK_DONE,
+	};
 protected:
 	enum COMMUNICATION_TYPE
 	{
 		HMI_SOCKET_CONNECTION,
 		ACT_SOCKET_CONNECTION,
-		EXT_SOCKET_CONNECTION,
+		TCP_SOCKET_CONNECTION,
 		DIG_SOCKET_CONNECTION,
 		EIP_FIELDBUS_CONNECTION,
 		SENSOR_CAN_CONNECTION
@@ -31,10 +39,11 @@ protected:
 public:
 	CommunicationInterface(int type);
 	virtual ~CommunicationInterface();
-public:
 	virtual int ErrorHandling() = 0;
 	virtual int Sending(const void* data) = 0;
 	virtual int Receiving(void* data) = 0;
+	virtual void Close();
+	virtual int GetLinkStepIndex();
 private:
 	COMMUNICATION_TYPE m_typeCommunication;
 	CommunicationImplementer* m_objImplementor;

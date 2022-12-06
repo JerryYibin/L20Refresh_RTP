@@ -11,6 +11,7 @@
 
 #include "ReadyForTrigger.h"
 #include "../ACStateMachine.h"
+#include "../PCStateMachine.h"
 #include "SCStateMachine.h"
 #define DEBOUNCE_TIME	1000
 /**************************************************************************//**
@@ -25,7 +26,6 @@ ReadyForTrigger::ReadyForTrigger()
 {
 	m_Actions = SCState::INIT;
 	m_State = SCState::READY_FOR_TRIGGER;
-	m_IsTrigger = false;
 }
 
 /**************************************************************************//**
@@ -60,7 +60,7 @@ void ReadyForTrigger::Enter()
 
 /**************************************************************************//**
 * 
-* \brief   - ReadyForTrigger Loop. With litter debounce time after the triggered.
+* \brief   - ReadyForTrigger Loop. 
 *
 * \param   - None.
 *
@@ -73,12 +73,10 @@ void ReadyForTrigger::Loop()
 	{
 		m_Actions = SCState::FAIL;
 	}
-	if(m_IsTrigger == true)
+	
+	if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
 	{
-		if(m_Timeout > DEBOUNCE_TIME)
-			m_Actions = SCState::JUMP;
-		else
-			m_Timeout++;
+		m_Actions = SCState::FAIL;
 	}
 }
 
@@ -93,7 +91,6 @@ void ReadyForTrigger::Loop()
 ******************************************************************************/
 void ReadyForTrigger::Exit()
 {
-	m_IsTrigger = false;
 	ACStateMachine::AC_RX->MasterState = SCState::NO_STATE;
 }
 
@@ -124,6 +121,6 @@ void ReadyForTrigger::Fail()
 int ReadyForTrigger::Execute(void* _obj)
 {
 	ReadyForTrigger* _ReadyForTrigger = (ReadyForTrigger*)_obj;
-	_ReadyForTrigger->m_IsTrigger = true;
+	_ReadyForTrigger->m_Actions = SCState::JUMP;
 	return OK;
 }
