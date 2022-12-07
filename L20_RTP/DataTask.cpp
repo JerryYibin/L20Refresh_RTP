@@ -252,7 +252,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->QueryWeldSignature(message.Buffer);
 		break;
 	case TO_DATA_TASK_ALARM_LOG_QUERY:
-        _ObjDBConn->QueryAlarmLog(message.Buffer);
+        _ObjDBConn->QueryBlockAlarmLog(message.Buffer);
         break;
 	case TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY:
         _ObjDBConn->QueryHeightCalibration(message.Buffer);
