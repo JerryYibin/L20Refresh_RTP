@@ -25,6 +25,11 @@
 #define FIRST_SEND_DATA_NUM		10
 #define ONE_RESULT_PAGE_NUM		4
 
+#define TABLE_RESULT_MEM		15 /* there are 15 columns in table WeldResult */
+#define TABLE_PWR_SUP_MEM		3
+#define TABLE_TEACH_MODE_MEM	11
+#define TABLE_ALARMLOG_MEM		7 /* there are 7 columns in table AlarmLog */
+
 class DBAccessL20DB: public DBAccess 
 {
 private:
@@ -38,8 +43,10 @@ private:
     
     int Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string& jsonStr);
     int JSON2Vector(const string jsonStr, vector<WELD_SIGNATURE>* _ptrVector);
-    int Vector2String(const vector<WELD_SIGNATURE>* _ptrVector, string& str);
-    int String2Vector(const string str, vector<WELD_SIGNATURE>* _ptrVector);
+    
+    int Vector2String(const vector<shared_ptr<WeldResultSignatureDefine>>* _ptrVector, string& str);
+    int String2Vector(const string str, vector<shared_ptr<WeldResultSignatureDefine>>* _ptrVector);
+    
     int Vector2String(const vector<WeldStepValueSetting>* _ptrVector, string& str);
     int String2Vector(const string str, vector<WeldStepValueSetting>* _ptrVector);
     int pushWeldRecipeLib(const string str);

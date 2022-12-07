@@ -29,11 +29,11 @@ public:
 	
 	//Methods to fetch data from database needed for CSV reports generation.		
 	virtual string	GetWeldResultCSVParameters(int nRowID, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT) = 0;
-	virtual string	GetWeldResultCSVReportHeader() = 0;
+	virtual string	GetWeldResultCSVReportHeader() 			= 0;
 	
 	virtual string	GetWeldSignatureCSVParameters(int nRowID, int &nBlobParamNumber, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT) = 0;
-	virtual string	GetWeldSignatureCSVReportHeader1() = 0;
-	virtual string	GetWeldSignatureCSVReportHeader2() = 0;
+	virtual string	GetWeldSignatureCSVReportHeader1() 		= 0;
+	virtual string	GetWeldSignatureCSVReportHeader2() 		= 0;
 	
 	virtual int 	StoreWeldResult(char* buffer)			= 0;
 	virtual int 	StoreWeldSignature(char* buffer)		= 0;

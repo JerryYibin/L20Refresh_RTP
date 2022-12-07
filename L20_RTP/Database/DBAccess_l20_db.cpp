@@ -15,12 +15,16 @@
 **********************************************************************************************************/
 #include "DBAccess_l20_db.h"
 #include "commons.h"
+#include "AlarmCodeUI.h"
 #include "../Utility.h"
 #include "../Recipe.h"
-#include "../AlarmData.h"
 #include "../HeightEncoder.h"
 #include "../UserAuthority.h"
 #include "../SystemConfiguration.h"
+#include "../User.h"
+#include "../WeldResultsDefine.h"
+#include "../WeldResults.h"
+#include "../AlarmEvent.h"
 #include <jansson.h>
 extern "C"
 {
@@ -275,7 +279,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
     }
 #endif
 	str.clear();
-	Vector2String(&CommonProperty::WeldSignatureVector, str);
+	Vector2String(WeldResultSignature::_OrignalSignature, str);
 	if(str.empty() != true)
 	{
     	string strStore =
@@ -309,7 +313,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 /**************************************************************************//**
 * \brief   - Writing Weld Recipe into DB
 *
-* \param   - char* buffer - not used
+* \param   - char* buffer - WeldRecipeSC data
 *
 * \return  - int - status of query exec
 *
@@ -481,59 +485,35 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 /**************************************************************************//**
 * \brief   - Writing AlarmLog into DB
 *
-* \param   - char* buffer - not used
+* \param   - char *buffer - Alarm Event object
 *
 * \return  - int - status of query exec
 *
 ******************************************************************************/
 int DBAccessL20DB::StoreAlarmLog(char* buffer)
 {
-	int id;
 	string str;
+	int id = 0;
 	int nErrCode = SQLITE_ERROR;
-    ALARM_DATA* pData = &AlarmDataSC::AlarmData;
-
-	str = ExecuteQuery(
-            "select * from "+string(TABLE_ALARM_LOG)+
-            " where WeldResultID="+std::to_string(pData->WeldResultID)+";");
-	if(str.empty()!=true)
-	{
-		LOGERR((char*) "Database_T: WeldResultID %u already exists in table AlarmLog\n",
-                pData->WeldResultID, 0, 0);
-    	return nErrCode;
-	}
-
-	str = ExecuteQuery(
-            "select * from "+string(TABLE_WELD_RESULT)+
-            " where ID="+std::to_string(pData->WeldResultID)+";");
-	if(str.empty()==true)
-	{
-		LOGERR((char*) "Database_T: ID %u doesn't exist in table WeldResult\n",
-                pData->WeldResultID, 0, 0);
-    	return nErrCode;
-	}
-
-	struct tm timeStamp;
-    char timeBuf[20];
-	vxbRtcGet(&timeStamp);
-    strftime(timeBuf, 20, "%Y-%m-%d %H:%M:%S", &timeStamp);
+	AlarmEvent event;
+	memcpy((void*)&event, buffer, sizeof(AlarmEvent));
 
 	str =
         "insert into " + string(TABLE_ALARM_LOG) +
         " (DateTime, AlarmType, RecipeID, WeldResultID, UserID, IsReset) " +
         "values ('"+
-        timeBuf+"',"+//DateTime
-        std::to_string(pData->AlarmType)+","+//AlarmType
-        std::to_string(pData->WeldRecipeID)+","+//RecipeID
-        std::to_string(pData->WeldResultID)+","+//WeldResultID
-        std::to_string(pData->UserID)+","+//UserID
-        std::to_string(pData->AlarmSubType)+");";//is AlarmSubType for column IsReset?
+        event.m_strTimeStamp +"',"+//DateTime
+        std::to_string(event.m_Type)+","+//AlarmType
+        std::to_string(event.m_WeldRecipeID)+","+//RecipeID
+        std::to_string(event.m_WeldResultID)+","+//WeldResultID
+        std::to_string(-1)+","+//UserID
+        std::to_string(1)+");";//IsReset
 	nErrCode = SingleTransaction(str);
 
 	getLatestID(TABLE_ALARM_LOG, &id);
 	if(nErrCode == SQLITE_OK)
 	{
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
         LOG("# store AlarmLog to ID(%u) with WeldResultID(%u)\n", id, pData->WeldResultID);
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
@@ -807,8 +787,7 @@ void DBAccessL20DB::QueryWeldSignature(char* buffer)
         " where WeldResultID="+
         std::to_string(*(int* )buffer)+";";
     string str = ExecuteQuery(strQuery);
-    vector<WELD_SIGNATURE> WeldSignVector;
-    String2Vector(str, &WeldSignVector);
+    String2Vector(str, WeldResultSignature::_OrignalSignature);
 #if UNITTEST_DATABASE
     for(int i=0;i<WeldSignVector.size();i++)
 	{
@@ -1118,6 +1097,22 @@ int DBAccessL20DB::QueryWeldRecipe(char* buffer)
             power[i].m_Order, power[i].m_StepValue, power[i].m_AmplitudeValue);
         }
 #endif
+    
+    str = "";
+    str = ExecuteQuery(
+ 			"select * from " + string(TABLE_ACTIVE_RECIPE)
+ 					+ " where RecipeID = "
+ 					+ std::to_string(RecipeID) + ";");
+
+     if(!str.empty())
+     {
+     	string strStore = 
+     			"select BatchSize from " + string(TABLE_ACTIVE_RECIPE) + 
+     			" where RecipeID = " + std::to_string(RecipeID) + ";";
+     	str = ExecuteQuery(strStore);
+     	Recipe::RecipeSC->Set(&str, WeldRecipeSC::PARALIST::BATCH_SIZE);
+     }
+    
     return OK;
 }
 
@@ -1308,7 +1303,7 @@ int DBAccessL20DB::QueryDbVersion(char* buffer)
             tmpStr[0].c_str(),
             tmpStr[1].c_str(),
             tmpStr[2].c_str());
-#ifdef UNITTEST_DATABASE
+#if UNITTEST_DATABASE
     LOG("QueryDbVersion:%s\n", str.c_str());
     LOG("Major:%s\n", tmpStr[0].c_str());
     LOG("Minor:%s\n", tmpStr[1].c_str());
@@ -1372,19 +1367,24 @@ int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
     int PermissionLevel;
     int count;
 	vector<string> tmpStr;
+	User tmpUser;
 	int nErrCode = SQLITE_ERROR;
     string str = ExecuteQuery("select PermissionLevel, Password from "+string(TABLE_USER_PROFILE)+";", &nErrCode);
     if(str.empty() == true)
     	return 0;
     if(nErrCode != SQLITE_OK)
     	return 0;
-	UserAuthority::_UserProfilesSC->clear();
     Utility::StringToTokens(str, ',', tmpStr);
 	for(count = 0; count < tmpStr.size()/2; count++)
 	{
-        UserAuthority::_UserProfilesSC->insert(
-             pair<int, string>
-            (atoi(tmpStr[count*2].c_str()),tmpStr[count*2+1]));
+		tmpUser.m_Level = (PREMISSION_LEVEL)atoi(tmpStr[count*2].c_str());
+		tmpUser.m_Password = tmpStr[count*2+1];
+		auto iter = UserAuthority::_UserProfilesSC->find((int)tmpUser.m_Level);	
+	    if(iter != UserAuthority::_UserProfilesSC->end())
+		{
+			iter->second->m_Level = tmpUser.m_Level;
+			iter->second->m_Password = tmpUser.m_Password;
+		}
 	}
 #if UNITTEST_DATABASE
     map<int,string>::iterator st;
@@ -1530,6 +1530,8 @@ int DBAccessL20DB::QueryBlockPowerSupply(char* buffer)
 	vector<string> tmpStr;
 
     str = ExecuteQuery(string("select * from ")+string(TABLE_PWR_SUPPLY)+";");
+    if(str.empty() == true)
+    	return ERROR;
 #if UNITTEST_DATABASE
     LOG("QueryBlockPowerSupply:\n%s\n\n", str.c_str());
     SystemConfiguration::PowerSupplyType.clear();
@@ -1537,7 +1539,7 @@ int DBAccessL20DB::QueryBlockPowerSupply(char* buffer)
 
     Utility::StringToTokens(str, ',', tmpStr);
 	for(count = 0; count < tmpStr.size()/TABLE_RESULT_MEM; count++)
-	    {
+	{
 	    POWER_SUPPLY_TYPE tmpPwr;
         tmpPwr.Frequency = atoi(tmpStr[count*TABLE_RESULT_MEM+1].c_str());//Frequency
         tmpPwr.Power = atoi(tmpStr[count*TABLE_RESULT_MEM+2].c_str());//Power
@@ -1549,7 +1551,7 @@ int DBAccessL20DB::QueryBlockPowerSupply(char* buffer)
         LOG("Power: %d\n", tmpPwr.Power);
         LOG("\n");
 #endif
-	    }
+	}
     return count;
 }
 #endif
@@ -1627,6 +1629,8 @@ int DBAccessL20DB::QueryBlockTeachModeSetting(char* buffer)
 	vector<string> tmpStr;
 
     str = ExecuteQuery(string("select * from ")+string(TABLE_TEACH_MODE_SET)+";");
+	if(str.empty() == true)
+    	return ERROR;
 #if UNITTEST_DATABASE
     LOG("QueryBlockTeachModeSetting:\n%s\n\n", str.c_str());
     SystemConfiguration::TeachModeSetting.clear();
@@ -1634,17 +1638,17 @@ int DBAccessL20DB::QueryBlockTeachModeSetting(char* buffer)
 
     Utility::StringToTokens(str, ',', tmpStr);
 	for(count = 0; count < tmpStr.size()/TABLE_TEACH_MODE_MEM; count++)
-	    {
-	    TEACH_MODE_SETTING tmpTeach;
-        tmpTeach.TeachMode = (TEACHMODE_TYPE)atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+1].c_str());//TeachModeType
-        tmpTeach.TimeRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+2].c_str());//TimePLRG
-        tmpTeach.TimeRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+3].c_str());//TimeMSRG
-        tmpTeach.PowerRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+4].c_str());//PowerPLRG
-        tmpTeach.PowerRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+5].c_str());//PowerMSRG
-        tmpTeach.PreHeightRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+6].c_str());//PreHeightPLRG
-        tmpTeach.PreHeightRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+7].c_str());//PreHeightMSRG
-        tmpTeach.PostHeightRangePL = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+8].c_str());//HeightPLRG
-        tmpTeach.PostHeightRangeMS = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+9].c_str());//HeightMSRG
+	{
+		TEACHMODE tmpTeach;
+        tmpTeach.Teach_mode = (TEACHMODE_TYPE)atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+1].c_str());//TeachModeType
+        tmpTeach.Time_Upper = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+2].c_str());//TimePLRG
+        tmpTeach.Time_Lower = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+3].c_str());//TimeMSRG
+        tmpTeach.Power_Upper = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+4].c_str());//PowerPLRG
+        tmpTeach.Power_Lower = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+5].c_str());//PowerMSRG
+        tmpTeach.PreHeight_Upper = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+6].c_str());//PreHeightPLRG
+        tmpTeach.PreHeight_Lower = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+7].c_str());//PreHeightMSRG
+        tmpTeach.PostHeight_Upper = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+8].c_str());//HeightPLRG
+        tmpTeach.PostHeight_Lower = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+9].c_str());//HeightMSRG
         tmpTeach.Quantity = atoi(tmpStr[count*TABLE_TEACH_MODE_MEM+10].c_str());//Quantity
 		SystemConfiguration::TeachModeSetting.push_back(tmpTeach);
 
@@ -1662,7 +1666,7 @@ int DBAccessL20DB::QueryBlockTeachModeSetting(char* buffer)
         LOG("Quantity: %d\n", tmpTeach.Quantity);
         LOG("\n");
 #endif
-	    }
+	}
     return count;
 }
 #endif
@@ -1681,6 +1685,8 @@ int DBAccessL20DB::QuerySystemConfigure(char* buffer)
 	vector<string> tmpStr;
 
     str = ExecuteQuery(string("select * from ")+string(TABLE_SYS_CONFIG)+";");
+    if(str.empty() == true)
+    	return ERROR;
 #if UNITTEST_DATABASE
     LOG("QuerySystemConfigure:\n%s\n\n", str.c_str());
 #endif
@@ -1873,7 +1879,6 @@ void DBAccessL20DB::QueryActiveRecipe(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 {
-	cout << "857 UpdateWeldRecipe" << endl;
     string strStore;
 	int nErrCode = SQLITE_ERROR;
 
@@ -2139,16 +2144,17 @@ int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 {
-    map<int,string>::iterator st = UserAuthority::_UserProfilesSC->find(*(int* )buffer);
-    if(st == UserAuthority::_UserProfilesSC->end())
+    auto iter = UserAuthority::_UserProfilesSC->find(*(int* )buffer);
+    if(iter == UserAuthority::_UserProfilesSC->end())
 	{
-	    return SQLITE_ERROR;
+	    return ERROR;
 	}
+    User* _User = iter->second;
     //TODO, handle user passwords security in future.
 	string strStore =
         "update " 	+ string(TABLE_USER_PROFILE) +
-        " set Password='" + st->second+//Password
-        "' where PermissionLevel="+ std::to_string(st->first)+";";//PermissionLevel
+        " set Password='" + _User->m_Password.c_str()+//Password
+        "' where PermissionLevel="+ std::to_string(_User->m_Level)+";";//PermissionLevel
 	int nErrCode = SingleTransaction(strStore);
 	if(nErrCode != SQLITE_OK)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
@@ -2221,23 +2227,23 @@ int DBAccessL20DB::UpdateBlockTeachModeSetting(char* buffer)
 {
 	for (int i = 0; i < SystemConfiguration::TeachModeSetting.size(); i++)
 	{
-		TEACH_MODE_SETTING tmpTeach = SystemConfiguration::TeachModeSetting.at(i);
+		TEACHMODE tmpTeach = SystemConfiguration::TeachModeSetting.at(i);
     	string strStore =
             "update " 				+ string(TABLE_TEACH_MODE_SET) +
-            " set TeachModeType=" 	+ std::to_string(tmpTeach.TeachMode)+//TeachModeType
-            ", TimePLRG=" 			+ std::to_string(tmpTeach.TimeRangePL)+//TimePLRG
-            ", TimeMSRG=" 			+ std::to_string(tmpTeach.TimeRangeMS)+//TimeMSRG
-            ", PowerPLRG=" 			+ std::to_string(tmpTeach.PowerRangePL)+//PowerPLRG
-            ", PowerMSRG=" 			+ std::to_string(tmpTeach.PowerRangeMS)+//PowerMSRG
-            ", PreHeightPLRG=" 		+ std::to_string(tmpTeach.PreHeightRangePL)+//PreHeightPLRG
-            ", PreHeightMSRG=" 		+ std::to_string(tmpTeach.PreHeightRangeMS)+//PreHeightMSRG
-            ", HeightPLRG=" 		+ std::to_string(tmpTeach.PostHeightRangePL)+//HeightPLRG
-            ", HeightMSRG=" 		+ std::to_string(tmpTeach.PostHeightRangeMS)+//HeightMSRG
+            " set TeachModeType=" 	+ std::to_string(tmpTeach.Teach_mode)+//TeachModeType
+            ", TimePLRG=" 			+ std::to_string(tmpTeach.Time_Upper)+//TimePLRG
+            ", TimeMSRG=" 			+ std::to_string(tmpTeach.Time_Lower)+//TimeMSRG
+            ", PowerPLRG=" 			+ std::to_string(tmpTeach.Power_Upper)+//PowerPLRG
+            ", PowerMSRG=" 			+ std::to_string(tmpTeach.Power_Lower)+//PowerMSRG
+            ", PreHeightPLRG=" 		+ std::to_string(tmpTeach.PreHeight_Upper)+//PreHeightPLRG
+            ", PreHeightMSRG=" 		+ std::to_string(tmpTeach.PreHeight_Lower)+//PreHeightMSRG
+            ", HeightPLRG=" 		+ std::to_string(tmpTeach.PostHeight_Upper)+//HeightPLRG
+            ", HeightMSRG=" 		+ std::to_string(tmpTeach.PostHeight_Lower)+//HeightMSRG
             ", Quantity=" 			+ std::to_string(tmpTeach.Quantity)+//Quantity
             " where ID=" 			+ std::to_string(i)+";";
     	int nErrCode = SingleTransaction(strStore);
     	if(nErrCode != SQLITE_OK)
-        {   
+        {	
     		LOGERR((char*) "Database_T: UpdateBlockTeachModeSetting Error. %d\n", nErrCode, 0, 0);
         	return nErrCode;
         }
@@ -2332,7 +2338,7 @@ void DBAccessL20DB::DeleteOldest(const char* table)
 /**************************************************************************//**
 * \brief   - Delete Specific Weld Recipe to DB
 *
-* \param   - char *buffer - Recipe ID
+* \param   - char *buffer (int)
 *
 * \return  - int - ErrCode
 *
@@ -2538,39 +2544,28 @@ int DBAccessL20DB::Vector2JSON(const vector<WELD_SIGNATURE>* _ptrVector, string&
 * \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
 *
 ******************************************************************************/
-int DBAccessL20DB::Vector2String(const vector<WELD_SIGNATURE>* _ptrVector, string & str)
+int DBAccessL20DB::Vector2String(const vector<shared_ptr<WeldResultSignatureDefine>>* _ptrVector, string & str)
 {
-	if ((_ptrVector->size() == 0) || (_ptrVector->size() > HMI_SIGNA_POINT_MAX))
+	if (_ptrVector->size() == 0)
 	{
 		return ERROR;
 	}
-	WELD_SIGNATURE tmpSignature;
+	shared_ptr<WeldResultSignatureDefine> _Signature;
 	int j = 0;
+	int iError = OK;
+	int iResult = 0;
 	for (int i = 0; i < _ptrVector->size(); i++)
 	{
-		tmpSignature = _ptrVector->at(0);
-		for(int j = 0; j < TOTAL; j++)
+		_Signature = _ptrVector->at(i);
+		for(int j = 0; j < WeldResultSignatureDefine::TOTAL; j++)
 		{
-			switch(j)
-			{
-			case FRQUENCY:
-				str += std::to_string(tmpSignature.Frquency) + DB_VALUE_SEPARATOR;
-				break;
-			case POWER:
-				str += std::to_string(tmpSignature.Power) + DB_VALUE_SEPARATOR;
-				break;
-			case HEIGHT:
-				str += std::to_string(tmpSignature.Height) + DB_VALUE_SEPARATOR;
-				break;
-			case AMPLITUDE:
-				str += std::to_string(tmpSignature.Amplitude) + ";";
-				break;
-			default:
-				break;
-			}
+			iResult = _Signature->Get(j, &iError);
+			if(iError == OK)
+				str += std::to_string(iResult) + ",";
 		}
+		str.pop_back(); // instead of "," using ";"
+		str += ";";
 	}
-
 	return OK;
 }
 
@@ -2655,10 +2650,10 @@ int DBAccessL20DB::JSON2Vector(const string jsonStr, vector<WELD_SIGNATURE>* _pt
 * \return  - If there is not any issue during data converting, it will be return OK; else it will return ERROR.
 *
 ******************************************************************************/
-int DBAccessL20DB::String2Vector(const string str, vector<WELD_SIGNATURE>* _ptrVector)
+int DBAccessL20DB::String2Vector(const string str, vector<shared_ptr<WeldResultSignatureDefine>>* _ptrVector)
 {
 	int iResult = ERROR;
-	WELD_SIGNATURE tmpSignature;
+	shared_ptr<WeldResultSignatureDefine> _Signature = WeldResultSignatureDefine::GetWeldSignature();
 
 	if (str.empty() == true)
 		return ERROR;
@@ -2669,32 +2664,20 @@ int DBAccessL20DB::String2Vector(const string str, vector<WELD_SIGNATURE>* _ptrV
 	if (Utility::StringToTokens(str, ';', tmpStringlist) == 0)
 		return ERROR;
 
+	int vectorIndex = 0;
+	unsigned int data = 0;
 	for (int i = 0; i < tmpStringlist.size(); i++)
 	{
     	tmpStringData.clear();
 		if (Utility::StringToTokens(tmpStringlist[i], ',', tmpStringData) > 0)
 		{
-			for (int j = 0; j < tmpStringData.size(); j++)
+			for (int j = 0; j < WeldResultSignatureDefine::TOTAL; j++)
 			{
-				switch (j)
-				{
-				case FRQUENCY:
-					tmpSignature.Frquency = std::stoi(tmpStringData[j]);
-					break;
-				case POWER:
-					tmpSignature.Power = std::stoi(tmpStringData[j]);
-					break;
-				case HEIGHT:
-					tmpSignature.Height = std::stoi(tmpStringData[j]);
-					break;
-				case AMPLITUDE:
-					tmpSignature.Amplitude = std::stoi(tmpStringData[j]);
-					break;
-				default:
-					break;
-				}
+				data = std::stoi(tmpStringData[vectorIndex]);
+				if(_Signature->Set(j, data) == OK)
+					vectorIndex++;
 			}
-			_ptrVector->push_back(tmpSignature);
+			_ptrVector->push_back(_Signature);
 		}
 		else
 		{
@@ -2735,10 +2718,10 @@ int DBAccessL20DB::Vector2String(const vector<WeldStepValueSetting>* _ptrVector,
 			switch(j)
 			{
 			case Recipe::ORDER:
-				str += std::to_string(tmpStepSetting.m_Order) + DB_VALUE_SEPARATOR;
+				str += std::to_string(tmpStepSetting.m_Order) + ",";
 				break;
 			case Recipe::STEPVALUE:
-				str += std::to_string(tmpStepSetting.m_StepValue) + DB_VALUE_SEPARATOR;
+				str += std::to_string(tmpStepSetting.m_StepValue) + ",";
 				break;
 			case AMPLITUDE:
 				str += std::to_string(tmpStepSetting.m_AmplitudeValue) + ";";

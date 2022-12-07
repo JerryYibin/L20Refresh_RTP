@@ -37,4 +37,6 @@
 #define COLUMN_GRAPHDATA		"WeldGraph"
 #define COLUMN_GOLDEN			"Golden"
 
+
+
 #endif /* DBCONFIGURATION_H_ */

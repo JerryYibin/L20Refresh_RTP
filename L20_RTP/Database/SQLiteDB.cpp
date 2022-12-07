@@ -177,21 +177,22 @@ string SQLiteDB::ExecuteQuery(string strSqlStatement, int *pnStatus, int nRetryC
 		do
 		{
 			nErrCode = sqlite3_exec(m_ptrDB, strSqlStatement.c_str(), Callback, &strOutBuffer, nullptr);
-			switch(nErrCode)
+			switch (nErrCode)
 			{
-				case SQLITE_OK:
+			case SQLITE_OK:
 				break;
-				
-				case SQLITE_BUSY:
-				case SQLITE_LOCKED:
-				//LOGERR((char *)"ExecuteQuery - SQLITE_BUSY/SQLITE_LOCKED, nErrCode: %d",nErrCode,0,0);
-				if(nRetryCounter > 0)
+
+			case SQLITE_BUSY:
+			case SQLITE_LOCKED:
+				LOGERR((char* )"ExecuteQuery - SQLITE_BUSY/SQLITE_LOCKED, nErrCode: %d",nErrCode, 0, 0);
+				if (nRetryCounter > 0)
 				{
 					taskDelay(SQLITE_BUSY_RETRY_INTERVAL);
 				}
-				break;		
-					
-				default:
+				break;
+
+			default:
+				LOGERR((char* )"ExecuteQuery - DEFAULT", 0, 0, 0);
 				break;
 			}
 			nRetryCounter--;		
