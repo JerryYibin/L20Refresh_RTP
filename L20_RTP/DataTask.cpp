@@ -329,14 +329,16 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->DeleteAllTableRows(TABLE_ALARM_LOG);
 		break;
 	case TO_DATA_TASK_WELD_RESULT_QUERY_LATEST_PAGE:
-		_ObjDBConn->QueryWeldResultLatestPage(message.Buffer);
-		message.msgID = UserInterface::TO_UI_TASK_RESULT_LIBRARY_DATA_RESPONSE;
-		SendToMsgQ(message, UI_MSG_Q_ID);
+		if(!_ObjDBConn->QueryWeldResultLatestPage(message.Buffer)){
+			message.msgID = UserInterface::TO_UI_TASK_RESULT_LIBRARY_DATA_RESPONSE;
+			SendToMsgQ(message, UI_MSG_Q_ID);
+		}
 		break;
 	case TO_DATA_TASK_WELD_RESULT_QUERY_NEXT_PAGE:
-		_ObjDBConn->QueryWeldResultNextPage(message.Buffer);
-		message.msgID = UserInterface::TO_UI_TASK_RESULT_LIBRARY_DATA_RESPONSE;
-		SendToMsgQ(message, UI_MSG_Q_ID);
+		if(!_ObjDBConn->QueryWeldResultNextPage(message.Buffer)){
+			message.msgID = UserInterface::TO_UI_TASK_RESULT_LIBRARY_DATA_RESPONSE;
+			SendToMsgQ(message, UI_MSG_Q_ID);
+		}
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_RENAME:
 		ErrCode = _ObjDBConn->RenameWeldRecipe(message.Buffer);

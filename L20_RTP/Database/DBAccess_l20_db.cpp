@@ -545,6 +545,7 @@ int DBAccessL20DB::QueryWeldResultLatestPage(char* buffer)
 			+ ";";
 	string str = ExecuteQuery(strQuery);
 	if (str.empty()) {
+		LOGERR((char*) "Weld Result is null\n", 0, 0, 0);
 		return ERROR;
 	}
 
@@ -559,6 +560,10 @@ int DBAccessL20DB::QueryWeldResultNextPage(char* buffer)
 			+ " order by DateTime DESC limit " + std::to_string(sendDataNum)
 			+ ", " + std::to_string(ONE_RESULT_PAGE_NUM) + ";";
 	string str = ExecuteQuery(strQuery);
+	if (str.empty()) {
+		LOGERR((char*) "Weld Result is null\n", 0, 0, 0);
+		return ERROR;
+	}
 
 	assignWeldResult(str);
 
