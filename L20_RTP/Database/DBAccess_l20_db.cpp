@@ -1133,7 +1133,7 @@ int DBAccessL20DB::QueryWeldRecipe(char* buffer)
 //TODO Is it temporary code for test only, because there is not any return?
 int DBAccessL20DB::QueryBlockAlarmLog(char* buffer)
 {
-    int count;
+    /*int count;
 	vector<string> tmpStr;
     int id = *(int* )buffer;
 
@@ -1184,7 +1184,8 @@ int DBAccessL20DB::QueryBlockAlarmLog(char* buffer)
         LOG("AlarmType:%d\n\n", tmpLog.AlarmType);
 #endif
         }
-    return count;
+    return count;*/
+	return OK;
 }
 #else
 /**************************************************************************//**
