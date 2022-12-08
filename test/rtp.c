@@ -177,8 +177,12 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_WELD_RECIPE_DELETE,
     TO_DATA_TASK_WELD_RECIPE_CLEAR,
     TO_DATA_TASK_WELD_RECIPE_DELETE_SPECIFIC,
+    TO_DATA_TASK_WELD_RECIPE_TOTAL_NUMBER,
+    TO_DATA_TASK_WELD_RECIPE_RENAME,
 
     TO_DATA_TASK_WELD_RESULT_QUERY,
+    TO_DATA_TASK_WELD_RESULT_QUERY_LATEST_PAGE,
+    TO_DATA_TASK_WELD_RESULT_QUERY_NEXT_PAGE,
     TO_DATA_TASK_WELD_RESULT_INSERT,
     TO_DATA_TASK_WELD_RESULT_DELETE,
     TO_DATA_TASK_WELD_RESULT_CLEAR,
@@ -190,11 +194,9 @@ enum MESSAGE_IDENTIFY
 
     TO_DATA_TASK_ALARM_LOG_QUERY,
     TO_DATA_TASK_ALARM_LOG_INSERT,
-    TO_DATA_TASK_ALARM_LOG_DELETE,
     TO_DATA_TASK_ALARM_LOG_CLEAR,
-
-    TO_DATA_TASK_HI_CALIB_QUERY,
-    TO_DATA_TASK_HI_CALIB_UPDATE,
+    TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY,
+    TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE,
 
     TO_DATA_TASK_DB_VERSION_QUERY,
 
@@ -214,7 +216,7 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_SYS_CONFIG_UPDATE,
 
     TO_DATA_TASK_ACTIVE_RECIPE_QUERY,
-    TO_DATA_TASK_ACTIVE_RECIPE_UPDATE
+    TO_DATA_TASK_ACTIVE_RECIPE_UPDATE,
     };
 #define DATA_TASK_EVENT 0x02
 
@@ -227,67 +229,81 @@ int main(int argc, char *argv[])
     MESSAGE buf = {0};
 /*
  * 0 for Database
- *   a for open Database
- *   b for close Database
+ *   a for TO_DATA_TASK_OPEN_DB
+ *   b for TO_DATA_TASK_CLOSE_DB
  *
  * 1 for WeldRecipeSC
- *   a for insert
- *     third parameter for count
+ *   a for TO_DATA_TASK_WELD_RECIPE_INSERT
+ *     third parameter for m_RecipeName
  *   b for query
- *     no third parameter for all records
- *     third parameter for m_RecipeID of WeldRecipeSC
- *   c for clear
+ *     no third parameter for TO_DATA_TASK_WELD_RECIPE_QUERY_ALL
+ *     third parameter is ID for TO_DATA_TASK_WELD_RECIPE_QUERY
+ *   c for TO_DATA_TASK_WELD_RECIPE_CLEAR
  *   d for delete
- *     no third parameter for last record
- *     third parameter for ID
- *   e for query last page
- *   f for query next page
- *   u for update
+ *     no third parameter for TO_DATA_TASK_WELD_RECIPE_DELETE
+ *     third parameter is ID for TO_DATA_TASK_WELD_RECIPE_DELETE_SPECIFIC
+ *   e for TO_DATA_TASK_WELD_RECIPE_QUERY_LATEST_PAGE
+ *   f for TO_DATA_TASK_WELD_RECIPE_QUERY_NEXT_PAGE
+ *   u for TO_DATA_TASK_WELD_RECIPE_UPDATE
+ *   r for TO_DATA_TASK_WELD_RECIPE_RENAME
  *
  * 2 for WELD_RESULT
- *   a for insert including table AlarmLog and WeldResultSignature
- *     third parameter for count
- *   b for query
- *     third parameter for ID of last in RESULT_FOR_UI_MAX
- *   c for clear
- *   d for delete oldest
+ *   a for TO_DATA_TASK_WELD_RESULT_INSERT including table AlarmLog and WeldResultSignature
+ *     third parameter is count
+ *   b for TO_DATA_TASK_WELD_RESULT_QUERY
+ *     third parameter is ID of last in RESULT_FOR_UI_MAX
+ *   c for TO_DATA_TASK_WELD_RESULT_CLEAR
+ *   d for TO_DATA_TASK_WELD_RESULT_DELETE
  *
  * 3 for WeldResultSignature_Data
- *   b for query latest RESULT_FOR_UI_MAX records
- *   c for clear
- *   d for delete oldest
+ *   a for TO_DATA_TASK_WELD_SIGN_INSERT
+ *     third parameter is WeldResultID
+ *   x for TO_DATA_TASK_WELD_SIGN_INSERT
+ *     third parameter is count
+ *   b for TO_DATA_TASK_WELD_SIGN_QUERY
+ *   c for TO_DATA_TASK_WELD_SIGN_CLEAR
+ *   d for TO_DATA_TASK_WELD_SIGN_DELETE
  *
  * 4 for AlarmLog
- *   b for query for ID
+ *   a for TO_DATA_TASK_ALARM_LOG_INSERT
+ *     third parameter is data
+ *   b for TO_DATA_TASK_ALARM_LOG_QUERY
  *     third parameter for ID of last in ALARM_LOG_MAX
- *   c for clear
- *   d for delete oldest
+ *   c for TO_DATA_TASK_ALARM_LOG_CLEAR
+ *
  * 5 for HeightCalibration
- *   b for query
- *   u for update
- *     third parameter for PSI
+ *   b for TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY
+ *   u for TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE
+ *     third parameter is PSI
  * 6 for DbVersion
- *   b for query
+ *   b for TO_DATA_TASK_DB_VERSION_QUERY
+ *
  * 7 for UserProfiles
- *   b for query
- *   u for update
- *     third parameter for PermissionLevel
+ *   b for TO_DATA_TASK_USER_PROFILE_QUERY
+ *   u for TO_DATA_TASK_USER_PROFILE_UPDATE
+ *     third parameter is PermissionLevel
+ *
  * 8 for PrivilegeConfiguration
- *   b for query
- *   u for update
- *     third parameter for ScreenIndex
+ *   b for TO_DATA_TASK_PRIVILEGE_CONFIG_QUERY
+ *     third parameter is data
+ *   u for TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE
+ *     third parameter is ScreenIndex
+ *
  * 9 for PowerSupply
- *   b for query
- *   u for update
+ *   b for TO_DATA_TASK_PWR_SUPPLY_QUERY
+ *   u for TO_DATA_TASK_PWR_SUPPLY_UPDATE
+ *
  * a for TeachModeSetting
- *   b for query
- *   u for update
+ *   b for TO_DATA_TASK_TEACH_MODE_SET_QUERY
+ *   u for TO_DATA_TASK_TEACH_MODE_SET_UPDATE
+ *
  * b for SystemConfigure
- *   b for query
- *   u for update
+ *   b for TO_DATA_TASK_SYS_CONFIG_QUERY
+ *   u for TO_DATA_TASK_SYS_CONFIG_UPDATE
+ *
  * c for ActiveRecipe
- *   b for query
- *   u for update
+ *   b for TO_DATA_TASK_ACTIVE_RECIPE_QUERY
+ *   u for TO_DATA_TASK_ACTIVE_RECIPE_UPDATE
  *
  */
     if(argc>=3)
@@ -317,31 +333,14 @@ int main(int argc, char *argv[])
                     case 'a':
                         {
                         int i;    
-                        int count = 1;
                         buf.msgID = TO_DATA_TASK_WELD_RECIPE_INSERT;
-
-                        WeldRecipeSC *pData = (WeldRecipeSC *)&buf.Buffer[0];
-                        pData->m_WeldParameter.m_EnergyStep[0].m_Order = 3;
-                        pData->m_WeldParameter.m_EnergyStep[0].m_StepValue = 2;
-                        pData->m_WeldParameter.m_EnergyStep[0].m_AmplitudeValue = 1;
-                        pData->m_WeldParameter.m_EnergyStep[1].m_Order = 6;
-                        pData->m_WeldParameter.m_EnergyStep[1].m_StepValue = 5;
-                        pData->m_WeldParameter.m_EnergyStep[1].m_AmplitudeValue = 4;
-                        pData->m_WeldParameter.m_EnergyStep[4].m_Order = 9;
-                        pData->m_WeldParameter.m_EnergyStep[4].m_StepValue = 8;
-                        pData->m_WeldParameter.m_EnergyStep[4].m_AmplitudeValue = 7;
-
-                        pData->m_WeldParameter.m_TimeStep[0].m_Order = 333;
-                        pData->m_WeldParameter.m_PowerStep[0].m_Order = 444;
-
                         if(argc>=4)
-                            count = atoi(argv[3]);
-                        if((count<1)||(count>1000))
-                            count = 1;
-                        for(i=0; i<(count-1); i++)
                             {
-                            msgQSend(mqidControl, (char *)&buf, sizeof(MESSAGE),-1,0);
-                            eventSend(tid, DATA_TASK_EVENT);
+                            snprintf(buf.Buffer, RECIPE_LEN, "%s", argv[3]);
+                            }
+                        else
+                            {
+                            snprintf(buf.Buffer, RECIPE_LEN, "testrecipe");
                             }
                         break;
                         }
@@ -367,7 +366,7 @@ int main(int argc, char *argv[])
                         int *pData = (int *)&buf.Buffer[0];
                         if(argc>=4)
                             {
-                            pData = atoi(argv[3]);
+                            *pData = atoi(argv[3]);
                             buf.msgID = TO_DATA_TASK_WELD_RECIPE_DELETE_SPECIFIC;
                             }
                         else
@@ -383,20 +382,11 @@ int main(int argc, char *argv[])
                         buf.msgID = TO_DATA_TASK_WELD_RECIPE_QUERY_NEXT_PAGE;
                         break;
                     case 'u':
-                        {
-                        WeldRecipeSC *pData = (WeldRecipeSC *)&buf.Buffer[0];
-                        pData->m_WeldParameter.m_Amplitude = 456;
-                        if(argc>=4)
-                            {
-                            pData->m_RecipeID = atoi(argv[3]);
-                            }
-                        else
-                            {
-                            pData->m_RecipeID = 1;
-                            }
                         buf.msgID = TO_DATA_TASK_WELD_RECIPE_UPDATE;
                         break;
-                        }
+                    case 'r':
+                        buf.msgID = TO_DATA_TASK_WELD_RECIPE_RENAME;
+                        break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;
@@ -412,9 +402,6 @@ int main(int argc, char *argv[])
                         int i;    
                         int count = 1;
                         buf.msgID = TO_DATA_TASK_WELD_RESULT_INSERT;
-
-                        WELD_RESULT *pData = (WELD_RESULT *)&buf.Buffer[0];
-                        pData->RecipeNum = 123;
 
                         if(argc>=4)
                             count = atoi(argv[3]);
@@ -544,7 +531,7 @@ int main(int argc, char *argv[])
                     {
                     case 'b':
                         {
-                        buf.msgID = TO_DATA_TASK_HI_CALIB_QUERY;
+                        buf.msgID = TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY;
                         break;
                         }
                     case 'u':
@@ -554,7 +541,7 @@ int main(int argc, char *argv[])
                             *pData = atoi(argv[3]);
                         else
                             *pData = 1;
-                        buf.msgID = TO_DATA_TASK_HI_CALIB_UPDATE;
+                        buf.msgID = TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE;
                         break;
                         }
                         break;
@@ -585,11 +572,6 @@ int main(int argc, char *argv[])
                     {
                     case 'b':
                         {
-                        int *pData = (int *)&buf.Buffer[0];
-                        if(argc>=4)
-                            *pData = atoi(argv[3]);
-                        else
-                            *pData = 1;
                         buf.msgID = TO_DATA_TASK_USER_PROFILE_QUERY;
                         break;
                         }

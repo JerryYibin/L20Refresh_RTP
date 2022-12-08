@@ -145,6 +145,11 @@ bool MainTask::CreateMsgQ()
 										(const char *) "/ScDgtOutputMsgQ",
 										(const char *) "/MaintMsgQ",
 										(const char *) "/ConsoleAppMsgQ",
+										(const char *) "/HMI_Socket_Task",
+										(const char *) "/ACT_Socket_Task",
+										(const char *) "/CAN_Socket_Task",
+										(const char *) "/FW_Upgrade_Task",
+										(const char *) "/External_Socket_Task",
 										(const char *) "/RtpMainMsgQ"};
 
 #endif
