@@ -619,7 +619,7 @@ int EmrsnSocket::NBAccept(const char * address)
     }
 	/*Use Select to realize non-blocking Accept*/
 	 struct fd_set fds;
-	 struct timeval timeOut={1,0};
+	 struct timeval timeOut={2,0};
 	 FD_ZERO(&fds);
 	 FD_SET(dwsock,&fds);
 	 if(select(dwsock + 1, &fds, NULL, NULL, &timeOut)>0)
@@ -680,7 +680,46 @@ int EmrsnSocket::Send(const char *buff, const unsigned int bufflen)
 
 	return dwReturnCode;
 }
-
+/**************************************************************************//**
+* 
+* \brief   - This method is used to send the information between the 
+* 			 connected sockets 
+*
+* \param   - const char *buff, const unsigned int bufflen
+* 			bool newsocket: for the new socket created by Accept, input true
+*
+* \return  - int dwReturnCode
+*
+******************************************************************************/
+int EmrsnSocket::Send(const char *buff, const unsigned int bufflen, bool newsocket)
+{
+	long dwReturnCode;
+	int socketid;
+	int flags;
+	if(newsocket)
+		socketid = drsock;
+	else
+		socketid = dwsock;
+	flags = fcntl(socketid,F_GETFL,0);
+	fcntl(socketid,F_SETFL,flags&~O_NONBLOCK);
+#if SOCKET_DBG	
+	printf("\n send buffer ->");
+	for (int i=0;i<bufflen;i++)
+		{
+		printf("%x,",buff[i]);
+		}
+#endif
+	printf("\nEmrsnSocket::Send -- length = %d\n",bufflen);
+	dwReturnCode = send(socketid, buff, bufflen, 0);
+	if(dwReturnCode < 0)
+	{
+		LOGERR((char *) "EmrsnSocket::Send: errno: %d", errno,0,0);
+		return -1;
+	}
+	flags = fcntl(socketid,F_GETFL,0);
+	fcntl(socketid,F_SETFL,flags|O_NONBLOCK);
+	return dwReturnCode;
+}
 /**************************************************************************//**
 * 
 * \brief   - This method is used to get the information from the connected

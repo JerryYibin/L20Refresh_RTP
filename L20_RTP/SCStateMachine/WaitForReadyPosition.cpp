@@ -12,6 +12,7 @@
 ***************************************************************************/
 
 #include "WaitForReadyPosition.h"
+#include "SCStateMachine.h"
 #include "../ACStateMachine.h"
 #include "../PCStateMachine.h"
 #include "../SystemConfiguration.h"
@@ -90,21 +91,17 @@ void WaitForReadyPosition::Enter()
 ******************************************************************************/
 void WaitForReadyPosition::Loop()
 {
+	if(SCStateMachine::getInstance()->GetCoreState() != 0)
+	{
+		m_Actions = SCState::FAIL;
+	}
 	if(ACStateMachine::AC_TX->ACState == ACState::AC_ALARM)
 	{
-		//TODO Record Database alarm table
-//		CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
-		int AlarmFlags = 1;
-		WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
 		m_Actions = SCState::FAIL;
 	}
 	
 	if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
 	{
-		//TODO Record Database alarm table
-//		CommonProperty::WeldResult.ALARMS.AlarmFlags.Overload = 1;
-		int AlarmFlags = 1;
-		WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
 		m_Actions = SCState::FAIL;
 	}
 	

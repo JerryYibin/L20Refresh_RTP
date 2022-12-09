@@ -85,7 +85,7 @@ void PowerSupplyTask::ProcessTaskMessage(MESSAGE& message)
 ******************************************************************************/
 unsigned int PowerSupplyTask::GetCoreState()
 {
-	return (CoreState == NO_ERROR || CoreState == BIT_MASK(SONICS_ON_OFF_STATUS)) ? NO_ERROR : CoreState;
+	return CoreState;
 }
 
 /**************************************************************************//**

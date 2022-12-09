@@ -64,6 +64,14 @@ int L20_AlarmLogDefine::Set(int indlx, void* para){
 			iResult = OK;
 			memcpy(this->RecipeName, para, RECIPE_NAME_LENGTH);
 			break;
+		case AlarmLogDefine::PARALIST::DATE_TIME:
+			iResult = OK;
+			memcpy(this->DateTime, para, DATA_TIME_LENGTH);
+			break;
+		case ALARM_TYPE:
+			iResult = OK;
+			memcpy(&this->AlarmType, para, sizeof(unsigned int));
+			break;
 		default:
 			break;
 		}
@@ -91,6 +99,14 @@ int L20_AlarmLogDefine::Get(int indlx, void* para){
 		case AlarmLogDefine::PARALIST::RECIPE_NAME:
 			iResult = OK;
 			memcpy(para, this->RecipeName, RECIPE_NAME_LENGTH);
+			break;
+		case AlarmLogDefine::PARALIST::DATE_TIME:
+			iResult = OK;
+			memcpy(para, this->DateTime, DATA_TIME_LENGTH);
+			break;
+		case ALARM_TYPE:
+			iResult = OK;
+			memcpy(para, &this->AlarmType, sizeof(unsigned int));
 			break;
 		default:
 			break;

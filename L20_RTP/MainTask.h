@@ -50,7 +50,7 @@ enum TASK_PRIORITY
 
 /* Stack size of tasks in Supervisory Controller */
 #define CONSOLE_T_STACK_SIZE			(1024 * 6)
-#define CTRL_T_STACK_SIZE				(1024 * 6)
+#define CTRL_T_STACK_SIZE				(1024 * 20)
 #define ACT_SOCKET_T_STACK_SIZE			(1024 * 8)
 #define ACT_PROCESS_T_STACK_SIZE		(1024 * 6)
 #define PS_T_STACK_SIZE					(1024 * 6)

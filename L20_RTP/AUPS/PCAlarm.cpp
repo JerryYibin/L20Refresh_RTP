@@ -53,13 +53,15 @@ void PCAlarm::Enter()
 	PCStateMachine::PC_RX->MasterEvents |= BIT_MASK(CTRL_PC_SONIC_DISABLE);
 	PCStateMachine::PC_RX->TargetAmplitude = 0;
 	
-	if (PowerSupplyTask::GetCoreState() & BIT_MASK(PowerSupplyTask::POWER_OVERLOAD))
+	if (PowerSupplyTask::GetCoreState() & ERR_POWER_OVERLOAD)
 		LOG("\nPower supply Core State: POWER_OVERLOAD\n");
-	if (PowerSupplyTask::GetCoreState() & BIT_MASK(PowerSupplyTask::VOLTAGE_OVERLOAD))
+	if (PowerSupplyTask::GetCoreState() & ERR_VOLTAGE_OVERLOAD)
 		LOG("\nPower supply Core State: VOLTAGE_OVERLOAD\n");
-	if (PowerSupplyTask::GetCoreState() & BIT_MASK(PowerSupplyTask::CURRENT_OVERLOAD))
+	if (PowerSupplyTask::GetCoreState() & ERR_CURRENT_OVERLOAD)
 		LOG("\nPower supply Core State: CURRENT_OVERLOAD\n");
-	if (PowerSupplyTask::GetCoreState() & BIT_MASK(PowerSupplyTask::TEMPERATURE_OVERLOAD))
+	if (PowerSupplyTask::GetCoreState() & ERR_FREQ_OVERLOAD)
+		LOG("\nPower supply Core State: FREQUENCY_OVERLOAD\n");
+	if (PowerSupplyTask::GetCoreState() & ERR_TEMP_OVERLOAD)
 		LOG("\nPower supply Core State: TEMPERATURE_OVERLOAD\n");
 }
 

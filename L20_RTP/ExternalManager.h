@@ -7,46 +7,52 @@
      written consent of Branson Ultrasonics Corporation.
  
 ***************************************************************************/
-#ifndef EXTERNALETHERNET_H_
-#define EXTERNALETHERNET_H_
+#ifndef ExternalManager_H_
+#define ExternalManager_H_
 #include "Common.h"
 #include "SCTask.h"
 #include "CommunicationInterface.h"
 #include "Connectivity.h"
-
+#include "ExternalData.h"
 #define SAMPLE500MSEC 500
-class ExternalEthernet : public SCTask 
+class ExternalManager : public SCTask 
 {
 
 public:
-	virtual ~ExternalEthernet();
+	enum CMD_ID
+	{
+		AFTERWELD,
+		REPLYWELDDATA,
+		REPLYPOWERCURVE,
+		REPLYHEIGHTCURVE,
+		REPLYFREQUENCYCURVE,
+		SENDHEARTBEAT
+	};
+	virtual ~ExternalManager();
 	virtual int Update();
-	static ExternalEthernet* GetInstance();
+	int Send(int cmd);
+	static ExternalManager* GetInstance();
 	CommunicationInterface* GetCommunicateObj();
 protected:
 	virtual void 	ProcessTaskMessage					(MESSAGE& message) override;	
 	
 private:
 
-	ExternalEthernet();
-	static ExternalEthernet* ExternalEthobj;
+	ExternalManager();
+	static ExternalManager* ExternalEthobj;
 	CommunicationInterface* m_ptrCom;
 	ETHERNET 	m_PrevEthernetConfig;
 	static unsigned int Tick1MS;
+	ExternalData* m_ptrData;
 	
 	int closeSocketEvent();
 	int linkSocketEvent();
 	int readSocketEvent();
 	bool requireUpdateSocket ();
 	void refreshExternalEthobj();
-	
-	ExternalEthernet (const ExternalEthernet&) 			= delete;
-	ExternalEthernet& operator=(const ExternalEthernet&) = delete;
+	int senddata(ExternalData::ETHMESSAGE* message);
+	ExternalManager (const ExternalManager&) 			= delete;
+	ExternalManager& operator=(const ExternalManager&) = delete;
 };
 
-
-
-
-
-
-#endif /* EXTERNALETHERNET_H_ */
+#endif /* ExternalManager_H_ */

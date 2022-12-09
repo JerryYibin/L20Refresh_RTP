@@ -64,17 +64,17 @@ public:
 	static vector<UI_ALARM_LOG>* _AlarmListUI;
 public:
 	static AlarmManager* GetInstance();
-	virtual ~AlarmManager();
+	virtual ~AlarmManager		();
 public:
-	void EnterAlarmEvent(const AlarmEvent* _event);
-	void SyncUIAlarmList();
-	void ClearAlarmList();
-	int GetAlarmType();
+	void 	EnterAlarmEvent		(const AlarmEvent* _event);
+	void 	SyncUIAlarmList		();
+	void 	ClearAlarmList		();
+	int 	GetAlarmType		();
+	void 	ClearEStopEvent		();
 private:
-	void operateMapOperand(const int type, const AlarmEvent* _event = nullptr);
-	void clearActuatorAlarm();
-	void clearPowerSupplyAlarm();
-	void clearSupervisoryAlarm();
+	void clearActuatorAlarm		();
+	void clearPowerSupplyAlarm	();
+	void clearSupervisoryAlarm	();
 protected:
 	AlarmManager();
 };

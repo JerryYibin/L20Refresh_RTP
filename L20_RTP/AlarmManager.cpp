@@ -17,6 +17,7 @@ code IDs.
 #include "GPIO.h"
 #include "ActuatorTask.h"
 #include "PowerSupplyTask.h"
+#include "SCStateMachine/SCStateMachine.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"	
@@ -126,15 +127,9 @@ void AlarmManager::SyncUIAlarmList()
 		alarmUI.WeldCount = iter->second->m_WeldCount;
 		memset(alarmUI.DateTime, 0, TIME_STAMP_LEN);
 		memcpy(alarmUI.DateTime, iter->second->m_strTimeStamp, TIME_STAMP_LEN);
-		if(iter->second->m_RecipeName.size() > RECIPE_LEN)
-		{
-			memcpy(alarmUI.RecipeName, iter->second->m_RecipeName.c_str(), RECIPE_LEN);
-		}
-		else
-		{
-			memset(alarmUI.RecipeName, 0, RECIPE_LEN);
-			memcpy(alarmUI.RecipeName, iter->second->m_RecipeName.c_str(), iter->second->m_RecipeName.size());
-		}
+
+		memset(alarmUI.RecipeName, 0, RECIPE_LEN);
+		memcpy(alarmUI.RecipeName, iter->second->m_RecipeName, RECIPE_LEN);
 		_AlarmListUI->push_back(alarmUI);
 	}
 	semGive(SemaphoreMutex); //release map
@@ -156,7 +151,7 @@ void AlarmManager::ClearAlarmList()
 		switch(iter->second->m_Source)
 		{
 		case AlarmEvent::ALARM_SC:
-//			clearSupervisoryAlarm();
+			clearSupervisoryAlarm();
 			break;
 		case AlarmEvent::ALARM_PC:
 			clearPowerSupplyAlarm();
@@ -186,12 +181,44 @@ void AlarmManager::ClearAlarmList()
 int AlarmManager::GetAlarmType()
 {
 	int alarmType = 0;
-	if(_AlarmListSC->size() != 0)
+	//ESTOP has the highest priority against other alarms
+	auto iter = _AlarmListSC->find(ALARM_ESTOP_NCA);
+	if(iter != _AlarmListSC->end())
 	{
-		auto iter = _AlarmListSC->begin();
+		LOG("222222222222222222222222222222222222222222: %d\n", alarmType);
 		alarmType = iter->first;
 	}
+	else
+	{
+		LOG("1111111111111111111111111111111111111111111: %d\n", _AlarmListSC->size());
+		if(_AlarmListSC->size() != 0)
+		{
+			iter = _AlarmListSC->begin();
+			alarmType = iter->first;
+		}
+	}
 	return alarmType;
+}
+
+/**************************************************************************//**
+* \brief  - Remove E-Stop event from Alarm list.
+*
+* \param - none
+*
+* \return  - none
+*
+******************************************************************************/
+void AlarmManager::ClearEStopEvent()
+{
+	semTake(SemaphoreMutex, WAIT_FOREVER); //lock map for map essential operation
+	//ESTOP has the highest priority against other alarms
+	auto iter = _AlarmListSC->find(ALARM_ESTOP_NCA);
+	if(iter != _AlarmListSC->end())
+	{
+		delete iter->second;
+		_AlarmListSC->erase(iter);
+	}
+	semGive(SemaphoreMutex); //release map
 }
 
 /**************************************************************************//**
@@ -232,5 +259,6 @@ void AlarmManager::clearPowerSupplyAlarm()
 ******************************************************************************/
 void AlarmManager::clearSupervisoryAlarm()
 {
-	
+	unsigned int coreState = SCStateMachine::getInstance()->GetCoreState();
+	SCStateMachine::getInstance()->ClearCoreState(coreState);
 }

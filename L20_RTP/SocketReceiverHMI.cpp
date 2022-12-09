@@ -193,6 +193,12 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_RESET_CURRENT_ALARM_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_RESET_CURRENT_ALARM_IDX;
 		break;
+	case REQ_ALARM_LOG_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_ALARM_LOG_LATEST_PAGE_IDX;
+		break;
+	case REQ_ALARM_LOG_NEXT_PAGE_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_ALARM_LOG_NEXT_PAGE_IDX;
+		break;
 	default:
 		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);
 		break;

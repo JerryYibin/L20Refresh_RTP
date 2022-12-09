@@ -11,7 +11,8 @@
 ***************************************************************************/
 #include "AlarmLog.h"
 
-AlarmLogDefine* AlarmLog::_ptrAlarm = AlarmLogDefine::GetAlarmLog().get();
+std::shared_ptr<AlarmLogDefine> AlarmLog::_ptrAlarm = AlarmLogDefine::GetAlarmLog();
+std::vector<shared_ptr<AlarmLogDefine>> AlarmLog::AlarmVector;
 
 /**************************************************************************//**
 * 
@@ -40,47 +41,25 @@ AlarmLog::~AlarmLog(){
 }
 
 /**************************************************************************//**
-* 
-* \brief   - Set UI Alarm log to SC Weld Alarm log
+* \brief   - Convert the Vector to a Vector available to the UI
 *
-* \param   - HMI_WELD_SIGNATURE.
+* \param   - Nullptr
 *
-* \return  - if there is any error happened during the data setting, 
-* 			 it will return ERROR; else it will return OK.
+* \return  - vector<WeldResultsUI> - The vector that is sent to the UI
 *
 ******************************************************************************/
-int AlarmLog::Set(const UI_ALARM_LOG* _sysAlarmLog)
+std::vector<UI_ALARM_LOG> AlarmLog::TransformAlarmLogVector()
 {
-	if(_sysAlarmLog == nullptr)
-		return ERROR;
-	
-	_ptrAlarm->Set(AlarmLogDefine::PARALIST::WELD_COUNT, 	(void*)(&_sysAlarmLog->WeldCount));
-	_ptrAlarm->Set(AlarmLogDefine::PARALIST::ALARM_TYPE, 	(void*)(&_sysAlarmLog->AlarmType));
-	_ptrAlarm->Set(AlarmLogDefine::PARALIST::DATE_TIME, 	(void*)(_sysAlarmLog->DateTime));
-	_ptrAlarm->Set(AlarmLogDefine::PARALIST::RECIPE_NAME, 	(void*)(_sysAlarmLog->RecipeName));
-	
-	return OK;
-}
-
-/**************************************************************************//**
-* 
-* \brief   - Get SC Alarm log to UI Weld Alarm log
-*
-* \param   - HMI_WELD_SIGNATURE.
-*
-* \return  - if there is any error happened during the data setting, 
-* 			 it will return ERROR; else it will return OK.
-*
-******************************************************************************/
-int AlarmLog::Get(UI_ALARM_LOG* _sysAlarmLog)
-{
-	if(_sysAlarmLog == nullptr)
-		return ERROR;
-	
-	_ptrAlarm->Get(AlarmLogDefine::PARALIST::WELD_COUNT, 	(void*)(&_sysAlarmLog->WeldCount));
-	_ptrAlarm->Get(AlarmLogDefine::PARALIST::ALARM_TYPE, 	(void*)(&_sysAlarmLog->AlarmType));
-	_ptrAlarm->Get(AlarmLogDefine::PARALIST::DATE_TIME, 	(void*)(_sysAlarmLog->DateTime));
-	_ptrAlarm->Get(AlarmLogDefine::PARALIST::RECIPE_NAME, 	(void*)(_sysAlarmLog->RecipeName));
-	
-	return OK;
+	std::vector<UI_ALARM_LOG> AlarmLogUIVector;
+	UI_ALARM_LOG _sysAlarmLog;
+	for(auto& i : AlarmLog::AlarmVector)
+	{
+		i->Get(AlarmLogDefine::PARALIST::WELD_COUNT, &_sysAlarmLog.WeldCount);
+		i->Get(AlarmLogDefine::PARALIST::ALARM_TYPE, &_sysAlarmLog.AlarmType);
+		i->Get(AlarmLogDefine::PARALIST::RECIPE_NAME, _sysAlarmLog.RecipeName);
+		i->Get(AlarmLogDefine::PARALIST::DATE_TIME, _sysAlarmLog.DateTime);
+		
+		AlarmLogUIVector.push_back(_sysAlarmLog);;
+	}
+	return AlarmLogUIVector;
 }

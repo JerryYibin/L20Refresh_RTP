@@ -61,7 +61,7 @@ SetWeldPressure::~SetWeldPressure() {
 ******************************************************************************/
 void SetWeldPressure::Enter()
 {
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &m_WPressure);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::WP_PRESSURE, &m_WPressure);
 	ACStateMachine::AC_RX->MasterState = SCState::WELD_PRESSURE_SET;
 	m_Timeout = 0;
 }

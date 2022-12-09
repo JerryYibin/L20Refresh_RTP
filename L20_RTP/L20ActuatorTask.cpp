@@ -275,6 +275,13 @@ void L20ActuatorTask::ScanInputs()
 		ACStateMachine::AC_TX->ACInputs &= ~SS2MASK;
 	else
 		ACStateMachine::AC_TX->ACInputs |= SS2MASK;
+	
+	if(vxbGpioGetValue(GPIO::I_ESTOPNC) == GPIO_VALUE_HIGH)
+		ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_ESTOP);
+	else
+		ACStateMachine::AC_RX->MasterEvents &= ~BIT_MASK(ACState::CTRL_ESTOP);
+	
+	
 }
 
 /**************************************************************************//**

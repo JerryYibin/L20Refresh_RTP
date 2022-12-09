@@ -19,15 +19,17 @@ for outside to call. It works like a Task while it won't need to be a real task
 #include  <iostream>
 #include "Logger.h"
 #include <net/ipioctl_var.h>
-#include "ExternalEthernet.h"
+#include "ExternalManager.h"
 #include "SocketReceiverExternal.h"
 #include "Connectivity.h"
 #include "CommunicationInterfaceTCP.h"
 #include "CommunicationInterfaceDIG.h"
+#include "ExternalDataTCP.h"
+
 using namespace std;
 
-ExternalEthernet* ExternalEthernet::ExternalEthobj = nullptr;
-unsigned int ExternalEthernet::Tick1MS;
+ExternalManager* ExternalManager::ExternalEthobj = nullptr;
+unsigned int ExternalManager::Tick1MS;
 /**************************************************************************//**
 * \brief   - Constructor 
 *
@@ -36,11 +38,12 @@ unsigned int ExternalEthernet::Tick1MS;
 * \return  - None
 *
 ******************************************************************************/
-ExternalEthernet::ExternalEthernet()
+ExternalManager::ExternalManager()
 {	
 	memcpy(&m_PrevEthernetConfig, &Connectivity::EthernetConfig, sizeof(ETHERNET));
 	refreshExternalEthobj();
 	Tick1MS = 0;
+	m_ptrData = nullptr;
 }
 
 /**************************************************************************//**
@@ -51,7 +54,7 @@ ExternalEthernet::ExternalEthernet()
 * \return  - None.
 *
 ******************************************************************************/
-ExternalEthernet::~ExternalEthernet()
+ExternalManager::~ExternalManager()
 {	
 	// TODO Auto-generated destructor stub
 }
@@ -65,9 +68,9 @@ ExternalEthernet::~ExternalEthernet()
 * \return  - Connectivity* Object 
 *
 ******************************************************************************/
-ExternalEthernet* ExternalEthernet:: GetInstance()
+ExternalManager* ExternalManager:: GetInstance()
 {
-	return (ExternalEthobj != nullptr) ? ExternalEthobj : (ExternalEthobj = new ExternalEthernet());
+	return (ExternalEthobj != nullptr) ? ExternalEthobj : (ExternalEthobj = new ExternalManager());
 }
 
 
@@ -79,7 +82,7 @@ ExternalEthernet* ExternalEthernet:: GetInstance()
 * \return  - Connectivity* Object 
 *
 ******************************************************************************/
-CommunicationInterface* ExternalEthernet:: GetCommunicateObj()
+CommunicationInterface* ExternalManager:: GetCommunicateObj()
 {
 	return m_ptrCom;
 }
@@ -92,14 +95,14 @@ CommunicationInterface* ExternalEthernet:: GetCommunicateObj()
 * \return  - OK or ERROR.
 *
 ******************************************************************************/
-int ExternalEthernet::closeSocketEvent()
+int ExternalManager::closeSocketEvent()
 {
 	unsigned int errid;
 	TASK_ID tID;
 	
 	if(eventSend(CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXTERNAL_SOCKET_T]), EXTERNAL_CLOSE_EVENT) != OK)
 	{
-		LOGERR((char*) "ExternalEthernet::closeSocket eventSend: Error\n", 0, 0, 0);
+		LOGERR((char*) "ExternalManager::closeSocket eventSend: Error\n", 0, 0, 0);
 		return ERROR;
 	}
 	
@@ -115,14 +118,14 @@ int ExternalEthernet::closeSocketEvent()
 * \return  - OK or ERROR.
 *
 ******************************************************************************/
-int ExternalEthernet::linkSocketEvent()
+int ExternalManager::linkSocketEvent()
 {
 	unsigned int errid;
 	TASK_ID tID;
 	
 	if(eventSend(CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXTERNAL_SOCKET_T]), EXTERNAL_LINK_EVENT) != OK)
 	{
-		LOGERR((char*) "ExternalEthernet::linkSocket eventSend: Error\n", 0, 0, 0);
+		LOGERR((char*) "ExternalManager::linkSocket eventSend: Error\n", 0, 0, 0);
 		return ERROR;
 	}
 	
@@ -138,14 +141,14 @@ int ExternalEthernet::linkSocketEvent()
 * \return  - OK or ERROR.
 *
 ******************************************************************************/
-int ExternalEthernet::readSocketEvent()
+int ExternalManager::readSocketEvent()
 {
 	unsigned int errid;
 	TASK_ID tID;
 	
 	if(eventSend(CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXTERNAL_SOCKET_T]), EXTERNAL_READ_EVENT) != OK)
 	{
-		LOGERR((char*) "ExternalEthernet::readSocket eventSend: Error\n", 0, 0, 0);
+		LOGERR((char*) "ExternalManager::readSocket eventSend: Error\n", 0, 0, 0);
 		return ERROR;
 	}
 	
@@ -161,7 +164,7 @@ int ExternalEthernet::readSocketEvent()
 * \return  - None.
 *
 ******************************************************************************/
-void ExternalEthernet::ProcessTaskMessage(MESSAGE& message)
+void ExternalManager::ProcessTaskMessage(MESSAGE& message)
 {
 	unsigned int tmp;
 	switch(message.msgID)
@@ -180,14 +183,23 @@ void ExternalEthernet::ProcessTaskMessage(MESSAGE& message)
 * \return  - None.
 *
 ******************************************************************************/
-void ExternalEthernet::refreshExternalEthobj()
+void ExternalManager::refreshExternalEthobj()
 {		
 	if(Connectivity::EthernetConfig.EthernetType == TCP_IP)
+	{
 		m_ptrCom = CommunicationInterfaceTCP::GetInstance();
+		m_ptrData = ExternalDataTCP::GetInstance();
+	}
 	else if(Connectivity::EthernetConfig.EthernetType == GATEWAY)
+	{
 		m_ptrCom = CommunicationInterfaceDIG::GetInstance();
+	}
 	else 
+	{
 		m_ptrCom = nullptr;
+		m_ptrData = nullptr;
+	}
+
 }
 
 /**************************************************************************//**
@@ -198,7 +210,7 @@ void ExternalEthernet::refreshExternalEthobj()
 * \return  - None.
 *
 ******************************************************************************/
-int ExternalEthernet::Update()
+int ExternalManager::Update()
 {
 	int result = FALSE;
 	Tick1MS++;
@@ -207,7 +219,7 @@ int ExternalEthernet::Update()
 		return OK;
 	}
 	else
-	{
+	{	
 		if(requireUpdateSocket() == true) 
 		{
 			closeSocketEvent();
@@ -223,18 +235,18 @@ int ExternalEthernet::Update()
 		
 		switch(m_ptrCom->GetLinkStepIndex())
 		{
-			case CommunicationInterface::LINK_CONFIG:
-			case CommunicationInterface::LINK_TCPIP:
-			case CommunicationInterface::LINK_ERROR:
-				if(linkSocketEvent() == OK)
-					result = OK;
-				break;
-			case CommunicationInterface::LINK_DONE:
-				if(readSocketEvent() == OK)
-					result = OK;
-				break;
-			default:
-				break;
+		case CommunicationInterface::LINK_CONFIG:
+		case CommunicationInterface::LINK_TCPIP:
+		case CommunicationInterface::LINK_ERROR:
+			if(linkSocketEvent() == OK)
+				result = OK;
+			break;
+		case CommunicationInterface::LINK_DONE:
+			if(readSocketEvent() == OK)
+				result = OK;
+			break;
+		default:
+			break;
 		}	
 	}
 	return result;
@@ -249,7 +261,7 @@ to see whether the socket related setting changes
 * \return  - true or false.
 *
 ******************************************************************************/
-bool ExternalEthernet::requireUpdateSocket()
+bool ExternalManager::requireUpdateSocket()
 {
 	bool do_update = false;	
 
@@ -289,8 +301,99 @@ bool ExternalEthernet::requireUpdateSocket()
 			do_update = true;
 			m_ptrCom = CommunicationInterfaceDIG::GetInstance();
 		}	
+		else
+		{
+			memcpy(&m_PrevEthernetConfig, &Connectivity::EthernetConfig, sizeof(ETHERNET));		
+		}
 	}
 	return do_update;
+}
+
+/**************************************************************************//**
+* \brief   - Send Weld Data via External Ethernet
+* 			 Interface to be called every time after welding is completed.
+* \param   - None
+* 
+* \return  - OK or not.
+*
+******************************************************************************/
+int ExternalManager::Send(int cmd)
+{
+	int result = ERROR;
+	if(m_ptrCom == nullptr)
+		return ERROR;
+	if(m_ptrCom->GetLinkStepIndex()!= CommunicationInterface::LINK_DONE)
+		return ERROR;
+	ExternalData::ETHMESSAGE sendMsg;
+	switch(cmd)
+	{
+	case AFTERWELD:
+		if(Connectivity::EthernetConfig.EthernetType == TCP_IP)
+		{
+			sendMsg.msgID = ExternalData::WELDDATA;
+			result = senddata(&sendMsg);
+			if(Connectivity::EthernetConfig.TCP_RemoteSignature == true)
+			{
+				sendMsg.msgID = ExternalData::POWERCURVE;
+				result = senddata(&sendMsg);
+					
+				sendMsg.msgID = ExternalData::HEIGHTCURVE;
+				result = senddata(&sendMsg);
+					
+				sendMsg.msgID = ExternalData::FREQUENCYCURVE;
+				result = senddata(&sendMsg);
+			}
+		}
+		break;
+	case REPLYWELDDATA:
+		sendMsg.msgID = ExternalData::WELDDATA;
+		result = senddata(&sendMsg);
+		break;	
+	case REPLYPOWERCURVE:
+		sendMsg.msgID = ExternalData::POWERCURVE;
+		result = senddata(&sendMsg);
+		break;
+	case REPLYHEIGHTCURVE:
+		sendMsg.msgID = ExternalData::HEIGHTCURVE;
+		result = senddata(&sendMsg);
+		break;
+	case REPLYFREQUENCYCURVE:
+		sendMsg.msgID = ExternalData::FREQUENCYCURVE;
+		result = senddata(&sendMsg);
+		break;
+	default:
+		break;
+	}
+	return result;
+}
+/**************************************************************************//**
+* \brief   - Send specific Weld Data via External Ethernet
+* 			 Interface to be called after receiving inquiry message from Client 
+* \param   - ExternalData::ETHMESSAGE* message
+* 
+* \return  - OK or not.
+*
+******************************************************************************/
+
+int ExternalManager::senddata(ExternalData::ETHMESSAGE* message)
+{
+	int result = ERROR; 
+	if(m_ptrCom == nullptr)
+		return ERROR;
+	if(m_ptrCom->GetLinkStepIndex()!= CommunicationInterface::LINK_DONE)
+		return ERROR;
+	memset(message->Buffer, 0x00, sizeof(message->Buffer));
+	result = m_ptrData->BuildProtocolData(message->msgID,message->Buffer);
+	if(result >= 0)
+	{
+		message->Length = result;
+		m_ptrCom->Sending(message);
+	}
+	else
+	{
+		LOGERR((char*) "ExternalManager -- BuildProtocolData failed\n", 0, 0, 0);
+	}	
+	return result;
 }
 
 

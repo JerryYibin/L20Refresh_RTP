@@ -28,6 +28,7 @@ The SC state machine shall run the generic work flow.
 #include "DataTask.h"
 #include "Recipe.h"
 #include "SystemConfiguration.h"
+#include "ExternalManager.h"
 extern "C"
 {
 	#include "customSystemCall.h"	

@@ -33,10 +33,11 @@ UserInterface owned using the class object pointer.
 #include "SystemConfigurationUI.h"
 #include "SonicsTestUI.h"
 #include "Connectivity.h"
-#include "ExternalEthernet.h"
+#include "ExternalManager.h"
 #include "RecipeUI.h"
 #include "WeldResultSignature.h"
 #include "AlarmManager.h"
+#include "AlarmLog.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -258,6 +259,8 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_ETHERNET_CONFIG_SET:
 		setEthernetConfigData(message.Buffer);
+		message.msgID = DataTask::TO_DATA_TASK_ETHERNET_CONFIG_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	case TO_UI_TASK_ETHERNET_CONFIG_GET:
 		responseEthernetConfigData();
@@ -303,7 +306,30 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_RESET_CURRENT_ALARM_IDX:
 		responseCurrentAlarmEventReset();
+		break;	
+	case TO_UI_TASK_ALARM_LOG_LATEST_PAGE_IDX:
+		message.msgID = DataTask::TO_DATA_TASK_ALARM_LOG_QUERY_LATEST_PAGE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
+	case TO_UI_TASK_ALARM_LOG_NEXT_PAGE_IDX:
+		message.msgID = DataTask::TO_DATA_TASK_ALARM_LOG_QUERY_NEXT_PAGE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_TASK_ALARM_LOG_LIBRARY_RESPONSE:
+		responseAlarmLogLib();
+		break;	
+	case TO_UI_TASK_WELD_DATA_EXTERNAL_REQ:
+		ExternalManager::GetInstance()->Send(ExternalManager::REPLYWELDDATA);
+		break;
+	case TO_UI_TASK_POWER_CURVE_EXTERNAL_REQ:
+		ExternalManager::GetInstance()->Send(ExternalManager::REPLYPOWERCURVE);
+		break;
+	case TO_UI_TASK_HEIGHT_CURVE_EXTERNAL_REQ:
+		ExternalManager::GetInstance()->Send(ExternalManager::REPLYHEIGHTCURVE);
+		break;
+	case TO_UI_TASK_FREQUENCY_CURVE_EXTERNAL_REQ:
+		ExternalManager::GetInstance()->Send(ExternalManager::REPLYFREQUENCYCURVE);
+		break;	
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
 		break;
@@ -328,7 +354,7 @@ void UserInterface::responseHeartbeat()
 	sendMsg.msgID	= REQ_HEART_BEAT_IDX;
 	sendMsg.msgLen  = 0;
 	sendMsg.rspCode = 0;
-	m_stHeartbeat.AlarmCode = AlarmManager::GetInstance()->GetAlarmType();
+	m_stHeartbeat.AlarmCode = AlarmManager::GetInstance()->GetAlarmType();	
 	memcpy(sendMsg.Buffer, &m_stHeartbeat, sizeof(HEARTBEAT));
 	sendMsg.msgLen = sizeof(HEARTBEAT);
 	
@@ -742,6 +768,28 @@ void UserInterface::responseWeldResultLib()
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 	WeldResult::WeldResultVector.clear();
 	WeldResult::TransformResultsVector().clear();
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Sends response to UIC for Alarm Log library request. 
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseAlarmLogLib()
+{	
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_ALARM_LOG_IDX;
+	sendMsg.msgLen = AlarmLog::TransformAlarmLogVector().size() * sizeof(UI_ALARM_LOG);
+	sendMsg.rspCode = 0;
+	memcpy(sendMsg.Buffer, &AlarmLog::TransformAlarmLogVector()[0], sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+	AlarmLog::AlarmVector.clear();
+	AlarmLog::TransformAlarmLogVector().clear();
 }
 
 /**************************************************************************//**

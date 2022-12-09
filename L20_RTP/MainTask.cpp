@@ -129,7 +129,7 @@ MainTask::MainTask()
 bool MainTask::CreateMsgQ()
 {
 
-#if UNITTEST_DATABASE
+#if UNITTEST
 
 	const char* MsgQName[TOTAL_NUM_OF_TASK] = {
 										(const char *) "/CtrlMsgQ",
@@ -145,13 +145,12 @@ bool MainTask::CreateMsgQ()
 										(const char *) "/ScDgtOutputMsgQ",
 										(const char *) "/MaintMsgQ",
 										(const char *) "/ConsoleAppMsgQ",
-										(const char *) "/HMI_Socket_Task",
-										(const char *) "/ACT_Socket_Task",
-										(const char *) "/CAN_Socket_Task",
-										(const char *) "/FW_Upgrade_Task",
-										(const char *) "/External_Socket_Task",
+										(const char *) "/HMISocketMsgQ",
+										(const char *) "/ACTSocketMsgQ",
+										(const char *) "/CANSocketMsgQ",
+										(const char *) "/FWUpgradeMsgQ",
+										(const char *) "/ExternalSocketMsgQ",										
 										(const char *) "/RtpMainMsgQ"};
-
 #endif
 
 

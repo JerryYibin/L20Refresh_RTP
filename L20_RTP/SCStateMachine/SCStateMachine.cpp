@@ -24,6 +24,7 @@
 #include "HoldTime.h"
 #include "TestSonicOn.h"
 #include "Alarm.h"
+#include "Estop.h"
 #include "../PCStateMachine.h"
 #include "../ACStateMachine.h"
 #include "../Logger.h"
@@ -38,6 +39,8 @@ SCStateMachine* SCStateMachine::m_StateMachineObj = nullptr;
 SCState* SCStateMachine::m_objState = nullptr;
 SEM_ID SCStateMachine::m_semaphoreMutex = SEM_ID_NULL;
 unsigned int SCStateMachine::CoreState = 0;
+unsigned int SCStateMachine::AlarmStateIndex = 0;
+unsigned int SCStateMachine::EStopStateIndex = 0;
 /**************************************************************************//**
 * \brief   - Constructor -
 *
@@ -51,10 +54,12 @@ SCStateMachine::SCStateMachine() {
 	m_StateIndex = 0;
 	m_IsRunning = false;
 	m_IsLoading = false;
+	CoreState = 0;
 	/*create semaphore*/
 	m_semaphoreMutex = semMCreate(SEM_Q_FIFO);
 	initStateMap();
 	_objActionMap = new map<SCState::STATE, SCState*>();
+	AlarmStateIndex = 0;
 }
 
 /**************************************************************************//**
@@ -136,7 +141,10 @@ void SCStateMachine::initStateMap()
 	_objStateMap->insert(pair<SCState::STATE, int>(SCState::CALIBRATE,					FALSE));	
 	_objStateMap->insert(pair<SCState::STATE, int>(SCState::READY_FOR_TRIGGER,			TRUE));
 	_objStateMap->insert(pair<SCState::STATE, int>(SCState::TEST_SONIC_ON,	 			TRUE));
-	_objStateMap->insert(pair<SCState::STATE, int>(SCState::ALARM,			 			TRUE));
+	_objStateMap->insert(pair<SCState::STATE, int>(SCState::ALARM,			 			FALSE));
+	_objStateMap->insert(pair<SCState::STATE, int>(SCState::ESTOP,						FALSE));
+	
+	
 }
 
 /**************************************************************************//**
@@ -167,6 +175,10 @@ void SCStateMachine::addActionToMap(SCState::STATE stateIdx, SCState* _action)
 ******************************************************************************/
 void SCStateMachine::RunStateMachine()
 {
+	//Once the ESTOP is detected by AC, the SC will go to ESTOP state directly for E-Stop handling.
+	if(ACStateMachine::AC_TX->ACState == ACState::AC_ESTOP)
+		m_StateIndex = EStopStateIndex;
+	
 	if (_objStateList->size() == 0)
 	{
 		m_IsRunning = false;
@@ -202,7 +214,7 @@ void SCStateMachine::RunStateMachine()
 		m_objState->Exit();
 		m_objState->m_Actions = SCState::INIT;
 		m_StateIndex++;
-		LOG("Jump Next State\n");
+//		LOG("Jump Next State\n");
 		break;
 	case SCState::ALJUMPNORM:
 		m_objState->Exit();
@@ -213,7 +225,7 @@ void SCStateMachine::RunStateMachine()
 	case SCState::ABORT:
 		m_objState->Exit();
 		m_objState->m_Actions = SCState::INIT;
-		m_StateIndex = _objStateList->size() - 1; //Directly go to alarm state.
+		m_StateIndex = AlarmStateIndex; //Directly go to alarm state.
 		LOG("Abort\n");
 		break;
 	case SCState::PUSH:
@@ -278,8 +290,15 @@ int SCStateMachine::LoadStatesHandler(int operation)
 			//If the flag is TRUE, all the state of current sequence may be removed from state list when operation mode change.
 			if(iter->second == TRUE)
 			{
-				//TODO It is still need to consider on the FAIL process of SC State.
-				if(m_objState->m_Actions != SCState::FAIL)
+				if(m_IsRunning == true)
+					return iResult;
+				else
+					deleteAll();
+			}
+			else
+			{
+				//If the current state is critical and running, it can't be stopped and removed, such as sonics on, calibration, alarm and estop.
+				if(m_objState->m_Actions != SCState::LOOP)
 				{
 					if(m_IsRunning == true)
 						return iResult;
@@ -310,10 +329,9 @@ int SCStateMachine::LoadStatesHandler(int operation)
 			SelectSonicsTestSequence();
 			break;
 		default:
-			m_objState = new Alarm();
-			_objStateList->push_back(m_objState);
 			break;
 		}
+		SelectAlarmEStopSequence();
 		iResult = OK;
 	}
 	m_IsLoading = FALSE;
@@ -359,9 +377,6 @@ void SCStateMachine::SelectWeldSequence(void)
 	
 	m_objState = new WaitForReadyPosition();
 	_objStateList->push_back(m_objState);
-	
-	m_objState = new Alarm();
-	_objStateList->push_back(m_objState);
 
 }
 
@@ -382,9 +397,6 @@ void SCStateMachine::SelectHeightCalibrateSequence(void)
 	addActionToMap(m_objState->m_State, m_objState);
 	
 	m_objState = new HeightCalibrate();
-	_objStateList->push_back(m_objState);
-	
-	m_objState = new Alarm();
 	_objStateList->push_back(m_objState);
 }
 
@@ -410,11 +422,19 @@ void SCStateMachine::SelectSonicsTestSequence(void)
 	m_objState = new TestSonicOn();
 	_objStateList->push_back(m_objState);
 	addActionToMap(m_objState->m_State, m_objState);
-	
-	m_objState = new Alarm();
-	_objStateList->push_back(m_objState);
 }
 
+void SCStateMachine::SelectAlarmEStopSequence(void)
+{
+	m_objState = nullptr;
+	AlarmStateIndex = _objStateList->size();
+	m_objState = new Alarm();
+	_objStateList->push_back(m_objState);
+	EStopStateIndex = _objStateList->size();
+	m_objState = new Estop();
+	_objStateList->push_back(m_objState);
+	
+}
 
 /**************************************************************************//**
 * 
@@ -482,16 +502,40 @@ void SCStateMachine::XTickTock()
 	}
 }
 
+/**************************************************************************//**
+* \brief  	- Specific SC core status
+*
+* \param	- None
+*
+* \return 	- uint32_t
+*
+******************************************************************************/
 unsigned int SCStateMachine::GetCoreState()
 {
 	return CoreState;;
 }
 
+/**************************************************************************//**
+* \brief  	- Set SC core status
+*
+* \param	- coreState
+*
+* \return 	- None
+*
+******************************************************************************/
 void SCStateMachine::SetCoreState(unsigned int coreState)
 {
 	CoreState |= coreState;
 }
 
+/**************************************************************************//**
+* \brief  	- Clear SC core status
+*
+* \param	- coreState
+*
+* \return 	- None
+*
+******************************************************************************/
 void SCStateMachine::ClearCoreState(unsigned int coreState)
 {
 	CoreState &= ~coreState;

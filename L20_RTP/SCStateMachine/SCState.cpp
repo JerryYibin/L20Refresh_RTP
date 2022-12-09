@@ -10,7 +10,7 @@
 ***************************************************************************/
 
 #include "SCState.h"
-
+#include "../AlarmEvent.h"
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -24,6 +24,8 @@ SCState::SCState() {
 	CP = CommonProperty::getInstance();
 	CTL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 	DGTOUT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DGTOUT_T]);
+	string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
+	DATA_MSG_Q_ID_CTRL = CP->getMsgQId(Data_Task + "/Control");
 }
 /**************************************************************************//**
 * 
@@ -107,4 +109,22 @@ void SCState::SendMsgToCtrlMsgQ(const ControlTask::MESSAGE_IDENTIFY msgID, int a
 		memcpy(message.Buffer, &alarmType, sizeof(int));
 	}
 	SendToMsgQ(message, CTL_MSG_Q_ID);
+}
+
+/**************************************************************************//**
+*
+* \brief   - Send Message to Data Task MessageQueue
+*
+* \param   - message ID, alarmEvent object.
+*
+* \return  - None.
+*
+******************************************************************************/
+void SCState::SendMsgToDataMsgQ(const DataTask::MESSAGE_IDENTIFY msgID, const char* _event)
+{
+	//Record the alarm into alarm table of database.
+	MESSAGE message;
+	message.msgID = msgID;
+	memcpy(message.Buffer, _event, sizeof(AlarmEvent));
+	SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
 }

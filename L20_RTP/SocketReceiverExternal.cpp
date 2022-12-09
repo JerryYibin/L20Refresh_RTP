@@ -18,7 +18,8 @@ need to handle the real role change according to the events receiving from other
 #include "CommunicationInterfaceDIG.h"
 #include "UserInterface.h"
 #include "Connectivity.h"
-#include "ExternalEthernet.h"
+#include "ExternalManager.h"
+#include "ExternalData.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -35,7 +36,7 @@ extern "C"
 ******************************************************************************/
 SocketReceiver_External::SocketReceiver_External()
 {
-	// TODO Auto-generated constructor stub
+	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 }
 
 /**************************************************************************//**
@@ -62,14 +63,34 @@ SocketReceiver_External::~SocketReceiver_External()
  ******************************************************************************/
 void SocketReceiver_External::ProcessTaskMessage(MESSAGE& message)
 {
-	//ToDO: To be implemented
+
+	ExternalData::ETHMESSAGE sendmsg;
+	sendmsg.msgID = message.msgID;
+	switch(message.msgID)
+	{
+	case REQ_WELD_DATA_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_WELD_DATA_EXTERNAL_REQ;
+		break;
+	case REQ_POWER_CURVE_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_POWER_CURVE_EXTERNAL_REQ;
+		break;
+	case REQ_HEIGHT_CURVE_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CURVE_EXTERNAL_REQ;
+		break;
+	case REQ_FREQUENCY_CURVE_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_FREQUENCY_CURVE_EXTERNAL_REQ;
+		break;
+	default:
+		break;
+	}	
+	SendToMsgQ(message, UI_MSG_Q_ID);
 }
 
 /**************************************************************************//**
 * 
 * \brief   - External Socket receiver task entry point
 * The Task have functions like: support receiving binary data from customer's device,
-* react to Socket role change according to event flag, sending heartbeat message 
+* react to Socket role change according to event flag, sending heart beat message 
 * for DIG type, hence the Receiving function should be non-blocking
 *  
 * \param   - None
@@ -82,8 +103,8 @@ void SocketReceiver_External::Socket_External_Task(void)
 	UINT32		events;
 	CommunicationInterface* _objCommunication = nullptr;
 	SocketReceiver_External* SocketReceiver = new(nothrow)SocketReceiver_External();
-	ExternalEthernet* EthernetObj = ExternalEthernet::GetInstance();
-	char ClientBuffer[MAX_RX];
+	ExternalManager* EthernetObj = ExternalManager::GetInstance();
+	MESSAGE				ProcessBuffer;
 	if(nullptr != SocketReceiver)
 	{
 		while(SocketReceiver->bIsTaskRunStatus())
@@ -101,9 +122,9 @@ void SocketReceiver_External::Socket_External_Task(void)
 				}
 				else if(events & EXTERNAL_READ_EVENT)
 				{
-					if(_objCommunication->Receiving(ClientBuffer) == OK) // Using Non-Blocking receiving 
+					if(_objCommunication->Receiving(&ProcessBuffer) == OK) // Using Non-Blocking receiving 
 					{
-						//TODO: How to Handle the Receiving message to be implemented
+						SocketReceiver->ProcessTaskMessage(ProcessBuffer);
 					}
 				}
 			}

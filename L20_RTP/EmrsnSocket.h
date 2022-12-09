@@ -210,7 +210,11 @@ public:
 	 ** This method is used to send the information between the connected sockets
 	 */
 	int Send(const char *buff, const unsigned int bufflen);
-
+	/*
+	 ** This method is used to send the information between the connected sockets,
+	 ** , if newsocket = true means tcp/ip server read messages from client
+	 */
+	int Send(const char *buff, const unsigned int bufflen, bool newsocket);
 	/*
 	 ** This method is used to get the information from the connected sockets.
 	 ** recv() blocks till a message comes from the specified socket.

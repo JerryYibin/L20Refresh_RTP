@@ -167,6 +167,6 @@ void HeightCalibrate::Exit()
 ******************************************************************************/
 void HeightCalibrate::Fail()
 {
-	m_Actions = SCState::ALJUMPNORM;
+	m_Actions = SCState::ABORT;
 	LOG("Height Calibrate Check Alarm process!\n");
 }

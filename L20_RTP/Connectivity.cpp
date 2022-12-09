@@ -31,7 +31,7 @@ Connectivity::Connectivity()
 	_DIGMachinesUI = new vector<struct GATEWAY_MACHINE>;
 	_DIGMachinesSC = new map<int, GATEWAY_MACHINE>;
 	EthernetConfig.EthernetType = INVALID_TYPE;
-	EthernetConfig.TCP_RemoteSignature = true;
+	EthernetConfig.TCP_RemoteSignature = false;
 	EthernetConfig.TCP_ServerPort = 4000;
 	memcpy(EthernetConfig.TCP_ServerIP, "192.168.0.100", IP_ADD_LEN);
 	EthernetConfig.DIG_WeldResult = false;

@@ -15,14 +15,16 @@
 #include "AlarmCodeUI.h"
 #include "CommonProperty.h"
 
+#define TABLE_ALARM_MEM                    7 /* there are 7 columns in table AlarmLog */
+
 class AlarmLog{
 public:
-	static AlarmLogDefine* _ptrAlarm;
+	static shared_ptr<AlarmLogDefine> _ptrAlarm;
+	static std::vector<shared_ptr<AlarmLogDefine>> AlarmVector;
 public:
 	AlarmLog();
 	~AlarmLog();
-	static int Set(const UI_ALARM_LOG*);
-	static int Get(UI_ALARM_LOG*);
+	static std::vector<UI_ALARM_LOG> TransformAlarmLogVector();
 };
 
 #endif

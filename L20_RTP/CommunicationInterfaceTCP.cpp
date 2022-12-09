@@ -15,7 +15,11 @@ and binary data Package Build & Send/Receive & processing
 #include "commons.h"
 #include "Logger.h"
 #include "Connectivity.h"
-
+extern "C"
+{
+	#include "customSystemCall.h"	
+	#include "hwif/drv/resource/vxbRtcLib.h"
+}
 SEM_ID CommunicationInterfaceTCP::TCPSendMutex = SEM_ID_NULL;
 CommunicationInterfaceTCP* CommunicationInterfaceTCP::_objComTCP = nullptr;
 
@@ -116,23 +120,16 @@ int CommunicationInterfaceTCP::ErrorHandling()
 ******************************************************************************/
 int CommunicationInterfaceTCP::Sending(const void* data)
 {
-	char 	tmpBuffer[MAX_SIZE_OF_MSG_LENGTH] 	= {0};
+	char 	tmpBuffer[MAX_LEN] 	= {0};
 	int 	tmpBufLen							= 0;
 	int		iResult								= ERROR;
 	if(data == nullptr)
 		return iResult;
 	semTake(TCPSendMutex, WAIT_FOREVER); //lock sending
-	if(((TX_MESSAGE*)data)->Length >= MAX_EXTERN_MSG_BUFF)
-	{
-		LOGERR( (char *)"TCP Socket SendMessageToClient, Socket message length exceeded : %d", ((TX_MESSAGE*)data)->Length, 0, 0);
-	}
-	else
-	{
-		if(buildProtocolPackage((TX_MESSAGE*)data, tmpBuffer, &tmpBufLen) == true)
+	if(buildProtocolPackage((ExternalData::ETHMESSAGE*)data, tmpBuffer, &tmpBufLen) == true)
 		{
-			if(m_objImplementor->Send(tmpBuffer, tmpBufLen) > 0)
+			if(m_objImplementor->Send(tmpBuffer, tmpBufLen, true) > 0)
 				iResult = OK;
-		}
 	}
 	semGive(TCPSendMutex); //release sending
 	return iResult;
@@ -141,14 +138,15 @@ int CommunicationInterfaceTCP::Sending(const void* data)
 /**************************************************************************//**
 *
 * \brief   - Data Receiving
-*
+* In this function we use dataVector to hold incoming message buffers to handle possible common TCP/IP problems
+* like lose package, sticky package, wrong package 
 * \param   - data, it should be the specific data structure pointer passed by the recall function.
-*
 * \return  - If a integrated data is received, it will return 0; else it will return -1;.
 ******************************************************************************/
 int CommunicationInterfaceTCP::Receiving(void* data)
 {
-	char tmpBuffer[MAX_RX] 	= {0};
+	char tmpBuffer[MAX_LEN] 	= {0};
+	char SpareBuffer[MAX_LEN] = {0};
 	int tmpRecvlen			= 0;
 	int	iResult				= ERROR;
 	if(data == nullptr)
@@ -156,24 +154,34 @@ int CommunicationInterfaceTCP::Receiving(void* data)
 	if(m_nStep == CommunicationInterfaceTCP::LINK_DONE)
 	{
 		memset(tmpBuffer, 0x00, sizeof(tmpBuffer));
-		tmpRecvlen = m_objImplementor->NBRead(tmpBuffer, MAX_RX,true); //Use Non-blocking reading
-		if(tmpRecvlen > 0)
-		{	
-			memcpy(data, tmpBuffer, sizeof(tmpRecvlen));
-#if TCP_Test
-			for(int i=0;i<MSG_LEN;i++)
-				LOG("data = %d\n",tmpBuffer[i]);
-			LOG("\nReceive len  = %d\n",tmpRecvlen);
-#endif
-			if(parseProtocolPackage(tmpBuffer, tmpRecvlen, (char*)data) == false)
-				LOGERR((char *)"TCP Socket Invalid message received\n", 0, 0, 0);
-			else
-				iResult = OK;
-		}
-		else if(tmpRecvlen < 0)
+	/*Won't read more data from the TCP/IP buffer if the vector size exceed the MAX length to prevent the Client send 
+	 message crazy and cause SC side cannot handle*/	
+		if(dataVector.size() < MAX_VECTOR_LENGTH) 
 		{
-			m_nStep = CommunicationInterface::LINK_ERROR;
-		}	
+			tmpRecvlen = m_objImplementor->NBRead(tmpBuffer, MAX_LEN,true); //Use Non-blocking reading
+			if(tmpRecvlen > 0)
+			{	
+	#if TCP_Test
+				for(int i=0;i<MSG_LEN;i++)
+					LOG("data = %d\n",tmpBuffer[i]);
+				LOG("\nReceive len  = %d\n",tmpRecvlen);
+	#endif
+				for (int i=0; i<tmpRecvlen; i++)
+				{
+					dataVector.push_back(tmpBuffer[i]); 
+				}
+			}
+			else if(tmpRecvlen < 0)
+			{
+				m_nStep = CommunicationInterface::LINK_ERROR;
+			}
+		}
+	/*Won't decode and process the TCP/IP buffer if the vector size is less than the minimal length */	
+		if(dataVector.size()>= MIN_RX_MSG_LEN)
+		{
+			if(parseProtocolPackage((MESSAGE*)data) == true)
+				iResult = OK;
+		}		
 	}
 	return iResult;
 }
@@ -287,60 +295,108 @@ bool CommunicationInterfaceTCP::linkConfig()
 * \return  - return bResult
 *
 ******************************************************************************/
-bool CommunicationInterfaceTCP::parseProtocolPackage(const char* buffer, const int buflen, char* ptrMsg)
+bool CommunicationInterfaceTCP::parseProtocolPackage(MESSAGE* ptrMsg)
 {
-	return true;
+	RX_DATA_STRUCT tmpBuffer;
+	bool bresult = false;
+	int offset = 0, len = 0;
+	if(ptrMsg == nullptr)
+		return false;
+	memset(tmpBuffer.Buffer,0x00,sizeof(tmpBuffer.Buffer));
+	if(findValidMessage(dataVector, &tmpBuffer) == true)
+	{
+		int calchecksum = checksumCalculate(&tmpBuffer.FUNID, tmpBuffer.Length/4+2);
+		if(calchecksum == tmpBuffer.Checksum)
+		{
+			ptrMsg->msgID = tmpBuffer.FUNID;
+			memcpy(&ptrMsg->Buffer, tmpBuffer.Buffer, tmpBuffer.Length);
+			bresult = true;
+		}				
+	}
+	return bresult;
 	//TODO: TO be implemented
 }
 
 /**************************************************************************//**
 *
-* \brief   - package building for the incoming message
+* \brief   - package building for the incoming ExternalData::ETHMESSAGE data
 *
-* \param   - Client_Message* ptrMsg. buffer, buflen
+* \param   - ExternalData::ETHMESSAGE* ptrMsg. buffer, buflen
 *
 * \return  - If the building process is successful, it will return true; else false.
 *
 ******************************************************************************/
-bool CommunicationInterfaceTCP::buildProtocolPackage(const TX_MESSAGE* ptrMsg, char* buffer, int* buflen)
+bool CommunicationInterfaceTCP::buildProtocolPackage(const ExternalData::ETHMESSAGE* ptrMsg, char* buffer, int* buflen)
 {
 	bool bResult = false;
-	char onePackage[MAX_SIZE_OF_MSG_LENGTH] = {0};
-	UINT32 crcResult = 0;
-	int offset = 0, msglen = 0;
+	TX_MESSAGE msgTx;
+	char onePackage[MAX_LEN] = {0};
+	int offset = 0, csstart = 0;
 	if(ptrMsg == nullptr)
 		return false;
 	if(buffer == nullptr)
 		return false;
 	if(buflen == nullptr)
 		return false;
-
-	memcpy(onePackage, &ptrMsg->DLEHEAD, sizeof(UINT8));
-	offset += sizeof(UINT8);
-
-	memcpy(onePackage + offset, &ptrMsg->STXSTHEAD, sizeof(UINT8));
-	offset += sizeof(UINT32);
-	
-	memcpy(onePackage + offset, &ptrMsg->FUNID, sizeof(UINT16));
-	offset += sizeof(UINT16);
-	
-	memcpy(onePackage + offset, &ptrMsg->Length, sizeof(UINT16));
-	offset += sizeof(UINT32);
-	
-	//TODO Put Real Data into Buffer
-	
-	memcpy(onePackage + offset, ptrMsg->Buffer, ptrMsg->Length);
-	offset += ptrMsg->Length;
-
-	//TODO Add Calculation of Checksum
-
-	memcpy(onePackage + offset, &ptrMsg->Checksum, sizeof(UINT16));
-	offset += sizeof(UINT16);
-
-	memcpy(onePackage + offset, &ptrMsg->DLETAIL, sizeof(UINT8));
+		
+	switch(ptrMsg->msgID)
+	{
+	case ExternalData::WELDDATA:
+		msgTx.FUNID = WELDDATAOUTPUT;
+		break;
+	case ExternalData::POWERCURVE:
+		msgTx.FUNID = POWERCURVEOUTPUT;
+		break;
+	case ExternalData::HEIGHTCURVE:
+		msgTx.FUNID = HEIGHTCURVEOUTPUT;
+		break;
+	case ExternalData::FREQUENCYCURVE:
+		msgTx.FUNID = FREQUENCYCURVEOUTPUT;
+		break;
+	default:
+		return false;
+		break;		
+	}
+	msgTx.Length = ptrMsg->Length;
+	msgTx._Buffer = ptrMsg->Buffer;
+	memcpy(onePackage, &msgTx.DLEHEAD1, sizeof(UINT8));
 	offset += sizeof(UINT8);
 	
-	memcpy(onePackage + offset, &ptrMsg->STXTAIL, sizeof(UINT8));
+	memcpy(onePackage + offset, &msgTx.DLEHEAD2, sizeof(UINT8));
+	offset += sizeof(UINT8);
+	
+	memcpy(onePackage + offset, &msgTx.STXSTHEAD1, sizeof(UINT8));
+	offset += sizeof(UINT8);
+	memcpy(onePackage + offset, &msgTx.STXSTHEAD2, sizeof(UINT8));
+	offset += sizeof(UINT8);
+	csstart = offset;
+	memcpy(onePackage + offset, &msgTx.FUNID, sizeof(UINT32));
+	offset += sizeof(UINT32);
+	
+	memcpy(onePackage + offset, &msgTx.Length, sizeof(UINT32));
+	offset += sizeof(UINT32);
+	
+	memcpy(onePackage + offset, msgTx._Buffer, msgTx.Length);
+	offset += msgTx.Length;
+
+	msgTx.Checksum = checksumCalculate(onePackage+csstart, msgTx.Length/4+2);
+	memcpy(onePackage + offset, &msgTx.Checksum, sizeof(UINT32));
+	offset += sizeof(UINT32);
+	
+	GetTimeInfo(&msgTx.Time);	
+	memcpy(onePackage + offset, &msgTx.Time, sizeof(TIME));
+	offset += sizeof(TIME);
+	
+	memcpy(onePackage + offset, &msgTx.DLETAIL1, sizeof(UINT8));
+	offset += sizeof(UINT8);
+	
+	memcpy(onePackage + offset, &msgTx.DLETAIL2, sizeof(UINT8));
+	offset += sizeof(UINT8);
+	
+	memcpy(onePackage + offset, &msgTx.STXTAIL1, sizeof(UINT8));
+	offset += sizeof(UINT8);
+	
+	memcpy(onePackage + offset, &msgTx.STXTAIL2, sizeof(UINT8));
 	offset += sizeof(UINT8);
 	
 	memcpy(buflen, &offset, sizeof(UINT32));
@@ -348,7 +404,6 @@ bool CommunicationInterfaceTCP::buildProtocolPackage(const TX_MESSAGE* ptrMsg, c
 
 	return true;
 }
-
 /**************************************************************************//**
 *
 * \brief   - Close Socket
@@ -365,7 +420,6 @@ void CommunicationInterfaceTCP::Close()
 
 }
 
-
 /**************************************************************************//**
 *
 * \brief   - Get the current step of the Communication Socket LINK 
@@ -379,4 +433,89 @@ int CommunicationInterfaceTCP::GetLinkStepIndex()
 	return m_nStep;
 }
 
+/**************************************************************************//**
+*
+* \brief   - Calculate the checksum value of the TCP/IP Sending Message buffer
+*
+* \param   - const void *buf, const unsigned int len
+*
+* \return  - Checksum Value.
+*
+******************************************************************************/
+unsigned int CommunicationInterfaceTCP::checksumCalculate(const void *buf,const unsigned int len)
+{
+	int counter = 0;
+	UINT64 checksum = 0;
+	for (counter = 0; counter < len; counter++)
+	{
+		checksum += *(unsigned int *)buf;
+	    buf = ((int *) buf) + 1;
+	}
+	checksum &= 0xFFFFFFFF;
+	return (unsigned int)checksum;
+}
+/**************************************************************************//**
+*
+* \brief   - Find an intact Message whose data format matched with the format defined at Client side
+*  from the whole vtData list. If can find, then copy it to a separate array buffer and discard all bytes
+* from the start of the vtData list to the end of the last founded byte. 
+*
+* \param  vector<char>&vtData, RX_DATA_STRUCT* ptrMsg
+*
+* \return  - whether found or not.
+*
+******************************************************************************/
 
+bool CommunicationInterfaceTCP::findValidMessage(vector<char>&vtData, RX_DATA_STRUCT* ptrMsg )
+{
+	int i ;
+	int len;
+	for(i = 0; i <= vtData.size()-MIN_RX_MSG_LEN; ++i)
+	{
+		if (vtData[i+HEAD1] == ptrMsg->DLEHEAD1 && vtData[i+HEAD2] == ptrMsg->DLEHEAD2 && vtData[i+HEAD3] == ptrMsg->STXSTHEAD1 && vtData[i+HEAD4] == ptrMsg->STXSTHEAD2)
+		{	
+			len = (int)(vtData[i+LEN1] << 24 | vtData[i+LEN2] << 16 | vtData[i+LEN3] << 8 | vtData[i+LEN4]);
+			if(i+len+MIN_RX_MSG_LEN-1 < vtData.size())
+			{
+				if(vtData[i+len+TAIL1] == ptrMsg->DLETAIL1 && vtData[i+len+TAIL2] == ptrMsg->DLETAIL2 && 
+					vtData[i+len+TAIL3] == ptrMsg->STXTAIL1 && vtData[i+len+TAIL4] == ptrMsg->STXTAIL2)
+				{
+					break;
+				}
+			}
+		}
+	}
+	if(i <= vtData.size()-MIN_RX_MSG_LEN)   // Once Found will delete the vector from begin to the last value of the found message.
+	{
+		memcpy(ptrMsg, &vtData[i], LEN4-HEAD1+1);
+		memcpy(ptrMsg->Buffer,&vtData[i+LEN4-HEAD1+1],len);
+		ptrMsg->Checksum = (int)(vtData[i+len+CS4] << 24 | vtData[i+len+CS3] << 16 | vtData[i+len+CS2] << 8 | vtData[i+len+CS1]);
+		vtData.erase(vtData.begin(), vtData.begin()+i+len+MIN_RX_MSG_LEN);
+		return true;
+	}
+	if(vtData.size() >= MAX_VECTOR_LENGTH-MIN_RX_MSG_LEN)
+	{
+		vtData.erase(vtData.begin(), vtData.end()-MIN_RX_MSG_LEN);
+	}
+	return false;
+}
+/**************************************************************************//**
+*
+* \brief   - Get the current system Time Information
+*
+* \param   - TIME* _timedata
+*
+* \return  - None.
+*
+******************************************************************************/
+void CommunicationInterfaceTCP::GetTimeInfo(TIME* _timedata)
+{
+	struct tm time;
+	vxbRtcGet(&time);
+	_timedata->Year = time.tm_year+1900;
+	_timedata->Month = time.tm_mon+1;
+	_timedata->Day = time.tm_mday;
+	_timedata->Hour = time.tm_hour;
+	_timedata->Minute = time.tm_min;
+	_timedata->Second = time.tm_sec;
+}

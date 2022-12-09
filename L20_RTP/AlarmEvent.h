@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <string.h>
+#include "RecipeUI.h"
 #define KNRM  "\x1B[0m"
 #define KRED  "\x1B[31m"
 #define KGRN  "\x1B[32m"
@@ -115,7 +116,7 @@ public:
 	char			m_strTimeStamp[TIME_STAMP_LEN];
 	int				m_WeldCount;
 	
-	string			m_RecipeName;
+	char			m_RecipeName[RECIPE_LEN];
 	int				m_WeldRecipeID;
 	int				m_WeldResultID;
 	ALARM_ACTIONS	m_AlarmActions;

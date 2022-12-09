@@ -19,6 +19,7 @@
 #include "../WeldResultSignature.h"
 #include "../ControlTask.h"
 #include "../Utility.h"
+#include "../SystemConfiguration.h"
 
 unsigned int WeldSonicOn::PwrBuffer[PWR_SIZE] = {0};
 unsigned int WeldSonicOn::PwrIndex = 0;
@@ -71,30 +72,36 @@ void WeldSonicOn::Enter()
 	m_PeakPower = 0;
 	m_EnergyAccumulator = 0;
 	m_Timeout = 0;
+	bool bHeightEncoder = true;
+	int currentValue = 0;
+	int upperLimit = 0;
+	int lowerLimit = 0;
 	unsigned int m_EnergySetting;
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_SETTING,&m_EnergySetting);
+	
+	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::HGT_ENCODER, &bHeightEncoder);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PRE_HEIGHT_MIN, &lowerLimit);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PRE_HEIGHT_MAX, &upperLimit);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::ENERGY_SETTING,&m_EnergySetting);
 	m_EnergyTarget = Utility::Energy2HEX(m_EnergySetting);
 	WeldResultSignature::_OrignalSignature->clear();
 	ClearWeldData();
-	//CommonProperty::WeldResult.PreHeight = ACStateMachine::AC_TX->ActualHeight;
-	WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &ACStateMachine::AC_TX->ActualHeight);
+	WeldResults::_WeldResults->Set(WeldResults::PRE_HEIGHT, &ACStateMachine::AC_TX->ActualHeight);
+	currentValue = ACStateMachine::AC_TX->ActualHeight;
 	//TODO Need to consider to move cooling control to the specific actuator task.
 	CoolAirControl(0, 0);
-//	if (SysConfig.m_SystemInfo.HeightEncoder == true)
-//	{
-//		if ((WeldData.m_WeldResult.PreHeight < ActivePreset.m_WeldParam.Height.min) && (ActivePreset.m_WeldParam.Height.min != 0))
-//		{
-//			WeldData.m_WeldResult.ALARMS.AlarmFlags.PreHeightMin = 1;
-//			WeldData.m_WeldResult.ALARMS.AlarmFlags.PreHeightMax = 0;
-//			m_Actions = SCState::FAIL;
-//		}
-//		else if (WeldData.m_WeldResult.PreHeight > ActivePreset.m_WeldParam.Height.max)
-//		{
-//			WeldData.m_WeldResult.ALARMS.AlarmFlags.PreHeightMin = 0;
-//			WeldData.m_WeldResult.ALARMS.AlarmFlags.PreHeightMax = 1;
-//			m_Actions = SCState::FAIL;
-//		}
-//	}
+	if (bHeightEncoder == true)
+	{
+		if ((currentValue < lowerLimit) && (lowerLimit != 0))
+		{
+			SCStateMachine::getInstance()->SetCoreState(ERR_PRE_HEIGHT_MS);
+			m_Actions = SCState::FAIL;
+		}
+		else if (currentValue > upperLimit)
+		{
+			SCStateMachine::getInstance()->SetCoreState(ERR_PRE_HEIGHT_PL);
+			m_Actions = SCState::FAIL;
+		}
+	}
 
 
 	PCStateMachine::PC_RX->MasterState = SCState::WELD_SONIC_ON;
@@ -129,9 +136,7 @@ void WeldSonicOn::Loop()
 		
 	if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
 	{
-		//CommonProperty::WeldResult.ALARMS.AlarmFlags.Overload = 1;
-		int AlarmFlags = 1;
-		WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
+		SCStateMachine::getInstance()->SetCoreState(ERR_OVERLOAD);
 		m_Actions = SCState::FAIL;
 	}
 
@@ -144,11 +149,12 @@ void WeldSonicOn::Loop()
 		
 	if (m_WeldTime > ABSMAXTIME)
 	{
-		m_Actions = SCState::JUMP;
+		SCStateMachine::getInstance()->SetCoreState(ERR_TIME_PL);
+		m_Actions = SCState::FAIL;
 	}
 	else
 	{
-		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WELD_MODE, &m_WeldMode);
+		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::WELD_MODE, &m_WeldMode);
 		switch (m_WeldMode)
 		{
 		case ENERGY_MODE:
@@ -156,7 +162,7 @@ void WeldSonicOn::Loop()
 				m_Actions = SCState::JUMP;
 			break;
 		case TIME_MODE:
-			Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TIME_MIN, &m_TimeMin);
+			Recipe::ActiveRecipeSC->Get(WeldRecipeSC::TIME_MIN, &m_TimeMin);
 			if (m_WeldTime > m_TimeMin)
 			{
 				m_Actions = SCState::JUMP;
@@ -188,18 +194,20 @@ void WeldSonicOn::Exit()
 {
 	int TriggerPressure = 0;
 	int WeldPressure = 0;
+	unsigned int AlarmFlags = 0;
 	PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
 	WeldResults::_WeldResults->Energy = Utility::HEX2Energy(m_EnergyAccumulator);
 	WeldResults::_WeldResults->WeldTime = m_WeldTime;
-	//CommonProperty::WeldResult.PostHeight = ACStateMachine::AC_TX->ActualHeight;
-	WeldResults::_WeldResults->Set(WeldResults::PARALIST::POST_HEIGHT, &ACStateMachine::AC_TX->ActualHeight);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &TriggerPressure);
-	WeldResults::_WeldResults->Set(WeldResults::PARALIST::TRIGGER_PRESSURE, &TriggerPressure);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WP_PRESSURE, &WeldPressure);
-	WeldResults::_WeldResults->Set(WeldResults::PARALIST::WELD_PRESSURE, &WeldPressure);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &WeldResults::_WeldResults->Amplitude/*CommonProperty::WeldResult.Amplitude*/);
-	//CommonProperty::WeldResult.PeakPower = Utility::HEX2Power(m_PeakPower);
+	WeldResults::_WeldResults->Set(WeldResults::POST_HEIGHT, &ACStateMachine::AC_TX->ActualHeight);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::TP_PRESSURE, &TriggerPressure);
+	WeldResults::_WeldResults->Set(WeldResults::TRIGGER_PRESSURE, &TriggerPressure);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::WP_PRESSURE, &WeldPressure);
+	WeldResults::_WeldResults->Set(WeldResults::WELD_PRESSURE, &WeldPressure);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AMPLITUDE, &WeldResults::_WeldResults->Amplitude);
 	WeldResults::_WeldResults->PeakPower = Utility::HEX2Power(m_PeakPower);
+	CheckWeldAlarm();
+	AlarmFlags = SCStateMachine::getInstance()->GetCoreState();
+	WeldResults::_WeldResults->Set(WeldResults::ALARM_ID, &AlarmFlags);
 	
 //		if (SysConfig.m_SystemInfo.CoolingType == WelderSystem::SECOND_PER_100JOULE)
 //		{
@@ -237,9 +245,6 @@ void WeldSonicOn::Exit()
 ******************************************************************************/
 void WeldSonicOn::Fail()
 {
-	//TODO still need to add output signal handler.
-	vxbGpioSetValue(GPIO::O_ALARM, GPIO_VALUE_HIGH);
-	//Record Database alarm table
 	m_Actions = SCState::ALJUMPNORM;
 }
 
@@ -268,11 +273,11 @@ void WeldSonicOn::ClearWeldData()
 	int TriggerPressure = 0;
 	int AlarmID = 0;
 	
-	WeldResults::_WeldResults->Set(WeldResults::PARALIST::PRE_HEIGHT, &PreHeight);
-	WeldResults::_WeldResults->Set(WeldResults::PARALIST::POST_HEIGHT, &PostHeight);
-	WeldResults::_WeldResults->Set(WeldResults::PARALIST::WELD_PRESSURE, &WeldPressure);
-	WeldResults::_WeldResults->Set(WeldResults::PARALIST::TRIGGER_PRESSURE, &TriggerPressure);
-	WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmID);
+	WeldResults::_WeldResults->Set(WeldResults::PRE_HEIGHT, &PreHeight);
+	WeldResults::_WeldResults->Set(WeldResults::POST_HEIGHT, &PostHeight);
+	WeldResults::_WeldResults->Set(WeldResults::WELD_PRESSURE, &WeldPressure);
+	WeldResults::_WeldResults->Set(WeldResults::TRIGGER_PRESSURE, &TriggerPressure);
+	WeldResults::_WeldResults->Set(WeldResults::ALARM_ID, &AlarmID);
 }
 
 /**************************************************************************//**
@@ -331,3 +336,51 @@ void WeldSonicOn::CoolAirControl(unsigned int delay, unsigned duration)
 	}
 }
 
+void WeldSonicOn::CheckWeldAlarm()
+{
+	bool bHeightEncoder = true;
+	int currentValue = 0;
+	int upperLimit = 0;
+	int lowerLimit = 0;
+	
+	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::HGT_ENCODER, &bHeightEncoder);
+	if(bHeightEncoder == true) 
+	{
+		WeldResults::_WeldResults->Get(WeldResults::POST_HEIGHT, &currentValue);
+		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::HEIGHT_MIN, &lowerLimit);
+		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::HEIGHT_MAX, &upperLimit);
+		
+		if((currentValue < lowerLimit) && (lowerLimit != 0))
+		{
+			SCStateMachine::getInstance()->SetCoreState(ERR_POST_HEIGHT_MS);
+		}
+		else if(currentValue > upperLimit)
+		{
+			SCStateMachine::getInstance()->SetCoreState(ERR_POST_HEIGHT_PL);
+		}
+	}
+	
+	currentValue = WeldResults::_WeldResults->WeldTime;
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::TIME_MIN, &lowerLimit);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::TIME_MAX, &upperLimit);
+	if(currentValue < lowerLimit)
+	{
+		SCStateMachine::getInstance()->SetCoreState(ERR_TIME_MS);
+	}
+	else if(currentValue > upperLimit)
+	{
+		SCStateMachine::getInstance()->SetCoreState(ERR_TIME_PL);
+	}
+	
+	currentValue = WeldResults::_WeldResults->PeakPower;
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PEAK_POWER_MIN, &lowerLimit);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PEAK_POWER_MAX, &upperLimit);
+	if(currentValue < lowerLimit)
+	{
+		SCStateMachine::getInstance()->SetCoreState(ERR_POWER_MS);
+	}
+	else if(currentValue > upperLimit)
+	{
+		SCStateMachine::getInstance()->SetCoreState(ERR_POWER_PL);
+	}
+}

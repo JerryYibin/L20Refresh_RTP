@@ -13,6 +13,7 @@
 ***************************************************************************/
 
 #include "Alarm.h"
+#include "SCStateMachine.h"
 #include "../Recipe.h"
 #include "../AlarmEvent.h"
 #include "../ACStateMachine.h"
@@ -53,7 +54,9 @@ Alarm::~Alarm() {
 
 /**************************************************************************//**
 *
-* \brief   - Alarm State Enter. If there is any alarm happened.
+* \brief   - Alarm State Enter. If there is any alarm detected, 
+* 			the function needs to parse these alarms from AC, PC and SC using the unify alarm code.
+* 			Register the alarm event into Alarm Manager and Save alarm event into Database using message queue. 
 *
 * \param   - None.
 *
@@ -62,47 +65,28 @@ Alarm::~Alarm() {
 ******************************************************************************/
 void Alarm::Enter()
 {
-	int origin;
-    char timeBuf[20];
-    struct tm timeStamp;
-	AlarmEvent event;
 	if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
 	{
-		origin = AlarmEvent::ALARM_PC;
-		event.m_RecipeName = "N/A";
-		event.m_WeldCount = -1;
-		event.m_WeldRecipeID = -1;
-		event.m_WeldResultID = -1;
+		if((SCStateMachine::getInstance()->GetCoreState() & ERR_OVERLOAD) != ERR_OVERLOAD)
+		{
+			getPCAlarmEvents();
+		}
 	}
 	else if(ACStateMachine::AC_TX->ACState == ACState::AC_ALARM)
 	{
-		origin = AlarmEvent::ALARM_AC;
-		event.m_RecipeName = "N/A";
-		event.m_WeldCount = -1;
-		event.m_WeldRecipeID = -1;
-		event.m_WeldResultID = -1;
+		getACAlarmEvents();
 	}
-	//TODO missing SC Alarm handling.
+	else if(SCStateMachine::getInstance()->GetCoreState() != 0)
+	{
+		getSCAlarmEvents();
+	}
 	else
 	{
 		m_Actions = SCState::JUMP;
 		return;
 	}
 
-//	event.m_SCState = state;
-	event.m_Source = origin;
-	event.m_Type = getAlarmType(origin);
-
-	vxbRtcGet(&timeStamp);
-	strftime(event.m_strTimeStamp, 20, "%Y/%m/%d %H:%M:%S", &timeStamp);
 	m_Timeout = 0;
-	//Register the alarm into alarm list of alarm manager. 
-	AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-	//Record the alarm into alarm table of database.
-	MESSAGE message;
-	message.msgID = DataTask::TO_DATA_TASK_ALARM_LOG_INSERT;
-	memcpy(message.Buffer, (void*)&event, sizeof(AlarmEvent));
-	SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
 }
 
 /**************************************************************************//**
@@ -128,17 +112,16 @@ void Alarm::Loop()
 			vxbGpioSetValue(GPIO::O_BUZZ, GPIO_VALUE_HIGH);
 		m_Timeout = 0;
 	}
-	//TODO missing SC alarm handling
-	if((PCStateMachine::PC_TX->PCState != PCState::PC_ALARM) && (ACStateMachine::AC_TX->ACState != ACState::AC_ALARM))
+	if((PCStateMachine::PC_TX->PCState != PCState::PC_ALARM) && (ACStateMachine::AC_TX->ACState != ACState::AC_ALARM) && 
+			(SCStateMachine::getInstance()->GetCoreState() == 0))
 	{
-		vxbGpioSetValue(GPIO::O_BUZZ, GPIO_VALUE_LOW);
 		m_Actions = SCState::JUMP;
 	}
 }
 
 /**************************************************************************//**
 *
-* \brief   - Hold time Exit 
+* \brief   - Alarm Exit close Beeper 
 *
 * \param   - None.
 *
@@ -147,9 +130,19 @@ void Alarm::Loop()
 ******************************************************************************/
 void Alarm::Exit()
 {
+	vxbGpioSetValue(GPIO::O_BUZZ, GPIO_VALUE_LOW);
 	m_Timeout = 0;
 }
 
+/**************************************************************************//**
+*
+* \brief   - Alarm Fail
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void Alarm::Fail()
 {
 
@@ -157,51 +150,170 @@ void Alarm::Fail()
 
 /**************************************************************************//**
 *
-* \brief   - Get alarm type. There is the unify indicators for each alarm.
+* \brief   - Get AC Alarm Event
 *
 * \param   - None.
 *
 * \return  - None.
 *
 ******************************************************************************/
-int	Alarm::getAlarmType(const int origin)
+int Alarm::getACAlarmEvents()
 {
 	unsigned int alarmCode = 0;
-	unsigned int alarmType = 0;
-	switch (origin)
+    char timeBuf[20];
+    struct tm timeStamp;
+	AlarmEvent event;
+	memcpy(event.m_RecipeName, "N/A", RECIPE_LEN);
+	event.m_WeldCount = -1;
+	event.m_WeldRecipeID = -1;
+	event.m_WeldResultID = -1;
+	vxbRtcGet(&timeStamp);
+	strftime(event.m_strTimeStamp, 20, "%Y/%m/%d %H:%M:%S", &timeStamp);
+//	event.m_SCState = state;
+	event.m_Source = AlarmEvent::ALARM_AC;
+	
+	alarmCode = ActuatorTask::GetCoreState();
+	if ((alarmCode & ERR_PRESSURE_SET) == ERR_PRESSURE_SET)
 	{
-	case AlarmEvent::ALARM_AC:
-		alarmCode = ActuatorTask::GetCoreState();
-		if ((alarmCode & ERR_PRESSURE_SET) == ERR_PRESSURE_SET)
-		{
-			alarmType = ALARM_PRESSURE_COMM_CAN_EFA;
-		}
-		else if ((alarmCode & ERR_HEIGHT_SYSTEM) == ERR_HEIGHT_SYSTEM)
-		{
-			alarmType = ALARM_HEIGHT_ENCODER_EFA;
-		}
-		else if ((alarmCode & ERR_HOME_POSITION) == ERR_HOME_POSITION)
-		{
-			alarmType = ALARM_HOME_POSITION_TIMEOUT_NCA;
-		}
-		else if ((alarmCode & ERR_STARTSWITCH_LOST) == ERR_STARTSWITCH_LOST)
-		{
-			alarmType = ALARM_START_SWITCH_LOST_EFA;
-		}
-		else
-		{
-			alarmType = ALARM_ELC_UNKNOWN;
-		}
-		break;
-	case AlarmEvent::ALARM_PC:
-		alarmCode = PowerSupplyTask::GetCoreState();
-		if ((alarmCode & BIT_MASK(PowerSupplyTask::POWER_OVERLOAD)) == BIT_MASK(PowerSupplyTask::POWER_OVERLOAD))
-			alarmType = ALARM_POWER_OVERLOAD_OVA;
-		else
-			alarmType = ALARM_ELC_UNKNOWN;
-		break;
-	default:
-		break;
+		event.m_Type = ALARM_PRESSURE_COMM_CAN_EFA;
+		//Register the alarm into alarm list of alarm manager. 
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
 	}
-	return alarmType;
+	if ((alarmCode & ERR_HEIGHT_SYSTEM) == ERR_HEIGHT_SYSTEM)
+	{
+		event.m_Type = ALARM_HEIGHT_ENCODER_EFA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	if ((alarmCode & ERR_HOME_POSITION) == ERR_HOME_POSITION)
+	{
+		event.m_Type = ALARM_HOME_POSITION_TIMEOUT_NCA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	if ((alarmCode & ERR_STARTSWITCH_LOST) == ERR_STARTSWITCH_LOST)
+	{
+		event.m_Type = ALARM_START_SWITCH_LOST_EFA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	
+	return 0;
+}
+
+/**************************************************************************//**
+*
+* \brief   - Get PC Alarm Event
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+int Alarm::getPCAlarmEvents()
+{
+	unsigned int alarmCode = 0;
+    char timeBuf[20];
+    struct tm timeStamp;
+	AlarmEvent event;
+	memcpy(event.m_RecipeName, "N/A", RECIPE_LEN);
+	event.m_WeldCount = -1;
+	event.m_WeldRecipeID = -1;
+	event.m_WeldResultID = -1;
+	vxbRtcGet(&timeStamp);
+	strftime(event.m_strTimeStamp, 20, "%Y/%m/%d %H:%M:%S", &timeStamp);
+//	event.m_SCState = state;
+	event.m_Source = AlarmEvent::ALARM_PC;
+	alarmCode = PowerSupplyTask::GetCoreState();
+	if ((alarmCode & ERR_POWER_OVERLOAD) == ERR_POWER_OVERLOAD)
+	{
+		event.m_Type = ALARM_POWER_OVERLOAD_OVA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	return 0;
+}
+
+/**************************************************************************//**
+*
+* \brief   - Get SC Alarm Event
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
+int Alarm::getSCAlarmEvents()
+{
+	unsigned int alarmCode = 0;
+    char timeBuf[20];
+    struct tm timeStamp;
+	AlarmEvent event;
+	memcpy(event.m_RecipeName, Recipe::ActiveRecipeSC->m_RecipeName, RECIPE_LEN);
+	event.m_WeldCount = WeldResults::_WeldResults->CycleCounter;
+	event.m_WeldRecipeID = Recipe::ActiveRecipeSC->m_RecipeID;
+	//TODO need to consider how to get the latest WeldResultID
+//	event.m_WeldResultID = WeldResults::_WeldResults->;
+	vxbRtcGet(&timeStamp);
+	strftime(event.m_strTimeStamp, 20, "%Y/%m/%d %H:%M:%S", &timeStamp);
+//	event.m_SCState = state;
+	event.m_Source = AlarmEvent::ALARM_SC;
+	alarmCode = SCStateMachine::getInstance()->GetCoreState();
+	if ((alarmCode & ERR_OVERLOAD) == ERR_OVERLOAD)
+	{
+		event.m_Type = ALARM_POWER_OVERLOAD_OVA;
+		//Register the alarm into alarm list of alarm manager. 
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	if ((alarmCode & ERR_TIME_MS) == ERR_TIME_MS)
+	{
+		event.m_Type = ALARM_TIME_LIMIT_MLR_PRA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	if ((alarmCode & ERR_TIME_PL) == ERR_TIME_PL)
+	{
+		event.m_Type = ALARM_TIME_LIMIT_PLR_PRA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	if ((alarmCode & ERR_POWER_MS) == ERR_POWER_MS)
+	{
+		event.m_Type = ALARM_PEAKPOWER_LIMIT_MLR_PRA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	if ((alarmCode & ERR_POWER_MS) == ERR_POWER_PL)
+	{
+		event.m_Type = ALARM_PEAKPOWER_LIMIT_PLR_PRA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	if ((alarmCode & ERR_PRE_HEIGHT_MS) == ERR_PRE_HEIGHT_MS)
+	{
+		event.m_Type = ALARM_PREHEIGHT_LIMIT_MLR_PRA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	if ((alarmCode & ERR_PRE_HEIGHT_PL) == ERR_PRE_HEIGHT_PL)
+	{
+		event.m_Type = ALARM_PREHEIGHT_LIMIT_PLR_PRA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	if ((alarmCode & ERR_POST_HEIGHT_MS) == ERR_POST_HEIGHT_MS)
+	{
+		event.m_Type = ALARM_POSTHEIGHT_LIMIT_MLR_PRA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	if ((alarmCode & ERR_POST_HEIGHT_PL) == ERR_POST_HEIGHT_PL)
+	{
+		event.m_Type = ALARM_POSTHEIGHT_LIMIT_PLR_PRA;
+		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
+		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+	}
+	return 0;
 }

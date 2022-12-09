@@ -18,7 +18,7 @@
 #include "SCStateMachine/SCStateMachine.h"
 #include "GPIO.h"
 #include "HeightEncoder.h"
-#include "ExternalEthernet.h"
+#include "ExternalManager.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"	
@@ -92,7 +92,7 @@ void AuxClockTask::AuxClock_Task(void* _obj)
 #endif
 	AuxClockTask* auxClockObj = (AuxClockTask*)_obj;
 	SCStateMachine::getInstance()->RunStateMachine();
-	ExternalEthernet* EthernetObj = ExternalEthernet::GetInstance();
+	ExternalManager* EthernetObj = ExternalManager::GetInstance();
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_RX_EVENT | PS_TASK_TX_EVENT | PS_TASK_1MS_EVENT) != OK)
 		LOGERR((char*) "AUX_T: Power supply eventSend: Error\n", 0, 0, 0);
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_RX_EVENT | ACT_TASK_TX_EVENT | ACT_TASK_1MS_EVENT) != OK)

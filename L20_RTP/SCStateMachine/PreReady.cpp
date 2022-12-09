@@ -54,8 +54,8 @@ PreReady::~PreReady() {
 ******************************************************************************/
 void PreReady::Enter()
 {
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &ACStateMachine::AC_RX->TargetPressure);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::AMPLITUDE, &PCStateMachine::PC_RX->TargetAmplitude);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::TP_PRESSURE, &ACStateMachine::AC_RX->TargetPressure);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AMPLITUDE, &PCStateMachine::PC_RX->TargetAmplitude);
 	//LOG("GetInitCount = %d\n", HeightEncoder::GetInitCount());
 	//LOG("GetMaxCount = %d\n", HeightEncoder::GetMaxCount());
 	LOG("GetPositionCount = %d\n", HeightEncoder::GetInstance()->GetPositionCount());
@@ -81,11 +81,6 @@ void PreReady::Loop()
 	}
 	else if(ACStateMachine::AC_TX->ACState == ACState::AC_ALARM)
 	{
-		//TODO Record Database alarm table
-		//TODO In reply to Code Review Issue 13, there is the work item 8373 for the CommonProperty clean up.
-		//CommonProperty::WeldResult.ALARMS.AlarmFlags.HeightSystemFailure = 1;
-		int AlarmFlags = 1;
-		WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
 		m_Actions = SCState::FAIL;
 	}
 }

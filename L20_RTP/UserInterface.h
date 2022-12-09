@@ -80,8 +80,15 @@ public:
 		TO_UI_TASK_READ_HEIGHT_GRAPH_RESPONSE,
 		TO_UI_TASK_READ_FREQUENCY_GRAPH_RESPONSE,
 		TO_UI_TASK_GET_CURRENT_ALARM_IDX,
-		TO_UI_TASK_RESET_CURRENT_ALARM_IDX
-		
+		TO_UI_TASK_RESET_CURRENT_ALARM_IDX,
+		TO_UI_TASK_ALARM_LOG_LATEST_PAGE_IDX,
+		TO_UI_TASK_ALARM_LOG_NEXT_PAGE_IDX,
+		TO_UI_TASK_ALARM_LOG_LIBRARY_RESPONSE,
+		TO_UI_TASK_CLEAR_WELD_COUNTER_IDX,
+		TO_UI_TASK_WELD_DATA_EXTERNAL_REQ,
+		TO_UI_TASK_POWER_CURVE_EXTERNAL_REQ,
+		TO_UI_TASK_HEIGHT_CURVE_EXTERNAL_REQ,
+		TO_UI_TASK_FREQUENCY_CURVE_EXTERNAL_REQ
 	};
 	UserInterface();
 	~UserInterface();
@@ -116,6 +123,7 @@ private:
 	void 			responseWeldRecipeDetails			();
 	void			responseWeldRecipeLib				();
 	void			responseWeldResultLib				();
+	void			responseAlarmLogLib					();
 	void			sendWeldRecipeErrCode				(char* recipebuf);
 	void 			responseInitializationData 			();
 	void 			responseSystemConfig				();

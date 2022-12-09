@@ -23,6 +23,7 @@
 #define USER_NAME_SIZE						16
 #define WELD_TIME_SIZE						20
 #define BARCODE_DATA_SIZE					50
+#define TABLE_RESULT_MEM                    15 /* there are 15 columns in table WeldResult */
 typedef uint32_t UINT32;
 typedef int32_t  INT32;
 using namespace std;
@@ -99,6 +100,7 @@ public:
 	int WeldTime;
 	int PeakPower;
 	int GraphID;
+	int WeldResultID;
 public:
     virtual int Set(int, void*) = 0;
     virtual int Get(int, void*) = 0;

@@ -84,8 +84,6 @@ void TestSonicOn::Loop()
 	{
 		//If there is not any State that is equal to requested, there is alarm happened in PC.
 		LOG("Current PC State: %d\n", PCStateMachine::PC_TX->PCState);
-		int AlarmFlags = 1;
-		WeldResults::_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlags);
 		m_Actions = SCState::FAIL;
 		return;
 	}

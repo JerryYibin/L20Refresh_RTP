@@ -88,11 +88,13 @@ public:
 	virtual void Exit() = 0;	/* Function to call on exit           */
 	virtual void Fail() = 0;	/* Function to call on alarm handling */
 	
+	//virtual bool SendToMsgQ(MESSAGE& msgBuffer, const int& msgQID);
 	void					SendMsgToCtrlMsgQ		(const ControlTask::MESSAGE_IDENTIFY msgID, int alarmType = 0);
 	void 					ChangeExtDgtOutput		(const ScDgtOutputTask::MESSAGE_IDENTIFY msgID);
-	STATUS					SendToMsgQ 				(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks_t waitType = NO_WAIT);
+	void					SendMsgToDataMsgQ		(const DataTask::MESSAGE_IDENTIFY msgID, const char* _event);
 private:
 	CommonProperty*							CP;
+	STATUS			SendToMsgQ 				(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks_t waitType = NO_WAIT);
 protected:
 	MSG_Q_ID	CTL_MSG_Q_ID;
 	MSG_Q_ID	DGTOUT_MSG_Q_ID;

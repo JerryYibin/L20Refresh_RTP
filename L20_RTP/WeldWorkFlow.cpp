@@ -17,6 +17,8 @@
 #include "CommonProperty.h"
 #include "Recipe.h"
 #include "SystemConfiguration.h"
+#include "SCStateMachine/SCStateMachine.h"
+#include "ExternalManager.h"
 /**************************************************************************//**
 * \brief   - Constructor - Set default operation as BATCH
 *
@@ -88,7 +90,11 @@ int WeldWorkFlow::RunProcess(void)
 		state =  FINISH;
 	else
 	{
-		WeldResults::_WeldResults->CycleCounter += 1;
+		if(SCStateMachine::getInstance()->GetCoreState() == 0)
+		{
+			WeldResults::_WeldResults->CycleCounter += 1;
+			ExternalManager::GetInstance()->Send(ExternalManager::AFTERWELD);
+		}
 		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::BATCH_SIZE, &batchCount);
 		if(WeldResults::_WeldResults->CycleCounter >= batchCount)
 			state = FINISH;
@@ -109,51 +115,7 @@ int WeldWorkFlow::RunProcess(void)
 ******************************************************************************/
 int WeldWorkFlow::UpdateResult(void)
 {
-	bool bHeightEncoder = true;
 	CommonProperty::SystemInfo.psLifeCounter += 1;
-	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::HGT_ENCODER, &bHeightEncoder);
-	if(bHeightEncoder == true)
-	{
-//		if((CommonProperty::m_WeldResults.Get(WeldResults::POST_HEIGHT) < CommonProperty::m_RecpeSC.m_ActiveRecipe.m_QualityWindowSetting.m_HeightMin) && 
-//				(CommonProperty::m_RecpeSC.m_ActiveRecipe.m_QualityWindowSetting.m_HeightMin != 0))
-//		{
-//			CommonProperty::m_WeldResults.SetAlarm(WeldResults::ALARM_HEIGHT_MIN);
-//			CommonProperty::m_WeldResults.ResetAlarm(WeldResults::ALARM_HEIGHT_MAX);
-//			ErrorOn = true;
-//		}
-//		else if((CommonProperty::m_WeldResults.Get(WeldResults::POST_HEIGHT) > CommonProperty::m_RecpeSC.m_ActiveRecipe.m_QualityWindowSetting.m_HeightMax))
-//		{
-//			CommonProperty::m_WeldResults.ResetAlarm(WeldResults::ALARM_HEIGHT_MIN);
-//			CommonProperty::m_WeldResults.SetAlarm(WeldResults::ALARM_HEIGHT_MAX);
-//			ErrorOn = true;
-//		}
-	}
-	
-//	if(CommonProperty::WeldResult.WeldTime < CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMin)
-//	{
-//		CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMin = 1;
-//		CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMax = 0;
-//		ErrorOn = true;
-//	}
-//	else if(CommonProperty::WeldResult.WeldTime > CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_TimeMax)
-//	{
-//		CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMin = 0;
-//		CommonProperty::WeldResult.ALARMS.AlarmFlags.TimeMax = 1;
-//		ErrorOn = true;
-//	}
-//
-//	if(CommonProperty::WeldResult.PeakPower < CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMin)
-//	{
-//		CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMin = 1;
-//		CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMax = 0;
-//		ErrorOn = true;
-//	}
-//	else if(CommonProperty::WeldResult.PeakPower > CommonProperty::ActiveRecipeSC.m_QualityWindowSetting.m_PeakPowerMax)
-//	{
-//		CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMin = 0;
-//		CommonProperty::WeldResult.ALARMS.AlarmFlags.PowerMax = 1;
-//		ErrorOn = true;
-//	}
 	///* Handle the maintenance counters */
 	//TODO Handle the maintenance counters and need to consider if the following code can be moved to the control task
 	//MaintCount[TIPCOUNT] += WD.WeldData.Energy;

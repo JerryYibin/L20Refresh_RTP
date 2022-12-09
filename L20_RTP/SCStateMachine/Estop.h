@@ -9,20 +9,14 @@
  
 ***************************************************************************/
 
-#ifndef ALARM_H_
-#define ALARM_H_
+#ifndef ESTOP_H_
+#define ESTOP_H_
 #include "SCState.h"
-#define ALARMBEEPDELAY 1000
-class Alarm: public SCState {
-private:
-	unsigned int m_iHoldTime;
-private:
-	int getACAlarmEvents();
-	int getPCAlarmEvents();
-	int getSCAlarmEvents();
+#define ESTOPBEEPDELAY 1000
+class Estop: public SCState {
 public:
-	Alarm();
-	virtual ~Alarm();
+	Estop();
+	virtual ~Estop();
 public:
 	virtual void Enter	()	override;
 	virtual void Loop	()	override;
@@ -30,4 +24,4 @@ public:
 	virtual void Fail	()	override;
 };
 
-#endif /* ALARM_H_ */
+#endif /* ESTOP_H_ */

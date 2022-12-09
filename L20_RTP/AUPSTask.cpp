@@ -107,11 +107,11 @@ void AUPSTask::PDODownloadRequest()
 	
 	if(vxbGpioGetValue(GPIO::I_OL_PSOUI) == GPIO_VALUE_HIGH)
 	{
-		SetCoreState(BIT_MASK(POWER_OVERLOAD));
+		SetCoreState(ERR_POWER_OVERLOAD);
 	}
 	else
 	{
-		SetCoreState(BIT_MASK(SONICS_ON_OFF_STATUS));
+		SetCoreState(NO_ERROR);
 	}
 }
 
