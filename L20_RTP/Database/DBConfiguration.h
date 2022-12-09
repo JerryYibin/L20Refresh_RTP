@@ -33,7 +33,9 @@
 #define TABLE_PWR_SUPPLY     	"PowerSupply"
 #define TABLE_TEACH_MODE_SET 	"TeachModeSetting"
 #define TABLE_SYS_CONFIG     	"SystemConfigure"
-#define TABLE_ACTIVE_RECIPE     "ActiveRecipe"
+#define TABLE_ACTIVE_RECIPE		"ActiveRecipe"
+#define TABLE_CONNECTIVITY		"Connectivity"
+#define TABLE_GATEWAY_SERVER	"GatewayServer"
 #define COLUMN_GRAPHDATA		"WeldGraph"
 #define COLUMN_GOLDEN			"Golden"
 

@@ -217,6 +217,11 @@ enum MESSAGE_IDENTIFY
 
     TO_DATA_TASK_ACTIVE_RECIPE_QUERY,
     TO_DATA_TASK_ACTIVE_RECIPE_UPDATE,
+
+    TO_DATA_TASK_CONNECTIVITY_QUERY,
+    TO_DATA_TASK_CONNECTIVITY_UPDATE,
+
+    TO_DATA_TASK_GATEWAY_SERVER_QUERY,
     };
 #define DATA_TASK_EVENT 0x02
 
@@ -305,6 +310,12 @@ int main(int argc, char *argv[])
  *   b for TO_DATA_TASK_ACTIVE_RECIPE_QUERY
  *   u for TO_DATA_TASK_ACTIVE_RECIPE_UPDATE
  *
+ * d for Connectivity
+ *   b for TO_DATA_TASK_CONNECTIVITY_QUERY
+ *   u for TO_DATA_TASK_CONNECTIVITY_UPDATE
+ *
+ * e for GatewaySever
+ *   b for TO_DATA_TASK_GATEWAY_SERVER_QUERY
  */
     if(argc>=3)
         {
@@ -544,7 +555,6 @@ int main(int argc, char *argv[])
                         buf.msgID = TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE;
                         break;
                         }
-                        break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;
@@ -585,7 +595,6 @@ int main(int argc, char *argv[])
                         buf.msgID = TO_DATA_TASK_USER_PROFILE_UPDATE;
                         break;
                         }
-                        break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;
@@ -616,7 +625,6 @@ int main(int argc, char *argv[])
                         buf.msgID = TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE;
                         break;
                         }
-                        break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;
@@ -637,7 +645,6 @@ int main(int argc, char *argv[])
                         buf.msgID = TO_DATA_TASK_PWR_SUPPLY_UPDATE;
                         break;
                         }
-                        break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;
@@ -658,7 +665,6 @@ int main(int argc, char *argv[])
                         buf.msgID = TO_DATA_TASK_TEACH_MODE_SET_UPDATE;
                         break;
                         }
-                        break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;
@@ -679,7 +685,6 @@ int main(int argc, char *argv[])
                         buf.msgID = TO_DATA_TASK_SYS_CONFIG_UPDATE;
                         break;
                         }
-                        break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;
@@ -691,15 +696,39 @@ int main(int argc, char *argv[])
                 switch(argv[2][0])
                     {
                     case 'b':
-                        {
                         buf.msgID = TO_DATA_TASK_ACTIVE_RECIPE_QUERY;
                         break;
-                        }
                     case 'u':
-                        {
                         buf.msgID = TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
                         break;
-                        }
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
+            case 'd':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'b':
+                        buf.msgID = TO_DATA_TASK_CONNECTIVITY_QUERY;
+                        break;
+                    case 'u':
+                        buf.msgID = TO_DATA_TASK_CONNECTIVITY_UPDATE;
+                        break;
+                    default:
+                        printf("invalid cmd:%s\n", argv[2]);
+                        return 0;
+                    }
+                break;
+                }
+            case 'e':
+                {
+                switch(argv[2][0])
+                    {
+                    case 'b':
+                        buf.msgID = TO_DATA_TASK_GATEWAY_SERVER_QUERY;
                         break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);

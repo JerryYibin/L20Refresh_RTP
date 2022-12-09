@@ -43,7 +43,7 @@ public:
 	virtual int 	QueryWeldResultLatestPage(char *)		= 0;
 	virtual int 	QueryWeldResultNextPage(char *)			= 0;
 	virtual int 	QueryBlockWeldResult(char *)			= 0;
-	virtual void 	QueryWeldSignature(char *)				= 0;
+	virtual int 	QueryWeldSignature(char *)				= 0;
 	virtual int 	QueryWeldRecipe(char *)					= 0;
 	virtual int 	QueryBlockAlarmLog(char *)				= 0;
 	virtual int 	QueryHeightCalibration(char *)			= 0;
@@ -53,10 +53,12 @@ public:
 	virtual int 	QueryBlockPowerSupply(char *)			= 0;
 	virtual int 	QueryBlockTeachModeSetting(char *)		= 0;
 	virtual int 	QuerySystemConfigure(char *)			= 0;
-	virtual void 	QueryActiveRecipe(char *)				= 0;
+	virtual int 	QueryActiveRecipe(char *)				= 0;
+	virtual int 	QueryConnectivity(char *)			= 0;
+	virtual int 	QueryGatewayServer(char *)			= 0;
 	
 	virtual int 	QueryWeldRecipeTotalNumber(char *)		= 0;
-	virtual void 	QueryWeldRecipeAll(char *)				= 0;
+	virtual int 	QueryWeldRecipeAll(char *)				= 0;
 	virtual int 	QueryWeldRecipeLatestPage()				= 0;
 	virtual int 	QueryWeldRecipeNextPage()				= 0;
 	virtual int 	UpdateWeldRecipe(char *)				= 0;
@@ -69,8 +71,9 @@ public:
 	virtual int 	UpdateBlockTeachModeSetting(char *)		= 0;
 	virtual int 	UpdateSystemConfigure(char *)			= 0;
 	virtual int 	UpdateActiveRecipe(char *)				= 0;
+	virtual int 	UpdateConnectivity(char *)				= 0;
 
-	virtual void 	DeleteOldest(const char *)				= 0;
+	virtual int 	DeleteOldest(const char *)				= 0;
 	virtual int		DeleteSpecificRecipe(const char *)		= 0;
 	
 	string GetWeldSignatureGraphBlob(int nRowID, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);

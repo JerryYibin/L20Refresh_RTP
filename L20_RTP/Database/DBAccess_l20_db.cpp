@@ -25,6 +25,7 @@
 #include "../WeldResultsDefine.h"
 #include "../WeldResults.h"
 #include "../AlarmEvent.h"
+#include "../Connectivity.h"
 #include <jansson.h>
 extern "C"
 {
@@ -494,6 +495,12 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	AlarmEvent event;
 	memcpy((void*)&event, buffer, sizeof(AlarmEvent));
 
+#if UNITTEST_DATABASE
+    event.m_Type = 123;
+    event.m_WeldRecipeID = 1;
+    event.m_WeldResultID = 1;
+#endif
+
 	str =
         "insert into " + string(TABLE_ALARM_LOG) +
         " (DateTime, AlarmType, RecipeID, WeldResultID, UserID, IsReset) " +
@@ -509,9 +516,6 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	getLatestID(TABLE_ALARM_LOG, &id);
 	if(nErrCode == SQLITE_OK)
 	{
-#if UNITTEST_DATABASE
-        LOG("# store AlarmLog to ID(%u) with WeldResultID(%u)\n", id, event.m_WeldResultID);
-#endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
             DeleteOldest(TABLE_ALARM_LOG);
@@ -519,7 +523,9 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	}
 	else
     {
+#if UNITTEST_DATABASE
         LOG("StoreAlarmLog:\n%s\n", str.c_str());
+#endif
 		LOGERR((char*) "Database_T: Single Transaction Error. %d after ID %u\n", nErrCode, id, 0);
     }
 	return nErrCode;
@@ -780,7 +786,7 @@ int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryWeldSignature(char* buffer)
+int DBAccessL20DB::QueryWeldSignature(char* buffer)
 {
     string strQuery =
         "select "+string(COLUMN_GRAPHDATA)+
@@ -793,9 +799,10 @@ void DBAccessL20DB::QueryWeldSignature(char* buffer)
 #if UNITTEST_DATABASE
         LOG("\tWeldResultID %d not found from WeldResultSignature\n", (*(int* )buffer));
 #endif
-        return;
+        return ERROR;
         }
 
+    WeldResultSignature::_OrignalSignature->clear();
     String2Vector(str, WeldResultSignature::_OrignalSignature);
 
 #if UNITTEST_DATABASE
@@ -815,7 +822,7 @@ void DBAccessL20DB::QueryWeldSignature(char* buffer)
 	}
 #endif
 
-    return;
+    return OK;
 }
 
 /**************************************************************************//**
@@ -851,7 +858,7 @@ int DBAccessL20DB::QueryWeldRecipeTotalNumber(char* buffer)
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::QueryWeldRecipeAll(char* buffer)
+int DBAccessL20DB::QueryWeldRecipeAll(char* buffer)
 {
     string strQuery =
         "select * from "+string(TABLE_WELD_RECIPE)+";";
@@ -861,7 +868,7 @@ void DBAccessL20DB::QueryWeldRecipeAll(char* buffer)
     if(str.size()>0)
         LOG("QueryWeldRecipe all:\n%s\n", str.c_str());
 #endif
-    return;
+    return OK;
 }
 
 /**************************************************************************//**
@@ -1443,7 +1450,10 @@ int DBAccessL20DB::QueryBlockPrivilegeConfigure(char* buffer)
 {
 #if UNITTEST_DATABASE
     if(UserAuthority::_UserPrivilegesSC == nullptr)
+        {
 		UserAuthority::GetInstance();
+        LOG("new _UserPrivilegesSC\n");
+        }
 #endif
     int count;
 	vector<string> tmpStr;
@@ -1750,13 +1760,13 @@ int DBAccessL20DB::QuerySystemConfigure(char* buffer)
 * \return  - N/A
 *
 ******************************************************************************/
-void DBAccessL20DB::QueryActiveRecipe(char* buffer)
+int DBAccessL20DB::QueryActiveRecipe(char* buffer)
 {
     string str = ExecuteQuery(string("select * from ")+string(TABLE_ACTIVE_RECIPE)+";");
     if(str.size() == 0)
     {
     	LOGERR((char*) "ActiveRecipe is null\n", 0, 0, 0);
-    	return;
+    	return ERROR;
     }
     vector<string> tmpStr;
     Utility::StringToTokens(str, DB_VALUE_SEPARATOR[0], tmpStr);
@@ -1780,14 +1790,14 @@ void DBAccessL20DB::QueryActiveRecipe(char* buffer)
         std::to_string(Recipe::ActiveRecipeSC->m_RecipeID)+";";
     str = ExecuteQuery(strQuery);
     if(str.size()==0)
-        return;
+        return ERROR;
 #if UNITTEST_DATABASE
     if(str.size()>0)
         LOG("QueryWeldRecipe:\n%s\n", str.c_str());
 #endif
 	vector<string> data;
 	if (!Utility::StringToTokens(str,',',data))
-		return;
+		return ERROR;
 
 	unsigned int m_Amplitude 	= stoi(data.at(6));
 	int m_WidthSetting			= stoi(data.at(7));
@@ -1894,7 +1904,87 @@ void DBAccessL20DB::QueryActiveRecipe(char* buffer)
             }
 #endif
         }
-    return;
+    return OK;
+}
+
+/**************************************************************************//**
+* \brief   - Query the unique record from table Connectivity
+*
+* \param   - char* buffer - not used
+*
+* \return  - N/A
+*
+******************************************************************************/
+int DBAccessL20DB::QueryConnectivity(char* buffer)
+{
+	vector<string> tmpStr;
+    string str;
+
+    str = ExecuteQuery(string("select * from ")+string(TABLE_CONNECTIVITY)+";");
+    if(str.empty() == true)
+    	return ERROR;
+
+    Utility::StringToTokens(str, ',', tmpStr);
+    Connectivity::EthernetConfig.EthernetType        = atoi(tmpStr[0].c_str()); /* EthernetType */
+    Connectivity::EthernetConfig.TCP_RemoteSignature = atoi(tmpStr[1].c_str()); /* SignatureOption */
+    Connectivity::EthernetConfig.TCP_ServerPort      = atoi(tmpStr[2].c_str()); /* ServerPort */
+    strcpy(Connectivity::EthernetConfig.TCP_ServerIP, tmpStr[3].c_str()); /* DeviceIP */
+    Connectivity::EthernetConfig.DIG_WeldResult      = atoi(tmpStr[4].c_str()); /* WeldResultOption */
+    Connectivity::EthernetConfig.DIG_WeldRecipe      = atoi(tmpStr[5].c_str()); /* WeldRecipeOption */
+    Connectivity::EthernetConfig.DIG_Signature       = atoi(tmpStr[6].c_str()); /* WeldSignatureOption */
+    Connectivity::EthernetConfig.DIG_SysConfigure    = atoi(tmpStr[7].c_str()); /* SystemConfigureOption */
+    Connectivity::EthernetConfig.DIG_MachineID       = atoi(tmpStr[8].c_str()); /* GatewayID */
+#if UNITTEST_DATABASE
+    LOG("QueryConnectivity: %s\n\n", str.c_str());
+    LOG("TCP_ServerIP: %s\n\n", Connectivity::EthernetConfig.TCP_ServerIP);
+#endif
+
+    return OK;
+}
+
+/**************************************************************************//**
+* \brief   - Query the unique record from table GatewayServer
+*
+* \param   - char* buffer - not used
+*
+* \return  - N/A
+*
+******************************************************************************/
+int DBAccessL20DB::QueryGatewayServer(char* buffer)
+{
+#if UNITTEST_DATABASE
+    if(Connectivity::_DIGMachinesUI == nullptr)
+        {
+		Connectivity::GetInstance();
+        LOG("new _DIGMachinesUI\n");
+        }
+    Connectivity::_DIGMachinesUI->clear();
+#endif
+	vector<string> tmpStr;
+    string str;
+    int count;
+
+    str = ExecuteQuery(string("select * from ")+string(TABLE_GATEWAY_SERVER)+";");
+    if(str.empty() == true)
+    	return ERROR;
+
+    Utility::StringToTokens(str, ',', tmpStr);
+	for(count = 0; count < tmpStr.size()/TABLE_GATEWAY_SERVER_MEM; count++)
+	{
+		GATEWAY_MACHINE machine;
+        strcpy(machine.DIG_MachineName, tmpStr[count*TABLE_GATEWAY_SERVER_MEM+1].c_str()); /* MachineName */
+        machine.DIG_MachinePort = atoi(tmpStr[count*TABLE_GATEWAY_SERVER_MEM+2].c_str());//ServerPort
+        strcpy(machine.DIG_MachineIP, tmpStr[count*TABLE_GATEWAY_SERVER_MEM+3].c_str()); /* ServerIP */
+		Connectivity::_DIGMachinesUI->push_back(machine);
+#if UNITTEST_DATABASE
+        LOG("ID: %s\n", tmpStr[count*TABLE_GATEWAY_SERVER_MEM].c_str());
+        LOG("DIG_MachineName: %s\n", machine.DIG_MachineName);
+        LOG("DIG_MachinePort: %d\n", machine.DIG_MachinePort);
+        LOG("DIG_MachineIP: %s\n", machine.DIG_MachineIP);
+        LOG("\n");
+#endif
+	}
+    return OK;
 }
 
 /**************************************************************************//**
@@ -2345,6 +2435,36 @@ int DBAccessL20DB::UpdateActiveRecipe(char* buffer)
 }
 
 /**************************************************************************//**
+* \brief   - Update the unique record to Connectivity
+*
+* \param   - char* buffer - not used
+*
+* \return  - int - Database status
+*
+******************************************************************************/
+int DBAccessL20DB::UpdateConnectivity(char* buffer)
+{
+	string strStore =
+        "update " 				+ string(TABLE_CONNECTIVITY) +
+        " set EthernetType=" 	+ std::to_string(Connectivity::EthernetConfig.EthernetType)+
+        ", SignatureOption=" 	+ std::to_string(Connectivity::EthernetConfig.TCP_RemoteSignature)+
+        ", ServerPort=" 		+ std::to_string(Connectivity::EthernetConfig.TCP_ServerPort)+
+        ", DeviceIP='" 			+ Connectivity::EthernetConfig.TCP_ServerIP+
+        "', WeldResultOption=" 	+ std::to_string(Connectivity::EthernetConfig.DIG_WeldResult)+
+        ", WeldRecipeOption=" 	+ std::to_string(Connectivity::EthernetConfig.DIG_WeldRecipe)+
+        ", WeldSignatureOption=" 	+ std::to_string(Connectivity::EthernetConfig.DIG_Signature)+
+        ", SystemConfigureOption=" 	+ std::to_string(Connectivity::EthernetConfig.DIG_SysConfigure)+
+        ", GatewayID=" 			+ std::to_string(Connectivity::EthernetConfig.DIG_MachineID)+
+        ";";
+	int nErrCode = SingleTransaction(strStore);
+	if(nErrCode != SQLITE_OK)
+    {   
+		LOGERR((char*) "Database_T: UpdateConnectivity Error. %d\n", nErrCode, 0, 0);
+    }
+	return nErrCode;
+}
+
+/**************************************************************************//**
 * \brief   - Delete table, please confirm what's the purpose of the function.
 *
 * \param   - char* table - table name
@@ -2353,14 +2473,14 @@ int DBAccessL20DB::UpdateActiveRecipe(char* buffer)
 *
 ******************************************************************************/
 //TODO Is it temporary code for test only, because there is not any return?
-void DBAccessL20DB::DeleteOldest(const char* table)
+int DBAccessL20DB::DeleteOldest(const char* table)
 {
     string strQuery =
         "delete from "+
         string(table)+" where ID in (select ID from "+
         string(table)+" order by ID asc limit 1);";
     SingleTransaction(strQuery);
-    return;
+    return OK;
 }
 
 /**************************************************************************//**

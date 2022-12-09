@@ -29,6 +29,7 @@
 #define TABLE_PWR_SUP_MEM		3
 #define TABLE_TEACH_MODE_MEM	11
 #define TABLE_ALARMLOG_MEM		7 /* there are 7 columns in table AlarmLog */
+#define TABLE_GATEWAY_SERVER_MEM	4
 
 class DBAccessL20DB: public DBAccess 
 {
@@ -73,7 +74,7 @@ public:
 	virtual int 	QueryWeldResultLatestPage(char *)		override;
 	virtual int 	QueryWeldResultNextPage(char *)			override;
 	virtual int 	QueryBlockWeldResult(char *) 			override;
-	virtual void 	QueryWeldSignature(char *) 				override;
+	virtual int 	QueryWeldSignature(char *) 				override;
 	virtual int 	QueryWeldRecipe(char *) 				override;
 	virtual int 	QueryBlockAlarmLog(char *) 		  		override;
 	virtual int 	QueryHeightCalibration(char *) 			override;
@@ -83,10 +84,12 @@ public:
 	virtual int 	QueryBlockPowerSupply(char *)			override;
 	virtual int 	QueryBlockTeachModeSetting(char *)		override;
 	virtual int 	QuerySystemConfigure(char *)			override;
-	virtual void 	QueryActiveRecipe(char *)				override;
+	virtual int 	QueryActiveRecipe(char *)				override;
+	virtual int 	QueryConnectivity(char *)				override;
+	virtual int 	QueryGatewayServer(char *)				override;
 
 	virtual int		QueryWeldRecipeTotalNumber(char *)		override;
-	virtual void 	QueryWeldRecipeAll(char *) 				override;
+	virtual int 	QueryWeldRecipeAll(char *) 				override;
 	virtual int 	QueryWeldRecipeLatestPage() 			override;
 	virtual int 	QueryWeldRecipeNextPage()				override;
 	virtual int 	UpdateWeldRecipe(char *) 				override;
@@ -99,8 +102,9 @@ public:
 	virtual int 	UpdateBlockTeachModeSetting(char *)		override;
 	virtual int 	UpdateSystemConfigure(char *)			override;
 	virtual int 	UpdateActiveRecipe(char *)				override;
+	virtual int 	UpdateConnectivity(char *)				override;
 
-	virtual void 	DeleteOldest(const char *) 				override;
+	virtual int 	DeleteOldest(const char *) 				override;
 	virtual int 	DeleteSpecificRecipe(const char *)		override;
 
 	//End of methods to fetch data from database needed for CSV reports generation.	
