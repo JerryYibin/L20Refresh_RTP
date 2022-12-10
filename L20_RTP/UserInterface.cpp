@@ -335,6 +335,11 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 	case TO_UI_TASK_FREQUENCY_CURVE_EXTERNAL_REQ:
 		ExternalManager::GetInstance()->Send(ExternalManager::REPLYFREQUENCYCURVE);
 		break;	
+	case TO_UI_TASK_AMPLITUDE_CALIBRATE_SAVE_IDX:
+		SystemConfiguration::_SystemConfig->Set(SYSTEMCONFIG::MAX_AMPLITUDE, message.Buffer);
+		message.msgID = DataTask::TO_DATA_TASK_SYS_CONFIG_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
 		break;

@@ -1985,7 +1985,7 @@ int DBAccessL20DB::QueryConnectivity(char* buffer)
 * \return  - N/A
 *
 ******************************************************************************/
-int DBAccessL20DB::QueryGatewayServer(char* buffer)
+int DBAccessL20DB::QueryGatewayMachine(char* buffer)
 {
 #if UNITTEST_DATABASE
     if(Connectivity::_DIGMachinesUI == nullptr)

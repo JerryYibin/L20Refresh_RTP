@@ -68,6 +68,7 @@ SocketReceiver_HMI::~SocketReceiver_HMI()
  ******************************************************************************/
 void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 {
+	int iResult = OK;
 	switch(message.msgID)
 	{
 	case REQ_HEART_BEAT_IDX:
@@ -202,11 +203,16 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_ALARM_LOG_NEXT_PAGE_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_ALARM_LOG_NEXT_PAGE_IDX;
 		break;
+	case REQ_AMPLITUDE_CALIBRATE_SAVE_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_AMPLITUDE_CALIBRATE_SAVE_IDX;
+		break;
 	default:
+		iResult = ERROR;
 		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);
 		break;
 	}
-	SendToMsgQ(message, UI_MSG_Q_ID);
+	if(iResult == OK)
+		SendToMsgQ(message, UI_MSG_Q_ID);
 }
 
 /**************************************************************************//**

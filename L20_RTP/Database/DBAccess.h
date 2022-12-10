@@ -56,8 +56,8 @@ public:
 	virtual int 	QueryBlockTeachModeSetting(char *)		= 0;
 	virtual int 	QuerySystemConfigure(char *)			= 0;
 	virtual int 	QueryActiveRecipe(char *)				= 0;
-	virtual int 	QueryConnectivity(char *)			= 0;
-	virtual int 	QueryGatewayServer(char *)			= 0;
+	virtual int 	QueryConnectivity(char *)				= 0;
+	virtual int 	QueryGatewayMachine(char *)				= 0;
 	
 	virtual int 	QueryWeldRecipeTotalNumber(char *)		= 0;
 	virtual int 	QueryWeldRecipeAll(char *)				= 0;

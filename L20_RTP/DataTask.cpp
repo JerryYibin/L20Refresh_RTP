@@ -313,7 +313,8 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->UpdateBlockTeachModeSetting(message.Buffer);
 		break;
 	case TO_DATA_TASK_SYS_CONFIG_UPDATE:
-        _ObjDBConn->UpdateSystemConfigure(message.Buffer);
+		ErrCode = _ObjDBConn->UpdateSystemConfigure(message.Buffer);
+		sendErrorCode(ErrCode);
 		break;
 	case TO_DATA_TASK_ACTIVE_RECIPE_UPDATE:
         _ObjDBConn->UpdateActiveRecipe(message.Buffer);
@@ -385,7 +386,11 @@ int DataTask::InitData()
     		&& _ObjDBConn->QuerySystemConfigure(nullptr)
 			&& _ObjDBConn->QueryBlockTeachModeSetting(nullptr)
 			&& _ObjDBConn->QueryBlockPowerSupply(nullptr)
-    		&& _ObjDBConn->QueryHeightCalibration(nullptr));
+    		&& _ObjDBConn->QueryHeightCalibration(nullptr)
+			&& _ObjDBConn->QueryBlockUserProfiles(nullptr)
+			&& _ObjDBConn->QueryConnectivity(nullptr)
+			&& _ObjDBConn->QueryGatewayMachine(nullptr));
+    		
 }
 
 /**************************************************************************//**
