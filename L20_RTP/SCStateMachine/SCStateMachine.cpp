@@ -177,7 +177,14 @@ void SCStateMachine::RunStateMachine()
 {
 	//Once the ESTOP is detected by AC, the SC will go to ESTOP state directly for E-Stop handling.
 	if(ACStateMachine::AC_TX->ACState == ACState::AC_ESTOP)
-		m_StateIndex = EStopStateIndex;
+	{
+		if(m_objState->m_State != SCState::ESTOP)
+		{
+			m_objState->Exit();
+			m_objState->m_Actions = SCState::INIT;
+			m_StateIndex = EStopStateIndex;
+		}
+	}
 	
 	if (_objStateList->size() == 0)
 	{

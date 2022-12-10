@@ -185,12 +185,10 @@ int AlarmManager::GetAlarmType()
 	auto iter = _AlarmListSC->find(ALARM_ESTOP_NCA);
 	if(iter != _AlarmListSC->end())
 	{
-		LOG("222222222222222222222222222222222222222222: %d\n", alarmType);
 		alarmType = iter->first;
 	}
 	else
 	{
-		LOG("1111111111111111111111111111111111111111111: %d\n", _AlarmListSC->size());
 		if(_AlarmListSC->size() != 0)
 		{
 			iter = _AlarmListSC->begin();

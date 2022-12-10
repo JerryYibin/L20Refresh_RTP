@@ -82,7 +82,6 @@ void Alarm::Enter()
 	}
 	else
 	{
-		m_Actions = SCState::JUMP;
 		return;
 	}
 
@@ -178,25 +177,25 @@ int Alarm::getACAlarmEvents()
 		event.m_Type = ALARM_PRESSURE_COMM_CAN_EFA;
 		//Register the alarm into alarm list of alarm manager. 
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	if ((alarmCode & ERR_HEIGHT_SYSTEM) == ERR_HEIGHT_SYSTEM)
 	{
 		event.m_Type = ALARM_HEIGHT_ENCODER_EFA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	if ((alarmCode & ERR_HOME_POSITION) == ERR_HOME_POSITION)
 	{
 		event.m_Type = ALARM_HOME_POSITION_TIMEOUT_NCA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	if ((alarmCode & ERR_STARTSWITCH_LOST) == ERR_STARTSWITCH_LOST)
 	{
 		event.m_Type = ALARM_START_SWITCH_LOST_EFA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	
 	return 0;
@@ -230,7 +229,7 @@ int Alarm::getPCAlarmEvents()
 	{
 		event.m_Type = ALARM_POWER_OVERLOAD_OVA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	return 0;
 }
@@ -253,8 +252,7 @@ int Alarm::getSCAlarmEvents()
 	memcpy(event.m_RecipeName, Recipe::ActiveRecipeSC->m_RecipeName, RECIPE_LEN);
 	event.m_WeldCount = WeldResults::_WeldResults->CycleCounter;
 	event.m_WeldRecipeID = Recipe::ActiveRecipeSC->m_RecipeID;
-	//TODO need to consider how to get the latest WeldResultID
-//	event.m_WeldResultID = WeldResults::_WeldResults->;
+	event.m_WeldResultID = -1;
 	vxbRtcGet(&timeStamp);
 	strftime(event.m_strTimeStamp, 20, "%Y/%m/%d %H:%M:%S", &timeStamp);
 //	event.m_SCState = state;
@@ -265,55 +263,55 @@ int Alarm::getSCAlarmEvents()
 		event.m_Type = ALARM_POWER_OVERLOAD_OVA;
 		//Register the alarm into alarm list of alarm manager. 
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	if ((alarmCode & ERR_TIME_MS) == ERR_TIME_MS)
 	{
 		event.m_Type = ALARM_TIME_LIMIT_MLR_PRA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	if ((alarmCode & ERR_TIME_PL) == ERR_TIME_PL)
 	{
 		event.m_Type = ALARM_TIME_LIMIT_PLR_PRA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	if ((alarmCode & ERR_POWER_MS) == ERR_POWER_MS)
 	{
 		event.m_Type = ALARM_PEAKPOWER_LIMIT_MLR_PRA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
-	if ((alarmCode & ERR_POWER_MS) == ERR_POWER_PL)
+	if ((alarmCode & ERR_POWER_PL) == ERR_POWER_PL)
 	{
 		event.m_Type = ALARM_PEAKPOWER_LIMIT_PLR_PRA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	if ((alarmCode & ERR_PRE_HEIGHT_MS) == ERR_PRE_HEIGHT_MS)
 	{
 		event.m_Type = ALARM_PREHEIGHT_LIMIT_MLR_PRA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	if ((alarmCode & ERR_PRE_HEIGHT_PL) == ERR_PRE_HEIGHT_PL)
 	{
 		event.m_Type = ALARM_PREHEIGHT_LIMIT_PLR_PRA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	if ((alarmCode & ERR_POST_HEIGHT_MS) == ERR_POST_HEIGHT_MS)
 	{
 		event.m_Type = ALARM_POSTHEIGHT_LIMIT_MLR_PRA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	if ((alarmCode & ERR_POST_HEIGHT_PL) == ERR_POST_HEIGHT_PL)
 	{
 		event.m_Type = ALARM_POSTHEIGHT_LIMIT_PLR_PRA;
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 	}
 	return 0;
 }

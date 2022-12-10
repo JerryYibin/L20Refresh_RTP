@@ -23,7 +23,7 @@ Height Check Process: 		Manually put a height-known shim on, do Horn down/Hold/H
 #include "../HeightEncoder.h"
 #include "SCStateMachine.h"
 
-#define TIMEDELAY 1000
+#define TIMEDELAY 1500
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -66,6 +66,7 @@ void HeightCalibrate::Enter()
 	m_HornDownTimeout = 0;
 	m_HornHoldTimeout = 0;
 	m_HornUpTimeout = 0;
+	m_PressureSettingTimeout = 0;
 	HeightEncoder::HeightProperty.TotalTime = 0;
 }
 /**************************************************************************//**
@@ -91,10 +92,15 @@ void HeightCalibrate::Loop()
 	case ACState::AC_READY:
 		if((m_HornUpTimeout == 0) && (m_HornHoldTimeout == 0) && (m_HornDownTimeout == 0))
 		{
-			// At the first time running when AC in the Ready state.
-			HeightEncoder::RawHeight.TopCount = ACStateMachine::AC_TX->RawHeightCount;
-			ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_PART_CONTACT_ENABLE);//Contact Check Enable
-			ACStateMachine::AC_RX->MasterState = SCState::DOWN_STROKE; 
+			if(m_PressureSettingTimeout >= TIMEDELAY)
+			{
+				// At the first time running when AC in the Ready state.
+				HeightEncoder::RawHeight.TopCount = ACStateMachine::AC_TX->RawHeightCount;
+				ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_PART_CONTACT_ENABLE);//Contact Check Enable
+				ACStateMachine::AC_RX->MasterState = SCState::DOWN_STROKE; 
+			}
+			else
+				m_PressureSettingTimeout++;
 	
 		}
 		else

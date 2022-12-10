@@ -45,7 +45,7 @@ WorkFlow* ControlTask::_WorkFlowObj = nullptr;
 * \return  - None.
 ******************************************************************************/
 ControlTask::ControlTask()
-	:m_OperationMode(SCStateMachine::NO_OPERATION)
+	:m_OperationMode(SCStateMachine::END_OPERATION)
 {
 	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 	string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
@@ -194,7 +194,9 @@ void ControlTask::responseStateMachineProcess(MESSAGE& message)
 			case SCStateMachine::BATCH_WELD:
 				_WorkFlowObj->UpdateResult();
 				message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_INSERT;
-				SendToMsgQ(message,DATA_MSG_Q_ID_CTRL);
+				SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
+				message.msgID = DataTask::TO_DATA_TASK_WELD_SIGN_INSERT;
+				SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
 				message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
 				SendToMsgQ(message, UI_MSG_Q_ID);
 				break;
@@ -301,6 +303,10 @@ void ControlTask::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_CTRL_SC_RESPONSE:
 		responseStateMachineProcess(message);
+		break;
+	case TO_CTRL_ALARM_EVENT:
+		message.msgID = DataTask::TO_DATA_TASK_ALARM_LOG_INSERT;
+		SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
 		break;
 	default:
 		LOGERR((char *)"CTRL_T : ----------Unknown Message ID------------- : %d",message.msgID, 0, 0);

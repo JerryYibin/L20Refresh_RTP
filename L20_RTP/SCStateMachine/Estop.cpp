@@ -66,7 +66,9 @@ Estop::~Estop() {
 void Estop::Enter()
 {
 	if((ACStateMachine::AC_TX->ACState != ACState::AC_ESTOP) && (PCStateMachine::PC_TX->PCState != PCState::PC_ESTOP))
-		m_Actions = SCState::JUMP;
+	{
+		return;
+	}
 	else if(ACStateMachine::AC_TX->ACState == ACState::AC_ESTOP)
 	{
 		PCStateMachine::PC_RX->MasterEvents |= BIT_MASK(PCState::CTRL_ESTOP);
@@ -86,7 +88,7 @@ void Estop::Enter()
 		event.m_Type = ALARM_ESTOP_NCA;
 		//Register the alarm into alarm list of alarm manager. 
 		AlarmManager::GetInstance()->EnterAlarmEvent(&event);
-		SendMsgToDataMsgQ(DataTask::TO_DATA_TASK_ALARM_LOG_INSERT, (const char*)&event);
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_ALARM_EVENT, (const char*)&event);
 		m_Timeout = 0;
 	}
 }

@@ -89,6 +89,7 @@ public:
 		
 	};
 
+	int WeldResultID;
 	int CycleCounter;
 	int RecipeID;
 	char RecipeName[USER_NAME_SIZE];
@@ -100,7 +101,6 @@ public:
 	int WeldTime;
 	int PeakPower;
 	int GraphID;
-	int WeldResultID;
 public:
     virtual int Set(int, void*) = 0;
     virtual int Get(int, void*) = 0;

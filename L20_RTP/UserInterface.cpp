@@ -166,7 +166,12 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		SendToMsgQ(message, CTRL_MSG_Q_ID);
 		break;
 	case TO_UI_TASK_HEIGHT_CALIBRATE_ACCEPT:
-		//TODO send message to Database
+		message.msgID = DataTask::TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_TASK_HEIGHT_CALIBRATE_EXIT:
+		message.msgID = DataTask::TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY;
+		SendToMsgQ(message, DATA_MSG_Q_ID_REQ);
 		break;
 	case TO_UI_TASK_USERIO_INPUT_READ:
 		message.msgID = ScDgtInputTask::TO_DGT_INPUT_TASK_IO_GET;

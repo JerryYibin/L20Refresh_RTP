@@ -34,6 +34,7 @@ PCStateMachine::PCStateMachine()
 	
 	CurrentStateObj = m_ReadyObj;
 	CurrentStateObj->Enter();
+	PC_TX->PCState = PCState::PC_READY;
 }
 
 /**************************************************************************//**

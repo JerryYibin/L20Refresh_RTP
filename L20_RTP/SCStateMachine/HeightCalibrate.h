@@ -20,6 +20,7 @@ private:
 	unsigned int m_HornDownTimeout;
 	unsigned int m_HornHoldTimeout;
 	unsigned int m_HornUpTimeout;
+	unsigned int m_PressureSettingTimeout;
 public:
 	HeightCalibrate();
 	virtual ~HeightCalibrate();

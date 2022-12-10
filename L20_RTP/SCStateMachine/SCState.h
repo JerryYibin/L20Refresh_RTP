@@ -17,7 +17,6 @@
 #include "../Utility.h"
 #include "../ScDgtOutput.h"
 #include "../ControlTask.h"
-#include "../DataTask.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"	
@@ -89,16 +88,14 @@ public:
 	virtual void Fail() = 0;	/* Function to call on alarm handling */
 	
 	//virtual bool SendToMsgQ(MESSAGE& msgBuffer, const int& msgQID);
-	void					SendMsgToCtrlMsgQ		(const ControlTask::MESSAGE_IDENTIFY msgID, int alarmType = 0);
+	void					SendMsgToCtrlMsgQ		(const ControlTask::MESSAGE_IDENTIFY msgID, const char* _event = nullptr);
 	void 					ChangeExtDgtOutput		(const ScDgtOutputTask::MESSAGE_IDENTIFY msgID);
-	void					SendMsgToDataMsgQ		(const DataTask::MESSAGE_IDENTIFY msgID, const char* _event);
 private:
 	CommonProperty*							CP;
 	STATUS			SendToMsgQ 				(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks_t waitType = NO_WAIT);
 protected:
 	MSG_Q_ID	CTL_MSG_Q_ID;
 	MSG_Q_ID	DGTOUT_MSG_Q_ID;
-	MSG_Q_ID 	DATA_MSG_Q_ID_CTRL;
 };
 
 #endif /* SCSTATE_H_ */

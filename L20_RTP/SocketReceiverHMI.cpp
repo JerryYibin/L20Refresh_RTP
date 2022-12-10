@@ -115,6 +115,9 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_HEIGHT_CALIBRATE_ACCEPT_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CALIBRATE_ACCEPT;
 		break;
+	case REQ_HEIGHT_CALIBRATE_EXIT_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CALIBRATE_EXIT;
+		break;
 	case REQ_MAINTAIN_ACTUATOR_MOTION_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_AUX_MOTION_REQ;
 		break;

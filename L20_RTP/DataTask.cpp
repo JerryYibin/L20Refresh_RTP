@@ -212,7 +212,6 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_DATA_TASK_WELD_SIGN_INSERT:
 		ErrCode = _ObjDBConn->StoreWeldSignature(message.Buffer);
-		sendErrorCode(ErrCode);
 		break;
 	case TO_DATA_TASK_ALARM_LOG_INSERT:
 		_ObjDBConn->StoreAlarmLog(message.Buffer);
@@ -267,7 +266,8 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		}
 		break;
 	case TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY:
-        _ObjDBConn->QueryHeightCalibration(message.Buffer);
+		ErrCode = _ObjDBConn->QueryHeightCalibration(message.Buffer);
+		sendErrorCode(ErrCode);
 		break;
 	case TO_DATA_TASK_DB_VERSION_QUERY:
         _ObjDBConn->QueryDbVersion(message.Buffer);
@@ -297,7 +297,8 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE:
-        _ObjDBConn->UpdateHeightCalibration(message.Buffer);
+		ErrCode = _ObjDBConn->UpdateHeightCalibration(message.Buffer);
+		sendErrorCode(ErrCode);
 		break;
 	case TO_DATA_TASK_USER_PROFILE_UPDATE:
         _ObjDBConn->UpdateUserProfiles(message.Buffer);
@@ -383,7 +384,8 @@ int DataTask::InitData()
     return (_ObjDBConn->QueryDbVersion(nullptr) 
     		&& _ObjDBConn->QuerySystemConfigure(nullptr)
 			&& _ObjDBConn->QueryBlockTeachModeSetting(nullptr)
-			&& _ObjDBConn->QueryBlockPowerSupply(nullptr));
+			&& _ObjDBConn->QueryBlockPowerSupply(nullptr)
+    		&& _ObjDBConn->QueryHeightCalibration(nullptr));
 }
 
 /**************************************************************************//**

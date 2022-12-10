@@ -45,6 +45,7 @@ ACStateMachine::ACStateMachine()
 	m_StartSwitchObj	= new ACStartSwitch();
 	CurrentStateObj = m_PowerUpObj;
 	CurrentStateObj->Enter();
+	AC_TX->ACState = ACState::AC_POWERUP;
 	LOG("\n%sACT_T: _AC_POWERUP%s\n", KGRN, KNRM);
 }
 
