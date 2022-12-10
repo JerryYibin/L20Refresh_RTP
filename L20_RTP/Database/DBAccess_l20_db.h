@@ -36,6 +36,7 @@ class DBAccessL20DB: public DBAccess
 private:
 	int sendDataNum;
     void assignWeldResult(const string&);
+    void assignAlarmLog(const string&);
     int getLatestID(const string table, int* _id);
     int Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr);
     int JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray);
@@ -76,6 +77,8 @@ public:
 	virtual int 	QueryBlockWeldResult(char *) 			override;
 	virtual int 	QueryWeldSignature(char *) 				override;
 	virtual int 	QueryWeldRecipe(char *) 				override;
+	virtual int 	QueryAlarmLogLatestPage(char *)			override;
+	virtual int 	QueryAlarmLogNextPage(char *)			override;
 	virtual int 	QueryBlockAlarmLog(char *) 		  		override;
 	virtual int 	QueryHeightCalibration(char *) 			override;
 	virtual int 	QueryDbVersion(char *) 					override;

@@ -45,6 +45,8 @@ public:
 	virtual int 	QueryBlockWeldResult(char *)			= 0;
 	virtual int 	QueryWeldSignature(char *)				= 0;
 	virtual int 	QueryWeldRecipe(char *)					= 0;
+	virtual int 	QueryAlarmLogLatestPage(char *)			= 0;
+	virtual int 	QueryAlarmLogNextPage(char *)			= 0;
 	virtual int 	QueryBlockAlarmLog(char *)				= 0;
 	virtual int 	QueryHeightCalibration(char *)			= 0;
 	virtual int 	QueryDbVersion(char *)					= 0;
