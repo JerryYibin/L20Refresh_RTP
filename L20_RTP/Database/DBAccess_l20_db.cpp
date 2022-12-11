@@ -37,6 +37,8 @@ extern "C"
 #include <timerDev.h>
 #endif
 
+#define min(x, y)	(((x) < (y)) ? (x) : (y))
+
 /******************************************************************************
 * \brief - Constructor.
 *
@@ -1017,7 +1019,10 @@ int DBAccessL20DB::QueryWeldRecipe(char* buffer)
 	
 	Recipe::RecipeSC->m_RecipeID = atoi(data[0].c_str());
 	cout << "641 Recipe::RecipeSC->m_RecipeID " << Recipe::RecipeSC->m_RecipeID <<endl;
-    strcpy(Recipe::RecipeSC->m_RecipeName, data[1].c_str());
+    memcpy(Recipe::RecipeSC->m_RecipeName, data[1].c_str(), min(RECIPE_LEN, data[1].size()));
+#if UNITTEST_DATABASE
+    LOG("m_RecipeName %s\n", Recipe::RecipeSC->m_RecipeName);
+#endif
     Recipe::RecipeSC->Set(&m_Amplitude, WeldRecipeSC::PARALIST::AMPLITUDE);
     Recipe::RecipeSC->Set(&m_WidthSetting, WeldRecipeSC::PARALIST::WIDTH_SETTING);
     Recipe::RecipeSC->Set(&m_WPpressure, WeldRecipeSC::PARALIST::WP_PRESSURE);
@@ -1851,7 +1856,7 @@ int DBAccessL20DB::QueryActiveRecipe(char* buffer)
     int m_MeasuredHeightOffset	= stoi(data.at(31));
 	
 	Recipe::ActiveRecipeSC->m_RecipeID = atoi(data[0].c_str());
-    strcpy(Recipe::ActiveRecipeSC->m_RecipeName, data[1].c_str());
+    memcpy(Recipe::ActiveRecipeSC->m_RecipeName, data[1].c_str(), min(RECIPE_LEN, data[1].size()));
     Recipe::ActiveRecipeSC->Set(&m_Amplitude, WeldRecipeSC::PARALIST::AMPLITUDE);
     Recipe::ActiveRecipeSC->Set(&m_WidthSetting, WeldRecipeSC::PARALIST::WIDTH_SETTING);
     Recipe::ActiveRecipeSC->Set(&m_WPpressure, WeldRecipeSC::PARALIST::WP_PRESSURE);
@@ -1956,7 +1961,7 @@ int DBAccessL20DB::QueryConnectivity(char* buffer)
     Connectivity::EthernetConfig.EthernetType        = atoi(tmpStr[0].c_str()); /* EthernetType */
     Connectivity::EthernetConfig.TCP_RemoteSignature = atoi(tmpStr[1].c_str()); /* SignatureOption */
     Connectivity::EthernetConfig.TCP_ServerPort      = atoi(tmpStr[2].c_str()); /* ServerPort */
-    strcpy(Connectivity::EthernetConfig.TCP_ServerIP, tmpStr[3].c_str()); /* DeviceIP */
+    memcpy(Connectivity::EthernetConfig.TCP_ServerIP, tmpStr[3].c_str(), min(IP_ADD_LEN, tmpStr[3].size())); /* DeviceIP */
     Connectivity::EthernetConfig.DIG_WeldResult      = atoi(tmpStr[4].c_str()); /* WeldResultOption */
     Connectivity::EthernetConfig.DIG_WeldRecipe      = atoi(tmpStr[5].c_str()); /* WeldRecipeOption */
     Connectivity::EthernetConfig.DIG_Signature       = atoi(tmpStr[6].c_str()); /* WeldSignatureOption */
@@ -1981,12 +1986,11 @@ int DBAccessL20DB::QueryConnectivity(char* buffer)
 int DBAccessL20DB::QueryGatewayMachine(char* buffer)
 {
 #if UNITTEST_DATABASE
-    if(Connectivity::_DIGMachinesUI == nullptr)
+    if(Connectivity::_DIGMachinesSC == nullptr)
         {
 		Connectivity::GetInstance();
-        LOG("new _DIGMachinesUI\n");
+        LOG("new _DIGMachinesSC\n");
         }
-    Connectivity::_DIGMachinesUI->clear();
 #endif
 	vector<string> tmpStr;
     string str;
@@ -2007,9 +2011,9 @@ int DBAccessL20DB::QueryGatewayMachine(char* buffer)
 			memcpy(iter->second.DIG_MachineIP, tmpStr[count*TABLE_GATEWAY_MACHINE_MEM+3].c_str(), IP_ADD_LEN); /* ServerIP */
 	#if UNITTEST_DATABASE
 			LOG("ID: %s\n", tmpStr[count*TABLE_GATEWAY_MACHINE_MEM].c_str());
-			LOG("DIG_MachineName: %s\n", machine.DIG_MachineName);
-			LOG("DIG_MachinePort: %d\n", machine.DIG_MachinePort);
-			LOG("DIG_MachineIP: %s\n", machine.DIG_MachineIP);
+			LOG("DIG_MachineName: %s\n", iter->second.DIG_MachineName);
+			LOG("DIG_MachinePort: %d\n", iter->second.DIG_MachinePort);
+			LOG("DIG_MachineIP: %s\n", iter->second.DIG_MachineIP);
 			LOG("\n");
 	#endif
         }
