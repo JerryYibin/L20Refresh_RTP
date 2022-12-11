@@ -270,7 +270,7 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 	}
 
 #if UNITTEST_DATABASE
-	if(CommonProperty::WeldSignatureVector.size()==0)
+	if(WeldResultSignature::_OrignalSignature->size()==0)
     {
         LOG("# push_back _OrignalSignature\n");
     	shared_ptr<WeldResultSignatureDefine> _Signature = WeldResultSignatureDefine::GetWeldSignature();
@@ -325,7 +325,8 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 {
 #if UNITTEST_DATABASE
 	if(Recipe::RecipeSC == nullptr)
-    	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
+		Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC();
+    snprintf(Recipe::RecipeSC->m_RecipeName, RECIPE_LEN, "%s", buffer);
 #endif
 	string str = ExecuteQuery("select RecipeName from "+string(TABLE_WELD_RECIPE)+
                     " where RecipeName='"+Recipe::RecipeSC->m_RecipeName+"';");
@@ -1321,19 +1322,19 @@ int DBAccessL20DB::QueryHeightCalibration(char* buffer)
     	return 0;
     if(nErrCode != SQLITE_OK)
     	return 0;
+
 	vector<string> tmpStr;
     Utility::StringToTokens(str, ',', tmpStr);
     //The expected result shall be "1, 30000, 2, 30000, ..., 20, 32261"; The first is PSI, second the height raw count.
     for(count = 0; count < tmpStr.size() / 2; count++)
     {
     	HeightEncoder::HeightCalibratedMap[atoi(tmpStr[count * 2].c_str())].ZeroCount = atoi(tmpStr[count * 2 + 1].c_str());
+#if UNITTEST_DATABASE
+        LOG("PSI:%s ", tmpStr[count * 2].c_str());
+        LOG("Count:%s\n", tmpStr[count * 2+1].c_str());
+#endif
     }
 
-#if UNITTEST_DATABASE
-    LOG("HeightCalibration:%s\n", str.c_str());
-    LOG("PSI:%s\n", tmpStr[0].c_str());
-    LOG("Count:%s\n", tmpStr[1].c_str());
-#endif
     return count;
 }
 
@@ -1724,15 +1725,7 @@ int DBAccessL20DB::QueryBlockTeachModeSetting(char* buffer)
 
 #if UNITTEST_DATABASE
         LOG("ID: %s\n", tmpStr[count*TABLE_TEACH_MODE_MEM].c_str());
-        LOG("TeachMode: %d\n", tmpTeach.TeachMode);
-        LOG("TimeRangePL: %d\n", tmpTeach.TimeRangePL);
-        LOG("TimeRangeMS: %d\n", tmpTeach.TimeRangeMS);
-        LOG("PowerRangePL: %d\n", tmpTeach.PowerRangePL);
-        LOG("PowerRangeMS: %d\n", tmpTeach.PowerRangeMS);
-        LOG("PreHeightRangePL: %d\n", tmpTeach.PreHeightRangePL);
-        LOG("PreHeightRangeMS: %d\n", tmpTeach.PreHeightRangeMS);
-        LOG("PostHeightRangePL: %d\n", tmpTeach.PostHeightRangePL);
-        LOG("PostHeightRangeMS: %d\n", tmpTeach.PostHeightRangeMS);
+        LOG("TeachMode: %d\n", tmpTeach.Teach_mode);
         LOG("Quantity: %d\n", tmpTeach.Quantity);
         LOG("\n");
 #endif
@@ -2012,7 +2005,7 @@ int DBAccessL20DB::QueryGatewayMachine(char* buffer)
         strcpy(machine.DIG_MachineIP, tmpStr[count*TABLE_GATEWAY_MACHINE_MEM+3].c_str()); /* ServerIP */
 		Connectivity::_DIGMachinesUI->push_back(machine);
 #if UNITTEST_DATABASE
-        LOG("ID: %s\n", tmpStr[count*TABLE_GATEWAY_SERVER_MEM].c_str());
+        LOG("ID: %s\n", tmpStr[count*TABLE_GATEWAY_MACHINE_MEM].c_str());
         LOG("DIG_MachineName: %s\n", machine.DIG_MachineName);
         LOG("DIG_MachinePort: %d\n", machine.DIG_MachinePort);
         LOG("DIG_MachineIP: %s\n", machine.DIG_MachineIP);
@@ -2037,7 +2030,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 
 #if UNITTEST_DATABASE
 	if(Recipe::RecipeSC == nullptr)
-    	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
+    	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC();
     LOG("# Recipe::RecipeSC->m_RecipeID %d\n", Recipe::RecipeSC->m_RecipeID);
     Recipe::RecipeSC->m_RecipeID = 1;
 #endif
@@ -2211,10 +2204,9 @@ int DBAccessL20DB::RenameWeldRecipe(char* buffer)
 
 #if UNITTEST_DATABASE
 	if(Recipe::RecipeSC == nullptr)
-    	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC().get();
-    
+    	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC();
     Recipe::RecipeSC->m_RecipeID = 1;
-	LOG("# Recipe::RecipeSC->m_RecipeID %d\n", Recipe::RecipeSC->m_RecipeID);
+    LOG("# Recipe::RecipeSC->m_RecipeID %d\n", Recipe::RecipeSC->m_RecipeID);
 #endif
 	strStore = ExecuteQuery(
 			"select RecipeName from " + string(TABLE_WELD_RECIPE) +
@@ -2270,8 +2262,8 @@ int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
     	{
     		string strStore =
     	        "update " 	+ string(TABLE_HI_CALIB) +
-    	        " set PSI=" + std::to_string(PSI)+//PSI
-    	        ", Count=" 	+ std::to_string(HeightEncoder::HeightCalibratedMap[PSI].ZeroCount)+//Count
+    	        " set Count=" + std::to_string(HeightEncoder::HeightCalibratedMap[PSI].ZeroCount)+//Count
+    	        " where PSI=" + std::to_string(PSI)+//PSI
     	        +";";
 
     		nErrCode = SingleTransaction(strStore);

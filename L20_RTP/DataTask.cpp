@@ -296,6 +296,13 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         message.msgID = UserInterface::TO_UI_TASK_ACTIVE_RECIPE_INFO_RESPONSE;
         SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
+	case TO_DATA_TASK_CONNECTIVITY_QUERY:
+        _ObjDBConn->QueryConnectivity(message.Buffer);
+		break;
+	case TO_DATA_TASK_GATEWAY_SERVER_QUERY:
+        _ObjDBConn->QueryGatewayMachine(message.Buffer);
+		break;
+
 	case TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE:
 		ErrCode = _ObjDBConn->UpdateHeightCalibration(message.Buffer);
 		sendErrorCode(ErrCode);
@@ -319,6 +326,10 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_ACTIVE_RECIPE_UPDATE:
         _ObjDBConn->UpdateActiveRecipe(message.Buffer);
 		break;
+	case TO_DATA_TASK_CONNECTIVITY_UPDATE:
+        _ObjDBConn->UpdateConnectivity(message.Buffer);
+		break;
+
 	case TO_DATA_TASK_WELD_RECIPE_DELETE:
         _ObjDBConn->DeleteOldest(TABLE_WELD_RECIPE);
 		break;

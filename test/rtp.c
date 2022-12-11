@@ -193,6 +193,8 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_WELD_SIGN_CLEAR,
 
     TO_DATA_TASK_ALARM_LOG_QUERY,
+    TO_DATA_TASK_ALARM_LOG_QUERY_LATEST_PAGE,
+    TO_DATA_TASK_ALARM_LOG_QUERY_NEXT_PAGE,
     TO_DATA_TASK_ALARM_LOG_INSERT,
     TO_DATA_TASK_ALARM_LOG_CLEAR,
     TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY,
@@ -217,6 +219,8 @@ enum MESSAGE_IDENTIFY
 
     TO_DATA_TASK_ACTIVE_RECIPE_QUERY,
     TO_DATA_TASK_ACTIVE_RECIPE_UPDATE,
+
+    TO_DATA_TASK_ETHERNET_CONFIG_UPDATE,
 
     TO_DATA_TASK_CONNECTIVITY_QUERY,
     TO_DATA_TASK_CONNECTIVITY_UPDATE,
@@ -279,7 +283,6 @@ int main(int argc, char *argv[])
  * 5 for HeightCalibration
  *   b for TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY
  *   u for TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE
- *     third parameter is PSI
  * 6 for DbVersion
  *   b for TO_DATA_TASK_DB_VERSION_QUERY
  *
@@ -547,11 +550,6 @@ int main(int argc, char *argv[])
                         }
                     case 'u':
                         {
-                        int *pData = (int *)&buf.Buffer[0];
-                        if(argc>=4)
-                            *pData = atoi(argv[3]);
-                        else
-                            *pData = 1;
                         buf.msgID = TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE;
                         break;
                         }

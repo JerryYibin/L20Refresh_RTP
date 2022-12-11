@@ -129,7 +129,7 @@ MainTask::MainTask()
 bool MainTask::CreateMsgQ()
 {
 
-#if UNITTEST
+#if UNITTEST_DATABASE
 
 	const char* MsgQName[TOTAL_NUM_OF_TASK] = {
 										(const char *) "/CtrlMsgQ",
