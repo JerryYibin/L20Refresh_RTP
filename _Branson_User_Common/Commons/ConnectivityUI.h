@@ -15,7 +15,7 @@ The file is used both on ASC and HMI software and it is used to define all the E
 #ifndef CONNECTIVITY_UI_H_
 #define CONNECTIVITY_UI_H_
 #define IP_ADD_LEN		16
-#define SERVER_NAME_LEN	12
+#define MACHINE_NAME_LEN	12
 enum ETHERNET_TYPE
 {
 	INVALID_TYPE = -1,
@@ -39,7 +39,7 @@ struct ETHERNET
 
 struct GATEWAY_MACHINE
 {
-	char			DIG_MachineName[SERVER_NAME_LEN];
+	char			DIG_MachineName[MACHINE_NAME_LEN];
 	unsigned int	DIG_MachinePort;
 	char			DIG_MachineIP[IP_ADD_LEN];
 };
