@@ -20,6 +20,7 @@
 #include "../WeldResultSignature.h"
 #include "../ControlTask.h"
 #include "../Utility.h"
+#include "../TestSonicsWorkFlow.h"
 
 /**************************************************************************//**
 * 
@@ -91,8 +92,8 @@ void TestSonicOn::Loop()
 	m_Timeout++;
 	if((m_Timeout % DEDAULT_WELD_TIME) == 0)
 	{
-		m_TestResult.Frequency = Utility::HEX2Frequency(PCStateMachine::PC_TX->Frequency);
-		m_TestResult.Power = Utility::HEX2Power(PCStateMachine::PC_TX->Power);
+		TestSonicsWorkFlow::TestResult.Frequency = Utility::HEX2Frequency(PCStateMachine::PC_TX->Frequency);
+		TestSonicsWorkFlow::TestResult.Power = Utility::HEX2Power(PCStateMachine::PC_TX->Power);
 		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_SC_RESPONSE);                 //  Update current Power and Frequency to UI Controller
 	}
 

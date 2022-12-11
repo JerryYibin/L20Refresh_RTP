@@ -7,6 +7,9 @@
 
 #include "Utility.h"
 #include <sstream>
+UINT32 Utility::SystemPower = 5500;
+UINT32 Utility::SystemFrequency = 19450;
+UINT32 Utility::SystemAmplitude = 72;
 Utility::Utility() {
 	// TODO Auto-generated constructor stub
 
@@ -14,6 +17,48 @@ Utility::Utility() {
 
 Utility::~Utility() {
 	// TODO Auto-generated destructor stub
+}
+
+void Utility::SetSystemPower(const SYSTEMCONFIG::POWER power)
+{
+	switch (power)
+	{
+	case SYSTEMCONFIG::POWER_3300W:
+		SystemPower = 3300;
+		break;
+	case SYSTEMCONFIG::POWER_4000W:
+		SystemPower = 4000;
+		break;
+	case SYSTEMCONFIG::POWER_5500W:
+		SystemPower = 5500;
+		break;
+	case SYSTEMCONFIG::POWER_8000W:
+		SystemPower = 8000;
+		break;
+	default:
+		SystemPower = 5500;
+		break;
+	}
+}
+
+UINT32 Utility::GetSystemPower()
+{
+	return SystemPower;
+}
+
+void Utility::SetSystemFrequency(const SYSTEMCONFIG::FREQUENCY frequency)
+{
+	//TODO need to add 40KHz process
+}
+
+void Utility::SetSystemAmplitude(const UINT32 amplitude)
+{
+	SystemAmplitude = amplitude;
+}
+
+UINT32 Utility::GetSystemAmplitude()
+{
+	return SystemAmplitude;
 }
 
 
@@ -24,13 +69,13 @@ UINT32 Utility::HEX2Pressure(UINT16 hexadecimal)
 
 UINT32 Utility::HEX2Power(UINT16 hexadcimal)
 {
-	return hexadcimal * POWER_MAX / POWER_FACTOR;
+	return hexadcimal * SystemPower / POWER_FACTOR;
 }
 
 UINT32 Utility::HEX2Energy(UINT32 hexadcimal)
 {
 	float tmp = (float)(hexadcimal / POWER_FACTOR);
-	return  tmp * (float)(POWER_MAX * 10.0 / 1000.0); 
+	return  tmp * (float)(SystemPower * 10.0 / 1000.0); 
 }
 
 UINT32 Utility::HEX2Frequency(UINT16 hexadcimal)
@@ -40,7 +85,7 @@ UINT32 Utility::HEX2Frequency(UINT16 hexadcimal)
 
 UINT32 Utility::HEX2Amplitude(UINT16 hexadcimal)
 {
-	return hexadcimal * AMPLITUDE_MAX / DAC_FACTOR;
+	return hexadcimal * SystemAmplitude / DAC_FACTOR;
 }
 
 UINT32 Utility::HEX2Memory(UINT16 hexadcimal)
@@ -67,7 +112,7 @@ UINT16 Utility::TunePoint2HEX(UINT32 physical)
 
 UINT16 Utility::Amplitude2HEX(UINT32 physical)
 {
-	return physical * DAC_FACTOR / AMPLITUDE_MAX;
+	return physical * DAC_FACTOR / SystemAmplitude;
 }
 
 UINT16 Utility::FrequencyOffset2HEX(INT32 physical)
@@ -82,7 +127,7 @@ UINT16 Utility::Pressure2HEX(UINT32 physical)
 
 UINT32 Utility::Energy2HEX(UINT32 physical)
 {
-	float tmp = physical * (float)(1000.0 / (POWER_MAX * 10.0));
+	float tmp = physical * (float)(1000.0 / (SystemPower * 10.0));
 	return tmp * (float)POWER_FACTOR;
 }
 

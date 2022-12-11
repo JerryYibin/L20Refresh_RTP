@@ -1319,9 +1319,9 @@ int DBAccessL20DB::QueryHeightCalibration(char* buffer)
     string str = ExecuteQuery(
                 "select PSI, Count from "+string(TABLE_HI_CALIB)+";", &nErrCode);
     if(str.empty() == true)
-    	return 0;
+    	return ERROR;
     if(nErrCode != SQLITE_OK)
-    	return 0;
+    	return ERROR;
 
 	vector<string> tmpStr;
     Utility::StringToTokens(str, ',', tmpStr);
@@ -1442,9 +1442,9 @@ int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
 	int nErrCode = SQLITE_ERROR;
     string str = ExecuteQuery("select PermissionLevel, Password from "+string(TABLE_USER_PROFILE)+";", &nErrCode);
     if(str.empty() == true)
-    	return 0;
+    	return ERROR;
     if(nErrCode != SQLITE_OK)
-    	return 0;
+    	return ERROR;
     Utility::StringToTokens(str, ',', tmpStr);
 	for(count = 0; count < tmpStr.size()/2; count++)
 	{
@@ -1609,15 +1609,15 @@ int DBAccessL20DB::QueryBlockPowerSupply(char* buffer)
 #endif
 
     Utility::StringToTokens(str, ',', tmpStr);
-	for(count = 0; count < tmpStr.size()/TABLE_RESULT_MEM; count++)
+	for(count = 0; count < tmpStr.size() / TABLE_PWR_SUP_MEM; count++)
 	{
 	    POWER_SUPPLY_TYPE tmpPwr;
-        tmpPwr.Frequency = atoi(tmpStr[count*TABLE_RESULT_MEM+1].c_str());//Frequency
-        tmpPwr.Power = atoi(tmpStr[count*TABLE_RESULT_MEM+2].c_str());//Power
+        tmpPwr.Frequency = atoi(tmpStr[count * TABLE_PWR_SUP_MEM+1].c_str());//Frequency
+        tmpPwr.Power = atoi(tmpStr[count * TABLE_PWR_SUP_MEM+2].c_str());//Power
 		SystemConfiguration::PowerSupplyType.push_back(tmpPwr);
 
 #if UNITTEST_DATABASE
-        LOG("ID: %s\n", tmpStr[count*TABLE_RESULT_MEM].c_str());
+        LOG("ID: %s\n", tmpStr[count * TABLE_PWR_SUP_MEM].c_str());
         LOG("Frequency: %d\n", tmpPwr.Frequency);
         LOG("Power: %d\n", tmpPwr.Power);
         LOG("\n");
@@ -1990,7 +1990,7 @@ int DBAccessL20DB::QueryGatewayMachine(char* buffer)
 #endif
 	vector<string> tmpStr;
     string str;
-    int count;
+    int count = 0;
     auto iter = Connectivity::_DIGMachinesSC->begin();
     str = ExecuteQuery(string("select * from ")+string(TABLE_GATEWAY_MACHINE)+";");
     if(str.empty() == true)
@@ -2014,7 +2014,7 @@ int DBAccessL20DB::QueryGatewayMachine(char* buffer)
 	#endif
         }
 	}
-    return OK;
+    return count;
 }
 
 /**************************************************************************//**

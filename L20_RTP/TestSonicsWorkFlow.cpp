@@ -14,7 +14,7 @@
 #include "SCStateMachine/SCStateMachine.h"
 #include "PCStateMachine.h"
 #include "commons.h"
-
+SONICS_TEST TestSonicsWorkFlow::TestResult;
 /**************************************************************************//**
 * \brief   - Constructor - 
 * 

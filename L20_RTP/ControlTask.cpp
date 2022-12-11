@@ -94,6 +94,8 @@ void ControlTask::updateWorkFlow(char* buff)
 		break;
 	case MAINTAIN_SCREEN:
 		//Intentional fall through
+	case MAINTAIN_SONICS_SCREEN:
+		//Intentional fall through
 	case AMPLITUDE_CALIBRATINON_SCREEN:
 		tmpOperationMode = SCStateMachine::TEST;
 		break;
@@ -184,6 +186,7 @@ void ControlTask::responseStateMachineProcess(MESSAGE& message)
 				break;
 			case SCStateMachine::TEST:
 				message.msgID = UserInterface::TO_UI_TASK_SONICS_TEST_RESPONSE;
+				memcpy(message.Buffer, &TestSonicsWorkFlow::TestResult, sizeof(SONICS_TEST));
 				SendToMsgQ(message, UI_MSG_Q_ID);
 				break;
 			case SCStateMachine::WELD:
@@ -214,6 +217,7 @@ void ControlTask::responseStateMachineProcess(MESSAGE& message)
 				break;
 			case SCStateMachine::TEST:
 				message.msgID = UserInterface::TO_UI_TASK_SONICS_TEST_RESPONSE;
+				memcpy(message.Buffer, &TestSonicsWorkFlow::TestResult, sizeof(SONICS_TEST));
 				SendToMsgQ(message, UI_MSG_Q_ID);
 				break;
 			case SCStateMachine::WELD:

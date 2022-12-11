@@ -14,11 +14,14 @@
 #define TESTSONICSWORKFLOW_H_
 
 #include "WorkFlow.h"
+#include "SonicsTestUI.h"
 class TestSonicsWorkFlow: public WorkFlow 
 {
 private:
 	unsigned int				m_Amplitude;
 	int							m_TriggerCounter;
+public:
+	static SONICS_TEST 	TestResult;
 public:
 	TestSonicsWorkFlow();
 	virtual ~TestSonicsWorkFlow();

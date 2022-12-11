@@ -18,8 +18,6 @@
 using namespace std;
 class TestSonicOn: public SCState 
 {
-private:
-	SONICS_TEST 	m_TestResult;
 public:
 	TestSonicOn();
 	virtual ~TestSonicOn();

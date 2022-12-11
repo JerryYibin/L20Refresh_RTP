@@ -8,19 +8,30 @@
 #ifndef UTILITY_H_
 #define UTILITY_H_
 #define POWER_FACTOR 	(3.0 * 0xFFFF / 4.0)
-#define POWER_MAX		4000
+//#define POWER_MAX		4000
 #define FREQ_FACTOR		((20450.0 - 19450.0)/ 0xFFFF)
 #define FREQ_MAX		20450.0
 #define DAC_FACTOR 		0x03FF
 #define PRESSURE_MAX	120000
-#define AMPLITUDE_MAX	72
+//#define AMPLITUDE_MAX	72
+#include "SystemConfigDefine.h"
 #include "Common.h"
 #include <vector>
 using namespace std;
 class Utility {
+private:
+	static UINT32 SystemPower;
+	static UINT32 SystemFrequency;
+	static UINT32 SystemAmplitude;
 public:
 	Utility();
 	virtual ~Utility();
+	
+	static void		SetSystemPower(const SYSTEMCONFIG::POWER power);
+	static UINT32	GetSystemPower();
+	static void		SetSystemFrequency(const SYSTEMCONFIG::FREQUENCY frequency);
+	static void		SetSystemAmplitude(const UINT32 amplitude);
+	static UINT32	GetSystemAmplitude();
 	
 	static UINT32 HEX2Pressure			(UINT16 hexadecimal);	
 	static UINT32 HEX2Power				(UINT16 hexadcimal);
@@ -42,6 +53,8 @@ public:
 	
 	static int    StringToTokens        (const string strData, const char delimiter, vector<string>&vTokens);
 	static int    TokensToString        (const vector<string>&vTokens, const char delimiter, string &strData);
+	
+	
 };
 
 #endif /* UTILITY_H_ */

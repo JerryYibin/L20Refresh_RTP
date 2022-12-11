@@ -139,12 +139,12 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		updateLastWeldResult();
 		break;
 	case TO_UI_TASK_SYSCONFIG_READ:
-		message.msgID = DataTask::TO_DATA_TASK_SYS_CONFIG_QUERY;
-		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);	
+		//TODO System Configure should be read from database once after power up.
+		responseSystemConfig();	
 		break;
-	case TO_UI_TASK_SYSCONFIG_READ_RESPONSE:
-		responseSystemConfig();
-		break;
+//	case TO_UI_TASK_SYSCONFIG_READ_RESPONSE:
+//		responseSystemConfig();
+//		break;
 	case TO_UI_TASK_SYSCONFIG_WRITE:
 		updateSystemConfigData(message.Buffer);
 		message.msgID = DataTask::TO_DATA_TASK_SYS_CONFIG_UPDATE;

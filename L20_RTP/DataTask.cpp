@@ -23,6 +23,9 @@ DataTask class owned using the class object pointer.
 #include "DataTask.h"
 #include "Database/DBAccess_l20_db.h"
 #include "UserInterface.h"
+#include "SystemConfiguration.h"
+#include "EEPROM.h"
+#include "Utility.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -286,8 +289,6 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_DATA_TASK_SYS_CONFIG_QUERY:
         _ObjDBConn->QuerySystemConfigure(message.Buffer);
-        message.msgID = UserInterface::TO_UI_TASK_SYSCONFIG_READ_RESPONSE;
-        SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case TO_DATA_TASK_ACTIVE_RECIPE_QUERY:
         _ObjDBConn->QueryActiveRecipe(message.Buffer);
@@ -319,9 +320,29 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->UpdateBlockTeachModeSetting(message.Buffer);
 		break;
 	case TO_DATA_TASK_SYS_CONFIG_UPDATE:
+	{
+		SYSTEMCONFIG::POWER power = SYSTEMCONFIG::POWER_5500W; 
+		SYSTEMCONFIG::FREQUENCY frequency = SYSTEMCONFIG::FREQ_20KHZ;
+		UINT32 amplitude = 72;
 		ErrCode = _ObjDBConn->UpdateSystemConfigure(message.Buffer);
+		SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::POWER_OPT, &power);
+		SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::FREQUENCY_OPT, &frequency);
+		if((power != EEPROM::_System->Power) || (frequency != EEPROM::_System->Frequency))
+		{
+			EEPROM::_System->Power 		= power;
+			EEPROM::_System->Frequency 	= frequency;
+			EEPROM::GetInstance()->Write();
+			if(power != EEPROM::_System->Power)
+				Utility::SetSystemPower(power);
+			if(frequency != EEPROM::_System->Frequency)
+				Utility::SetSystemFrequency(frequency);
+		}
+		SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::MAX_AMPLITUDE, &amplitude);
+		if(amplitude != Utility::GetSystemAmplitude())
+			Utility::SetSystemAmplitude(amplitude);
 		sendErrorCode(ErrCode);
 		break;
+	}
 	case TO_DATA_TASK_ACTIVE_RECIPE_UPDATE:
         _ObjDBConn->UpdateActiveRecipe(message.Buffer);
 		break;
@@ -392,16 +413,50 @@ int DataTask::InitData()
     	LOGERR((char* )"DataTask: --------Init Data Error--- : ", 0, 0, 0);
         return ERROR;
     }
-    return (_ObjDBConn->QueryDbVersion(nullptr) 
-    		&& _ObjDBConn->QueryBlockPowerSupply(nullptr)
-    		&& _ObjDBConn->QuerySystemConfigure(nullptr)
-			&& _ObjDBConn->QueryBlockTeachModeSetting(nullptr)
-			&& _ObjDBConn->QueryBlockPowerSupply(nullptr)
-    		&& _ObjDBConn->QueryHeightCalibration(nullptr)
-			&& _ObjDBConn->QueryBlockUserProfiles(nullptr)
-			&& _ObjDBConn->QueryConnectivity(nullptr)
-			&& _ObjDBConn->QueryGatewayMachine(nullptr));
-    		
+    if(_ObjDBConn->QueryDbVersion(nullptr) != OK)
+    {
+    	return ERROR;
+    }
+    if(_ObjDBConn->QueryBlockPowerSupply(nullptr) <= 0)
+    {
+    	return ERROR;
+    }
+    if(_ObjDBConn->QuerySystemConfigure(nullptr) != OK)
+    {
+    	return ERROR;
+    }
+    else
+    {
+    	EEPROM::GetInstance()->Read();
+    	SystemConfiguration::_SystemConfig->Set(SYSTEMCONFIG::POWER_OPT, &EEPROM::_System->Power);
+    	Utility::SetSystemPower(EEPROM::_System->Power);
+    	SystemConfiguration::_SystemConfig->Set(SYSTEMCONFIG::FREQUENCY_OPT, &EEPROM::_System->Frequency);
+    	UINT32 amplitude = 72;
+    	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::MAX_AMPLITUDE, &amplitude);
+    	Utility::SetSystemAmplitude(amplitude);
+    }
+	if(_ObjDBConn->QueryBlockTeachModeSetting(nullptr) <= 0)
+	{
+		return ERROR;
+	}
+	if(_ObjDBConn->QueryHeightCalibration(nullptr) <= 0)
+	{
+		return ERROR;
+	}
+	if(_ObjDBConn->QueryBlockUserProfiles(nullptr) <= 0)
+	{
+		return ERROR;
+	}
+	//TODO need to do further testing
+//	if(_ObjDBConn->QueryConnectivity(nullptr) != OK)
+//	{
+//		return ERROR;
+//	}
+//	if(_ObjDBConn->QueryGatewayMachine(nullptr) <= 0)
+//	{
+//		return ERROR;
+//	}
+    return OK;		
 }
 
 /**************************************************************************//**

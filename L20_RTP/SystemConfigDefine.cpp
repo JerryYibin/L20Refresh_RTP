@@ -337,7 +337,7 @@ void L20_SYSTEMCONFIG::Init()
 	TeachMode.PostHeight_Upper	= 0;
 	TeachMode.PostHeight_Lower	= 0;
 	
-	MaxAmplitude				= AMPLITUDE_MAX;
+	MaxAmplitude				= Utility::GetSystemAmplitude();
 }
 
 /**************************************************************************//**
