@@ -299,10 +299,9 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_DATA_TASK_CONNECTIVITY_QUERY:
         _ObjDBConn->QueryConnectivity(message.Buffer);
 		break;
-	case TO_DATA_TASK_GATEWAY_SERVER_QUERY:
+	case TO_DATA_TASK_GATEWAY_MACHINE_QUERY:
         _ObjDBConn->QueryGatewayMachine(message.Buffer);
 		break;
-
 	case TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE:
 		ErrCode = _ObjDBConn->UpdateHeightCalibration(message.Buffer);
 		sendErrorCode(ErrCode);
@@ -394,6 +393,7 @@ int DataTask::InitData()
         return ERROR;
     }
     return (_ObjDBConn->QueryDbVersion(nullptr) 
+    		&& _ObjDBConn->QueryBlockPowerSupply(nullptr)
     		&& _ObjDBConn->QuerySystemConfigure(nullptr)
 			&& _ObjDBConn->QueryBlockTeachModeSetting(nullptr)
 			&& _ObjDBConn->QueryBlockPowerSupply(nullptr)

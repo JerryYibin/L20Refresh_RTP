@@ -35,7 +35,7 @@
 #define TABLE_SYS_CONFIG     	"SystemConfigure"
 #define TABLE_ACTIVE_RECIPE		"ActiveRecipe"
 #define TABLE_CONNECTIVITY		"Connectivity"
-#define TABLE_GATEWAY_SERVER	"GatewayMachine"
+#define TABLE_GATEWAY_MACHINE	"GatewayMachine"
 #define COLUMN_GRAPHDATA		"WeldGraph"
 #define COLUMN_GOLDEN			"Golden"
 

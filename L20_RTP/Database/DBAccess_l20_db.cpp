@@ -1991,26 +1991,28 @@ int DBAccessL20DB::QueryGatewayMachine(char* buffer)
 	vector<string> tmpStr;
     string str;
     int count;
-
-    str = ExecuteQuery(string("select * from ")+string(TABLE_GATEWAY_SERVER)+";");
+    auto iter = Connectivity::_DIGMachinesSC->begin();
+    str = ExecuteQuery(string("select * from ")+string(TABLE_GATEWAY_MACHINE)+";");
     if(str.empty() == true)
     	return ERROR;
 
     Utility::StringToTokens(str, ',', tmpStr);
 	for(count = 0; count < tmpStr.size()/TABLE_GATEWAY_MACHINE_MEM; count++)
 	{
-		GATEWAY_MACHINE machine;
-        strcpy(machine.DIG_MachineName, tmpStr[count*TABLE_GATEWAY_MACHINE_MEM+1].c_str()); /* MachineName */
-        machine.DIG_MachinePort = atoi(tmpStr[count*TABLE_GATEWAY_MACHINE_MEM+2].c_str());//ServerPort
-        strcpy(machine.DIG_MachineIP, tmpStr[count*TABLE_GATEWAY_MACHINE_MEM+3].c_str()); /* ServerIP */
-		Connectivity::_DIGMachinesUI->push_back(machine);
-#if UNITTEST_DATABASE
-        LOG("ID: %s\n", tmpStr[count*TABLE_GATEWAY_MACHINE_MEM].c_str());
-        LOG("DIG_MachineName: %s\n", machine.DIG_MachineName);
-        LOG("DIG_MachinePort: %d\n", machine.DIG_MachinePort);
-        LOG("DIG_MachineIP: %s\n", machine.DIG_MachineIP);
-        LOG("\n");
-#endif
+        iter = Connectivity::_DIGMachinesSC->find(count);
+        if(iter != Connectivity::_DIGMachinesSC->end())
+        {
+        	memcpy(iter->second.DIG_MachineName, tmpStr[count*TABLE_GATEWAY_MACHINE_MEM+1].c_str(), MACHINE_NAME_LEN); /* MachineName */
+			iter->second.DIG_MachinePort = atoi(tmpStr[count*TABLE_GATEWAY_MACHINE_MEM+2].c_str()); //ServerPort
+			memcpy(iter->second.DIG_MachineIP, tmpStr[count*TABLE_GATEWAY_MACHINE_MEM+3].c_str(), IP_ADD_LEN); /* ServerIP */
+	#if UNITTEST_DATABASE
+			LOG("ID: %s\n", tmpStr[count*TABLE_GATEWAY_MACHINE_MEM].c_str());
+			LOG("DIG_MachineName: %s\n", machine.DIG_MachineName);
+			LOG("DIG_MachinePort: %d\n", machine.DIG_MachinePort);
+			LOG("DIG_MachineIP: %s\n", machine.DIG_MachineIP);
+			LOG("\n");
+	#endif
+        }
 	}
     return OK;
 }
@@ -2206,7 +2208,7 @@ int DBAccessL20DB::RenameWeldRecipe(char* buffer)
 	if(Recipe::RecipeSC == nullptr)
     	Recipe::RecipeSC = WeldRecipeSC::GetWeldRecipeSC();
     Recipe::RecipeSC->m_RecipeID = 1;
-    LOG("# Recipe::RecipeSC->m_RecipeID %d\n", Recipe::RecipeSC->m_RecipeID);
+	LOG("# Recipe::RecipeSC->m_RecipeID %d\n", Recipe::RecipeSC->m_RecipeID);
 #endif
 	strStore = ExecuteQuery(
 			"select RecipeName from " + string(TABLE_WELD_RECIPE) +
