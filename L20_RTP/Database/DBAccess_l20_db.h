@@ -25,7 +25,7 @@
 #define FIRST_SEND_DATA_NUM		10
 #define ONE_RESULT_PAGE_NUM		4
 
-#define TABLE_RESULT_MEM		15 /* there are 15 columns in table WeldResult */
+#define TABLE_RESULT_MEM		24 /* there are 15+9 columns in table WeldResult */
 #define TABLE_PWR_SUP_MEM		3
 #define TABLE_TEACH_MODE_MEM	11
 #define TABLE_ALARMLOG_MEM		7 /* there are 7 columns in table AlarmLog */

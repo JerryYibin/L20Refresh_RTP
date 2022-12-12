@@ -263,6 +263,8 @@ int main(int argc, char *argv[])
  *     third parameter is ID of last in RESULT_FOR_UI_MAX
  *   c for TO_DATA_TASK_WELD_RESULT_CLEAR
  *   d for TO_DATA_TASK_WELD_RESULT_DELETE
+ *   e for TO_DATA_TASK_WELD_RESULT_QUERY_LATEST_PAGE
+ *   f for TO_DATA_TASK_WELD_RESULT_QUERY_NEXT_PAGE
  *
  * 3 for WeldResultSignature_Data
  *   a for TO_DATA_TASK_WELD_SIGN_INSERT
@@ -443,6 +445,12 @@ int main(int argc, char *argv[])
                         break;
                     case 'd':
                         buf.msgID = TO_DATA_TASK_WELD_RESULT_DELETE;
+                        break;
+                    case 'e':
+                        buf.msgID = TO_DATA_TASK_WELD_RESULT_QUERY_LATEST_PAGE;
+                        break;
+                    case 'f':
+                        buf.msgID = TO_DATA_TASK_WELD_RESULT_QUERY_NEXT_PAGE;
                         break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
