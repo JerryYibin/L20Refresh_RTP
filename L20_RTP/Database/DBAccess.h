@@ -42,7 +42,7 @@ public:
 
 	virtual int 	QueryWeldResultLatestPage(char *)		= 0;
 	virtual int 	QueryWeldResultNextPage(char *)			= 0;
-	virtual int 	QueryBlockWeldResult(char *)			= 0;
+	virtual int 	QueryLatestWeldResult(char *)			= 0;
 	virtual int 	QueryWeldSignature(char *)				= 0;
 	virtual int 	QueryWeldRecipe(char *)					= 0;
 	virtual int 	QueryAlarmLogLatestPage(char *)			= 0;

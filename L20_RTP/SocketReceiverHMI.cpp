@@ -206,6 +206,21 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_AMPLITUDE_CALIBRATE_SAVE_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_AMPLITUDE_CALIBRATE_SAVE_IDX;
 		break;
+	case REQ_GET_PERMISSION_SCREEN:
+		message.msgID = UserInterface::TO_UI_TASK_PERMISSION_SCREEN_GET;
+		break;
+	case REQ_SET_PERMISSION_SCREEN:
+		message.msgID = UserInterface::TO_UI_TASK_PERMISSION_SCREEN_SET;
+		break;
+	case REQ_GET_PASSCODE_LIST:
+		message.msgID = UserInterface::TO_UI_TASK_PASSCODE_LIST_GET;
+		break;
+	case REQ_UPDATE_PASSCODE:
+		message.msgID = UserInterface::TO_UI_TASK_PASSCODE_UPDATE;
+		break;
+	case REQ_VALIDATE_PASSCODE:
+		message.msgID = UserInterface::TO_UI_TASK_VALIDATE_PASSCODE;
+		break;
 	default:
 		iResult = ERROR;
 		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);

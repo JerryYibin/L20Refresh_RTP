@@ -55,7 +55,7 @@ public:
 		
 		TO_UI_TASK_SETUP_CLICKET_PARAM,
 		TO_UI_TASK_ACTIVE_RECIPE_INFO_RESPONSE,
-//		TO_UI_TASK_SYSCONFIG_READ_RESPONSE,
+		TO_UI_TASK_SYSCONFIG_READ_RESPONSE,
 		TO_UI_TASK_LAST_WELD_RESULT,
 		TO_UI_TASK_HEIGHT_CALIBRATE_RESPONSE,
 		TO_UI_TASK_HEIGHT_CHECK_RESPONSE,
@@ -90,7 +90,14 @@ public:
 		TO_UI_TASK_POWER_CURVE_EXTERNAL_REQ,
 		TO_UI_TASK_HEIGHT_CURVE_EXTERNAL_REQ,
 		TO_UI_TASK_FREQUENCY_CURVE_EXTERNAL_REQ,
-		TO_UI_TASK_AMPLITUDE_CALIBRATE_SAVE_IDX
+		TO_UI_TASK_AMPLITUDE_CALIBRATE_SAVE_IDX,
+		TO_UI_TASK_PERMISSION_SCREEN_GET,
+		TO_UI_TASK_PERMISSION_SCREEN_SET,
+		TO_UI_TASK_PERMISSION_SCREEN_SET_RESPOMSE,
+		TO_UI_TASK_PASSCODE_LIST_GET,
+		TO_UI_TASK_PASSCODE_UPDATE,
+		TO_UI_TASK_PASSCODE_UPDATE_RESPOMSE,
+		TO_UI_TASK_VALIDATE_PASSCODE
 	};
 	UserInterface();
 	~UserInterface();
@@ -148,6 +155,14 @@ private:
 	void 			responseReadFrquencyGraphRequest    ();
 	void			responseCurrentAlarmEventRequest	();
 	void			responseCurrentAlarmEventReset		();
+	void 			responsePermissionScreenGetRequest  ();
+	void 			setScreenPermission         		(char* messagebuf);
+	void 			responsePasscodeListGetRequest      ();
+	void 			updateUserPasscode                  (char* messagebuf);
+	void 			responseCheckPasscodeRequest		(char* messagebuf);
+	void 			responsePermissionScreenSetRequest  (char* messagebuf);
+	void 			responseUpdatePasscodeRequest       (char* messagebuf);
+	
 };
 
 #endif /* USERINTERFACE_H_ */

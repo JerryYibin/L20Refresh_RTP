@@ -247,8 +247,8 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		ErrCode = _ObjDBConn->UpdateWeldRecipe(message.Buffer);
         sendErrorCode(ErrCode);
 		break;
-	case TO_DATA_TASK_WELD_RESULT_QUERY:
-        _ObjDBConn->QueryBlockWeldResult(message.Buffer);
+	case TO_DATA_TASK_LATEST_WELD_RESULT_QUERY:
+        _ObjDBConn->QueryLatestWeldResult(message.Buffer);
 		break;
 	case TO_DATA_TASK_WELD_SIGN_QUERY:
         _ObjDBConn->QueryWeldSignature(message.Buffer);
@@ -457,6 +457,7 @@ int DataTask::InitData()
 	{
 		return ERROR;
 	}
+	_ObjDBConn->QueryLatestWeldResult(nullptr);
 	//TODO need to do further testing
 //	if(_ObjDBConn->QueryConnectivity(nullptr) != OK)
 //	{

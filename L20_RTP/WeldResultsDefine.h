@@ -23,6 +23,7 @@
 #define USER_NAME_SIZE						16
 #define WELD_TIME_SIZE						20
 #define BARCODE_DATA_SIZE					50
+#define TABLE_RESULT_MEM                    25 /* there are 15 columns in table WeldResult */
 typedef uint32_t UINT32;
 typedef int32_t  INT32;
 using namespace std;

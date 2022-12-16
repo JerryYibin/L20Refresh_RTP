@@ -17,11 +17,7 @@
 #include "HeartBeatUI.h"
 #include "WeldResultsDefine.h"
 #include <vector>
-///////////////////////////////////
 
-#define L20REFRESH 							1
-#define USER_NAME_SIZE						16
-#define BARCODE_DATA_SIZE					50
 using namespace std;
 #if GSX
 	struct WELD_RESULT

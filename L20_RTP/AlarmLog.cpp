@@ -48,9 +48,9 @@ AlarmLog::~AlarmLog(){
 * \return  - vector<WeldResultsUI> - The vector that is sent to the UI
 *
 ******************************************************************************/
-std::vector<UI_ALARM_LOG> AlarmLog::TransformAlarmLogVector()
+unique_ptr<vector<UI_ALARM_LOG>> AlarmLog::TransformAlarmLogVector()
 {
-	std::vector<UI_ALARM_LOG> AlarmLogUIVector;
+	auto ptr_Vector = std::make_unique<std::vector<UI_ALARM_LOG>>();
 	UI_ALARM_LOG _sysAlarmLog;
 	for(auto& i : AlarmLog::AlarmVector)
 	{
@@ -59,7 +59,7 @@ std::vector<UI_ALARM_LOG> AlarmLog::TransformAlarmLogVector()
 		i->Get(AlarmLogDefine::PARALIST::RECIPE_NAME, _sysAlarmLog.RecipeName);
 		i->Get(AlarmLogDefine::PARALIST::DATE_TIME, _sysAlarmLog.DateTime);
 		
-		AlarmLogUIVector.push_back(_sysAlarmLog);;
+		ptr_Vector->push_back(_sysAlarmLog);
 	}
-	return AlarmLogUIVector;
+	return ptr_Vector;
 }
