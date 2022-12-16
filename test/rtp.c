@@ -186,17 +186,21 @@ enum MESSAGE_IDENTIFY
     TO_DATA_TASK_WELD_RESULT_INSERT,
     TO_DATA_TASK_WELD_RESULT_DELETE,
     TO_DATA_TASK_WELD_RESULT_CLEAR,
+    TO_DATA_TASK_WELD_RESULT_ID,
 
     TO_DATA_TASK_WELD_SIGN_QUERY,
     TO_DATA_TASK_WELD_SIGN_INSERT,
     TO_DATA_TASK_WELD_SIGN_DELETE,
     TO_DATA_TASK_WELD_SIGN_CLEAR,
+    TO_DATA_TASK_WELD_SIGN_ID,
 
     TO_DATA_TASK_ALARM_LOG_QUERY,
     TO_DATA_TASK_ALARM_LOG_QUERY_LATEST_PAGE,
     TO_DATA_TASK_ALARM_LOG_QUERY_NEXT_PAGE,
     TO_DATA_TASK_ALARM_LOG_INSERT,
     TO_DATA_TASK_ALARM_LOG_CLEAR,
+    TO_DATA_TASK_ALARM_LOG_ID,
+
     TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY,
     TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE,
 
@@ -265,22 +269,24 @@ int main(int argc, char *argv[])
  *   d for TO_DATA_TASK_WELD_RESULT_DELETE
  *   e for TO_DATA_TASK_WELD_RESULT_QUERY_LATEST_PAGE
  *   f for TO_DATA_TASK_WELD_RESULT_QUERY_NEXT_PAGE
+ *   i fpr TO_DATA_TASK_WELD_RESULT_ID
  *
  * 3 for WeldResultSignature_Data
  *   a for TO_DATA_TASK_WELD_SIGN_INSERT
  *     third parameter is WeldResultID
- *   x for TO_DATA_TASK_WELD_SIGN_INSERT
- *     third parameter is count
+ *     fourth parameter is count
  *   b for TO_DATA_TASK_WELD_SIGN_QUERY
  *   c for TO_DATA_TASK_WELD_SIGN_CLEAR
  *   d for TO_DATA_TASK_WELD_SIGN_DELETE
+ *   i fpr TO_DATA_TASK_WELD_SIGN_ID
  *
  * 4 for AlarmLog
  *   a for TO_DATA_TASK_ALARM_LOG_INSERT
- *     third parameter is data
+ *     third parameter is count
  *   b for TO_DATA_TASK_ALARM_LOG_QUERY
  *     third parameter for ID of last in ALARM_LOG_MAX
  *   c for TO_DATA_TASK_ALARM_LOG_CLEAR
+ *   i fpr TO_DATA_TASK_ALARM_LOG_ID
  *
  * 5 for HeightCalibration
  *   b for TO_DATA_TASK_HEIGHT_CALIBRATE_QUERY
@@ -417,6 +423,7 @@ int main(int argc, char *argv[])
                         {
                         int i;    
                         int count = 1;
+
                         buf.msgID = TO_DATA_TASK_WELD_RESULT_INSERT;
 
                         if(argc>=4)
@@ -452,6 +459,9 @@ int main(int argc, char *argv[])
                     case 'f':
                         buf.msgID = TO_DATA_TASK_WELD_RESULT_QUERY_NEXT_PAGE;
                         break;
+                    case 'i':
+                        buf.msgID = TO_DATA_TASK_WELD_RESULT_ID;
+                        break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;
@@ -464,32 +474,28 @@ int main(int argc, char *argv[])
                     {
                     case 'a':
                         {
-                        int *pData = (int *)&buf.Buffer[0];
-                        if(argc>=4)
-                            *pData = atoi(argv[3]);
-                        else
-                            *pData = 1;
-                        buf.msgID = TO_DATA_TASK_WELD_SIGN_INSERT;
-                        break;
-                        }
-                    case 'x':
-                        {
                         int i;    
-                        int count = 1;
+                        int count;
                         int *pData = (int *)&buf.Buffer[0];
+
                         buf.msgID = TO_DATA_TASK_WELD_SIGN_INSERT;
 
                         if(argc>=4)
-                            count = atoi(argv[3]);
+                            {
+                            *pData = atoi(argv[3]);
+                            if(argc>=5)
+                                count = atoi(argv[4]);
+                            }
+                        else
+                            *pData = 1;
                         if((count<1)||(count>5000))
                             count = 1;
                         for(i=0; i<(count-1); i++)
                             {
-                            *pData = i+1;
                             msgQSend(mqidControl, (char *)&buf, sizeof(MESSAGE),-1,0);
                             eventSend(tid, DATA_TASK_EVENT);
+                            *pData += 1;
                             }
-                        *pData = i+1;
                         break;
                         }
                     case 'b':
@@ -508,6 +514,9 @@ int main(int argc, char *argv[])
                     case 'd':
                         buf.msgID = TO_DATA_TASK_WELD_SIGN_DELETE;
                         break;
+                    case 'i':
+                        buf.msgID = TO_DATA_TASK_WELD_SIGN_ID;
+                        break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);
                         return 0;
@@ -520,12 +529,21 @@ int main(int argc, char *argv[])
                     {
                     case 'a':
                         {
-                        int *pData = (int *)&buf.Buffer[0];
-                        if(argc>=4)
-                            *pData = atoi(argv[3]);
-                        else
-                            *pData = 1;
+                        int i;    
+                        int count;
+
                         buf.msgID = TO_DATA_TASK_ALARM_LOG_INSERT;
+
+                        if(argc>=4)
+                            count = atoi(argv[3]);
+
+                        if((count<1)||(count>1000000))
+                            count = 1;
+                        for(i=0; i<(count-1); i++)
+                            {
+                            msgQSend(mqidControl, (char *)&buf, sizeof(MESSAGE),-1,0);
+                            eventSend(tid, DATA_TASK_EVENT);
+                            }
                         break;
                         }
                     case 'b':
@@ -540,6 +558,9 @@ int main(int argc, char *argv[])
                         }
                     case 'c':
                         buf.msgID = TO_DATA_TASK_ALARM_LOG_CLEAR;
+                        break;
+                    case 'i':
+                        buf.msgID = TO_DATA_TASK_ALARM_LOG_ID;
                         break;
                     default:
                         printf("invalid cmd:%s\n", argv[2]);

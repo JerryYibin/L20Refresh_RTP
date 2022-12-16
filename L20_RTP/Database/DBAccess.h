@@ -77,7 +77,9 @@ public:
 
 	virtual int 	DeleteOldest(const char *)				= 0;
 	virtual int		DeleteSpecificRecipe(const char *)		= 0;
-	
+
+	virtual int 	getLatestID(const string table, int* _id)		= 0;
+
 	string GetWeldSignatureGraphBlob(int nRowID, int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);
 	vector <int> GetGoldenWeldSignatureRowNumbers(int *pnStatus = nullptr, int nRetryCounter = SQLITE_BUSY_DEFAULT_RETRY_COUNT);
 	//End of methods to fetch data from database needed for CSV reports generation.

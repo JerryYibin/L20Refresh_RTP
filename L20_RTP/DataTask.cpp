@@ -391,6 +391,16 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		ErrCode = _ObjDBConn->RenameWeldRecipe(message.Buffer);
 		sendErrorCode(ErrCode);
 		break;
+
+	case TO_DATA_TASK_WELD_RESULT_ID:
+        _ObjDBConn->getLatestID(TABLE_WELD_RESULT, nullptr);
+		break;
+	case TO_DATA_TASK_WELD_SIGN_ID:
+        _ObjDBConn->getLatestID(TABLE_WELD_SIGNATURE, nullptr);
+		break;
+	case TO_DATA_TASK_ALARM_LOG_ID:
+        _ObjDBConn->getLatestID(TABLE_ALARM_LOG, nullptr);
+		break;
 	default:
 		LOGERR((char* )"DataTask: --------Unknown Message ID----------- : %d", message.msgID, 0, 0);
 		break;

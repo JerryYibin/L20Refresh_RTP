@@ -227,11 +227,15 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 	if(nErrCode == 0)
 	{
 #if UNITTEST_DATABASE
+        if((id%10000)==0)
+            {
         LOG("# store WeldResult to ID %u\n", id);
         LOG("# %s\n", strStore.c_str());
+            }
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
+            LOG("# DeleteOldest WeldResult ID %u\n", id);
         	DeleteOldest(TABLE_WELD_RESULT);
 		}
 	}
@@ -261,6 +265,10 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
     int id;
 	int WeldResultID = WeldResults::_WeldResults->WeldResultID;
 	int nErrCode = SQLITE_ERROR;
+
+#if UNITTEST_DATABASE
+    WeldResultID = *(int *)buffer;
+#endif
 
 	str = ExecuteQuery(
             "select * from "+string(TABLE_WELD_SIGNATURE)+
@@ -314,10 +322,12 @@ int DBAccessL20DB::StoreWeldSignature(char* buffer)
 	if(nErrCode == SQLITE_OK)
 	{
 #if UNITTEST_DATABASE
-        LOG("# store WeldSignature to ID %u\n", id);
+        if((id%1000)==0)
+            LOG("# store WeldSignature to ID %u\n", id);
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_SIGNAT_LIMIT)
 		{
+            LOG("# DeleteOldest WeldSignature ID %u\n", id);
             DeleteOldest(TABLE_WELD_SIGNATURE);
 		}
 	}
@@ -532,10 +542,14 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	if(nErrCode == SQLITE_OK)
 	{
 #if UNITTEST_DATABASE
-        LOG("# store AlarmLog to ID(%u) with WeldResultID(%u)\n", id, event.m_WeldResultID);
+        if((id%10000)==0)
+            {
+            LOG("# store AlarmLog to ID(%u) with WeldResultID(%u)\n", id, event.m_WeldResultID);
+            }
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
+            LOG("# DeleteOldest AlarmLog ID %u\n", id);
             DeleteOldest(TABLE_ALARM_LOG);
 		}
 	}
@@ -2221,15 +2235,24 @@ int DBAccessL20DB::getLatestID(const string table, int* _id)
 	int errorCode = SQLITE_OK;
 	if(table.empty() == true)
 		return ERROR;
-	if(_id == nullptr)
-		return ERROR;
+
     string strQuery =
         "select seq from sqlite_sequence where name='" +
         table +
         "';";
     string str = ExecuteQuery(strQuery, &errorCode);
     if(errorCode == SQLITE_OK)
-    	*_id = atoi(str.c_str());
+        {
+	    if(_id == nullptr)
+        {   
+#if UNITTEST_DATABASE
+            LOG("latest id of table %s is %u\n", table.c_str(), atoi(str.c_str()));
+#endif
+            errorCode = SQLITE_ERROR;
+        }
+        else
+        	*_id = atoi(str.c_str());
+        }
     return errorCode;
 }
 
