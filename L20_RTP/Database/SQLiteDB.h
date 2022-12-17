@@ -18,12 +18,6 @@
 //Values read from database are separated by comma
 #define DB_VALUE_SEPARATOR	","
 
-//records read from database are separated by semicolon
-#define DB_RECORD_SEPARATOR	";"
-#undef  DB_RECORD_SEPARATOR
-#ifndef DB_RECORD_SEPARATOR
-#endif
-
 //Retry interval in case SQLITE_BUSY/SQLITE_LOCKED error returned.
 #define SQLITE_BUSY_RETRY_INTERVAL	FIFTY_MS_DELAY
 					

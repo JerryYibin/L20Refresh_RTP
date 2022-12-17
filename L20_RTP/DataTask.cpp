@@ -415,6 +415,16 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		message.msgID = UserInterface::TO_UI_TASK_GET_WELDRESULTHISTORY_FREQUENCY_DATA;
 		SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
+
+	case TO_DATA_TASK_WELD_RESULT_ID:
+        _ObjDBConn->getLatestID(TABLE_WELD_RESULT, nullptr);
+		break;
+	case TO_DATA_TASK_WELD_SIGN_ID:
+        _ObjDBConn->getLatestID(TABLE_WELD_SIGNATURE, nullptr);
+		break;
+	case TO_DATA_TASK_ALARM_LOG_ID:
+        _ObjDBConn->getLatestID(TABLE_ALARM_LOG, nullptr);
+		break;
 	default:
 		LOGERR((char* )"DataTask: --------Unknown Message ID----------- : %d", message.msgID, 0, 0);
 		break;
@@ -485,6 +495,17 @@ int DataTask::InitData()
 		return ERROR;
 	}
 	if(_ObjDBConn->QueryLatestWeldResult(nullptr) != OK)
+	{
+		return ERROR;
+	}
+
+	_ObjDBConn->QueryLatestWeldResult(nullptr);
+	//TODO need to do further testing
+	if(_ObjDBConn->QueryConnectivity(nullptr) != OK)
+	{
+		return ERROR;
+	}
+	if(_ObjDBConn->QueryGatewayMachine(nullptr) <= 0)
 	{
 		return ERROR;
 	}

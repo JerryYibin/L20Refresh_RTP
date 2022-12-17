@@ -25,7 +25,7 @@
 #define FIRST_SEND_DATA_NUM		10
 #define ONE_RESULT_PAGE_NUM		4
 
-#define TABLE_RESULT_MEM		25 /* there are 15 columns in table WeldResult */
+#define TABLE_RESULT_MEM		25 /* there are 25 columns in table WeldResult */
 #define TABLE_PWR_SUP_MEM		3
 #define TABLE_TEACH_MODE_MEM	11
 #define TABLE_ALARMLOG_MEM		7 /* there are 7 columns in table AlarmLog */
@@ -37,7 +37,6 @@ private:
 	int sendDataNum;
     void assignWeldResult(const string&);
     void assignAlarmLog(const string&);
-    int getLatestID(const string table, int* _id);
     int Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr);
     int JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray);
     int Array2Vector(const WeldStepValueSetting* _ptrArray, vector<WeldStepValueSetting>* _ptrvector);
@@ -109,6 +108,8 @@ public:
 
 	virtual int 	DeleteOldest(const char *) 				override;
 	virtual int 	DeleteSpecificRecipe(const char *)		override;
+
+	virtual int 	getLatestID(const string table, int* _id)	override;
 
 	//End of methods to fetch data from database needed for CSV reports generation.	
 };

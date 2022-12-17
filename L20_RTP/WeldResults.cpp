@@ -30,7 +30,6 @@ std::vector<WeldResultsUI> WeldResult::TransformResultsVector()
 	{
 		strncpy(_sysWeldResult.RecipeName,i->RecipeName, USER_NAME_SIZE);
 		strncpy(_sysWeldResult.DateTime,i->DateTime, WELD_TIME_SIZE);
-		
     	_sysWeldResult.WeldMode 	= i->WeldMode;//WeldMode
     	_sysWeldResult.Energy 		= i->Energy;//WeldEnergy
 		_sysWeldResult.Amplitude 	= i->Amplitude;//WeldAmplitude
