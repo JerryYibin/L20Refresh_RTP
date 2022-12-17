@@ -1273,7 +1273,6 @@ int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
         LOG("new _UserProfilesSC\n");
         }
 #endif
-    int PermissionLevel;
     int count;
 	vector<string> tmpStr;
 	User tmpUser;
@@ -1948,7 +1947,7 @@ int DBAccessL20DB::RenameWeldRecipe(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
 {
-	int nErrCode = HEIGHT_CALIBRATE_ERROR;
+	int nErrCode = ERROR;
     int PSI = 0;
     auto iter = HeightEncoder::HeightCalibratedMap.begin();
     for(iter = HeightEncoder::HeightCalibratedMap.begin(); iter != HeightEncoder::HeightCalibratedMap.end(); iter++)
@@ -1974,7 +1973,7 @@ int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
     	}
     }
     if(iter == HeightEncoder::HeightCalibratedMap.end())
-    	nErrCode = HEIGHT_CALIBRATE_OK;
+    	nErrCode = OK;
     return nErrCode;
 }
 
@@ -2253,7 +2252,8 @@ int DBAccessL20DB::getLatestID(const string table, int* _id)
 	int errorCode = SQLITE_OK;
 	if(table.empty() == true)
 		return ERROR;
-
+	if(_id == nullptr)
+		return ERROR;
     string strQuery =
         "select seq from sqlite_sequence where name='" +
         table +

@@ -37,6 +37,7 @@ private:
 	int sendDataNum;
     void assignWeldResult(const string&);
     void assignAlarmLog(const string&);
+    int getLatestID(const string table, int* _id);
     int Struct2JSON(const WeldStepValueSetting* _ptrArray, const unsigned int size, string& jsonStr);
     int JSON2Struct(const string jsonStr, WeldStepValueSetting* _ptrArray);
     int Array2Vector(const WeldStepValueSetting* _ptrArray, vector<WeldStepValueSetting>* _ptrvector);
@@ -108,8 +109,6 @@ public:
 
 	virtual int 	DeleteOldest(const char *) 				override;
 	virtual int 	DeleteSpecificRecipe(const char *)		override;
-
-	virtual int 	getLatestID(const string table, int* _id)	override;
 
 	//End of methods to fetch data from database needed for CSV reports generation.	
 };
