@@ -42,7 +42,7 @@ public:
 		TO_DATA_TASK_WELD_RECIPE_TOTAL_NUMBER,
 		TO_DATA_TASK_WELD_RECIPE_RENAME,
 
-    	TO_DATA_TASK_WELD_RESULT_QUERY,
+    	TO_DATA_TASK_LATEST_WELD_RESULT_QUERY,
 		TO_DATA_TASK_WELD_RESULT_QUERY_LATEST_PAGE,
 		TO_DATA_TASK_WELD_RESULT_QUERY_NEXT_PAGE,
     	TO_DATA_TASK_WELD_RESULT_INSERT,
@@ -88,6 +88,13 @@ public:
     	TO_DATA_TASK_CONNECTIVITY_UPDATE,
 
 		TO_DATA_TASK_GATEWAY_MACHINE_QUERY,
+		
+		TO_DATA_TASK_PERMISSION_SCREEN_SET,
+		TO_DATA_TASK_PASSCODE_UPDATE,
+		  
+		TO_DATA_TASK_READ_WELDRESULTHISTORY_POWER_DATA,    
+		TO_DATA_TASK_READ_WELDRESULTHISTORY_HEIGHT_DATA,   
+		TO_DATA_TASK_READ_WELDRESULTHISTORY_FREQUENCY_DATA
 	};
 public:
 	DataTask();
@@ -102,7 +109,8 @@ private:
     int			InitData					();
     void		sendErrorCode				(int ErrCode);
     void		sendTotalNumber				(int Number);
-    
+    void 		updateScreenPermission		(char* messagebuf);
+    void 		updateUserPassword			(char* messagebuf);
 private:
     MSG_Q_ID 			SELF_MSG_Q_ID_DATA;
     MSG_Q_ID 			SELF_MSG_Q_ID_REQUEST;

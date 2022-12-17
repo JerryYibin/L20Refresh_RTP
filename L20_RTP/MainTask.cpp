@@ -516,9 +516,10 @@ int main()
 	ADC_AD7689::InitADConverter();
 	HeightEncoder::GetInstance();
 	Connectivity::GetInstance();
+	UserAuthority::GetInstance();
 	//TODO only for Sonics Test feature testing.
 	SystemConfiguration::_SystemConfig->Init();
-	
+
 	MainTask *MT 		= new(nothrow) MainTask();
 	if(NULL != MT)
 	{

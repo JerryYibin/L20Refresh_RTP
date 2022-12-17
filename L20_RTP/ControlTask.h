@@ -44,6 +44,7 @@ private:
 	//Just list out all the external Message ID, don't include itself.
 	MSG_Q_ID 				UI_MSG_Q_ID;
 	MSG_Q_ID 				DATA_MSG_Q_ID_CTRL;
+	MSG_Q_ID				ACT_MSG_Q_ID;
 	
 	int						m_OperationMode;
 	static WorkFlow*		_WorkFlowObj;				

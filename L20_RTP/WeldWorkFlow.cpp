@@ -97,7 +97,10 @@ int WeldWorkFlow::RunProcess(void)
 		}
 		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::BATCH_SIZE, &batchCount);
 		if(WeldResults::_WeldResults->CycleCounter >= batchCount)
+		{
+			SCStateMachine::getInstance()->SetCoreState(ERR_BATCH_SIZE);
 			state = FINISH;
+		}
 		else
 			state = ONGOING;
 	}
@@ -127,6 +130,11 @@ int WeldWorkFlow::UpdateResult(void)
 	//MaintCount[GENERATORCOUNT]++;
 	//MaintCount[ACTUATORCOUNT]++;
 	return 0;
+}
+
+void WeldWorkFlow::ResetProcess(void)
+{
+	
 }
 
 void WeldWorkFlow::SetOperationMode(unsigned int operation)

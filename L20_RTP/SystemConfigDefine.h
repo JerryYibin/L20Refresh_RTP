@@ -53,9 +53,10 @@ public:
 		HGT_ENCODER,
 		FOOT_PEDAL_ABORT,
 		LOCK_ON_ALARM,
+		FIRST_SCREEN_OPT,
 		COOLING_OPTION,
 		COOLING_DURATION,
-		COLLING_DELAY,
+		COOLING_DELAY,
 		AMP_UNIT_OPT,
 		PRESSURE_UNIT_OPT,
 		HGT_UNIT_OPT,
@@ -146,6 +147,7 @@ private:
 	bool bHeightEncoder;
 	bool bFootPedalAbort;
 	bool bLockOnAlarm;
+	bool bFirstScreen;
 	COOLING Cooling;
 	unsigned int CoolingDuration;
 	unsigned int CoolingDelay;

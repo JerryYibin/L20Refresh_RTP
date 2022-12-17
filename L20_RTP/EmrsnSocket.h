@@ -22,6 +22,7 @@
 #define MAX_READ_WAIT_TIME_CLIENT 	2 // Seconds.  2 Seconds required if network is too busy.
 #define TEMP_READ_BUFF_LEN          1000
 #define MAX_READ_WAIT_TIME			3 /* N - No.of seconds */
+#define SOCKET_DEBUG 0
 /* While blocking on Read() if there is no response
  from the other side for more than 300 secs the connection terminates. */
 

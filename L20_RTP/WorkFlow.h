@@ -33,6 +33,7 @@ public:
 	virtual void 	TriggerProcess	(void) = 0;
 	virtual int		RunProcess		(void) = 0;
 	virtual int 	UpdateResult	(void) = 0;
+	virtual void	ResetProcess	(void) = 0;
 };
 
 #endif /* WORKFLOW_H_ */

@@ -44,7 +44,6 @@ public:
 	void 					RunStateMachine();
 	bool 					GetStateMachineState() const;
 	int						GetCurrentStateIndex() const;
-	void 					SetCoolingTimer(unsigned int delay, unsigned int duration);
 	
 	int 					LoadStatesHandler(int operation);
 	
@@ -54,7 +53,6 @@ public:
 	void					SelectHeightCalibrateSequence(void);
 	void					SelectSonicsTestSequence(void);
 	void					SelectAlarmEStopSequence(void);
-	void 					XTickTock();
 	unsigned int			GetCoreState						();
 	void					SetCoreState						(unsigned int coreState);
 	void					ClearCoreState						(unsigned int coreState);
@@ -68,8 +66,6 @@ private:
 	map<SCState::STATE, int>*		_objStateMap;
 	map<SCState::STATE, SCState*>* _objActionMap;
 	unsigned int					m_StateIndex;
-	unsigned int					m_CoolDelayTimer;
-	unsigned int					m_CoolDurationTimer;
 	bool							m_IsRunning;
 	bool							m_IsLoading;
 	static SCState* 				m_objState;

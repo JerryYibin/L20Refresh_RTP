@@ -32,6 +32,7 @@ private:
 	vector<unsigned int> 		m_CalibrateReference;
 	unsigned int 				m_CalibrateStep;
 	unsigned int				m_OperationMode;
+	STATE 						m_State;
 private:
 	int calculateHeightPoint(unsigned int min, unsigned int max, unsigned int start, unsigned int end);
 public:
@@ -42,6 +43,7 @@ public:
 	virtual void 	TriggerProcess		(void) override;
 	virtual int 	UpdateResult		(void) override;
 	virtual int 	RunProcess			(void) override;
+	virtual void	ResetProcess		(void) override;
 	virtual void 	SetPressure			(unsigned int pressure);
 	virtual void 	SetCorrectHeight	(unsigned int height);
 	virtual void 	SetOperationMode	(unsigned int operation);

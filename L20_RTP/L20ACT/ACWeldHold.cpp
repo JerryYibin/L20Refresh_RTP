@@ -70,6 +70,8 @@ void ACWeldHold::Loop()
 	if((ACStateMachine::AC_RX->MasterState == SCState::RETURN_STROKE) || 
 			(ACStateMachine::AC_RX->MasterState == SCState::WAIT_FOR_READY_POSITION))
 		ChangeState(AC_RETURN_STROKE);
+	else if(ACStateMachine::AC_RX->MasterState == SCState::PRE_READY)
+		ChangeState(AC_READY);
 	else
 	{
 		// do more something here...

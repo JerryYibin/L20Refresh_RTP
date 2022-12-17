@@ -146,13 +146,16 @@ int L20_SYSTEMCONFIG::Get(const int index, void* _data)
 	case LOCK_ON_ALARM:
 		*(bool*)(_data) = bLockOnAlarm;
 		break;
+	case FIRST_SCREEN_OPT:
+		*(bool*)(_data) = bFirstScreen;
+		break;
 	case COOLING_OPTION:
 		*(L20_SYSTEMCONFIG::COOLING*)(_data) = Cooling;
 		break;
 	case COOLING_DURATION:
 		*(unsigned int*)(_data) = CoolingDuration;
 		break;
-	case COLLING_DELAY:
+	case COOLING_DELAY:
 		*(unsigned int*)(_data) = CoolingDelay;
 		break;
 	case AMP_UNIT_OPT:
@@ -241,13 +244,16 @@ int L20_SYSTEMCONFIG::Set(const int index, const void* _data)
 	case LOCK_ON_ALARM:
 		bLockOnAlarm = *(bool*)(_data);
 		break;
+	case FIRST_SCREEN_OPT:
+		bFirstScreen = *(bool*)(_data);
+		break;
 	case COOLING_OPTION:
 		Cooling = *(L20_SYSTEMCONFIG::COOLING*)(_data);
 		break;
 	case COOLING_DURATION:
 		CoolingDuration = *(unsigned int*)(_data);
 		break;
-	case COLLING_DELAY:
+	case COOLING_DELAY:
 		CoolingDelay = *(unsigned int*)(_data);
 		break;
 	case AMP_UNIT_OPT:
@@ -315,9 +321,10 @@ void L20_SYSTEMCONFIG::Init()
 	Language 					= English;
 	PowerSupply 				= POWER_3300W;
 	Frequency 					= FREQ_20KHZ;
-	bHeightEncoder				= false;
+	bHeightEncoder				= true;
 	bFootPedalAbort				= false;
 	bLockOnAlarm				= false;
+	bFirstScreen				= false;
 	Cooling						= DISABLE;
 	CoolingDuration				= 0;
 	CoolingDelay				= 0;

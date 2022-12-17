@@ -67,6 +67,7 @@ void Estop::Enter()
 {
 	if((ACStateMachine::AC_TX->ACState != ACState::AC_ESTOP) && (PCStateMachine::PC_TX->PCState != PCState::PC_ESTOP))
 	{
+		m_Actions = SCState::JUMP;
 		return;
 	}
 	else if(ACStateMachine::AC_TX->ACState == ACState::AC_ESTOP)

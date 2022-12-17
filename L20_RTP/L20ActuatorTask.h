@@ -18,6 +18,12 @@
 class L20ActuatorTask: public ActuatorTask 
 {
 private:
+	struct COOLING
+	{
+		UINT32 Delay;
+		UINT32 Duration;
+	};
+private:
 	static CommunicationInterface_CAN* 				_ObjDCan;
 	static ACStateMachine::RxPDO_AC					RXBackup;
 	UINT32											MaxSpeed;
@@ -29,6 +35,7 @@ private:
 	UINT32											m_ActualDownTime;
 	UINT32											m_ActualTotalTime;
 	bool											m_IsMoving;
+	static COOLING	CoolingTimer;
 public:
 							L20ActuatorTask();
 	virtual					~L20ActuatorTask			();
@@ -38,12 +45,14 @@ public:
 	virtual unsigned int	GetMaxSpeed					() override;
 	virtual void			InitHeightSystem			() override;
 	virtual void			ScanInputs					() override;
-protected:
 	virtual	void		 	DoAuxMotion					(int motion) override;
+	virtual void			SetCoolingTimer				() override;
+	virtual void		 	ResetCoolingTimer			() override;
 private:
 	bool		 			MovingCheckProcess			();
 	unsigned int			WeightedAverageSpeed		(unsigned int EncoderPosition);
 	void					InitMovingProcess			();
+	void					RunCoolingTimer				();
 };
 
 #endif /* L20ACTUATORTASK_H_ */

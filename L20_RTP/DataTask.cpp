@@ -23,9 +23,11 @@ DataTask class owned using the class object pointer.
 #include "DataTask.h"
 #include "Database/DBAccess_l20_db.h"
 #include "UserInterface.h"
+#include "AlarmCodeUI.h"
 #include "SystemConfiguration.h"
 #include "EEPROM.h"
 #include "Utility.h"
+#include "CommonProperty.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -191,7 +193,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		{
 		UINT32 m_startTime = sysTimestampLock();
 #endif 
-		ErrCode = _ObjDBConn->StoreWeldRecipe(message.Buffer);
+		ErrCode = ((_ObjDBConn->StoreWeldRecipe(message.Buffer) == OK)? NEW_RECIPE_OK : NEW_RECIPE_ERROR);	
 		sendErrorCode(ErrCode);
 #ifdef PERFORMANCE_MEASURE
 		UINT32 m_endTime = sysTimestampLock();
@@ -244,11 +246,11 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_UPDATE:
-		ErrCode = _ObjDBConn->UpdateWeldRecipe(message.Buffer);
+		ErrCode = ((_ObjDBConn->UpdateWeldRecipe(message.Buffer) == OK)? UPDATE_RECIPE_OK : UPDATE_RECIPE_ERROR);
         sendErrorCode(ErrCode);
 		break;
-	case TO_DATA_TASK_WELD_RESULT_QUERY:
-        _ObjDBConn->QueryBlockWeldResult(message.Buffer);
+	case TO_DATA_TASK_LATEST_WELD_RESULT_QUERY:
+        _ObjDBConn->QueryLatestWeldResult(message.Buffer);
 		break;
 	case TO_DATA_TASK_WELD_SIGN_QUERY:
         _ObjDBConn->QueryWeldSignature(message.Buffer);
@@ -304,7 +306,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->QueryGatewayMachine(message.Buffer);
 		break;
 	case TO_DATA_TASK_HEIGHT_CALIBRATE_UPDATE:
-		ErrCode = _ObjDBConn->UpdateHeightCalibration(message.Buffer);
+		ErrCode = ((_ObjDBConn->UpdateHeightCalibration(message.Buffer) == OK)? HEIGHT_CALIBRATE_OK : HEIGHT_CALIBRATE_ERROR);
 		sendErrorCode(ErrCode);
 		break;
 	case TO_DATA_TASK_USER_PROFILE_UPDATE:
@@ -323,7 +325,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 	{
 		SYSTEMCONFIG::POWER power = SYSTEMCONFIG::POWER_5500W; 
 		SYSTEMCONFIG::FREQUENCY frequency = SYSTEMCONFIG::FREQ_20KHZ;
-		UINT32 amplitude = 72;
+		UINT32 amplitude = DEFAULT_72UM_AMPLITUDE;
 		ErrCode = _ObjDBConn->UpdateSystemConfigure(message.Buffer);
 		SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::POWER_OPT, &power);
 		SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::FREQUENCY_OPT, &frequency);
@@ -332,10 +334,11 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 			EEPROM::_System->Power 		= power;
 			EEPROM::_System->Frequency 	= frequency;
 			EEPROM::GetInstance()->Write();
-			if(power != EEPROM::_System->Power)
-				Utility::SetSystemPower(power);
-			if(frequency != EEPROM::_System->Frequency)
-				Utility::SetSystemFrequency(frequency);
+			//TODO Update Power and Frequency
+			Utility::SetSystemPower(power);
+			Utility::SetSystemFrequency(frequency);
+	    	CommonProperty::SystemInfo.psFrequency 	= Utility::GetSystemFrequency();
+	    	CommonProperty::SystemInfo.psWatt 		= Utility::GetSystemPower();
 		}
 		SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::MAX_AMPLITUDE, &amplitude);
 		if(amplitude != Utility::GetSystemAmplitude())
@@ -360,7 +363,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
         _ObjDBConn->DeleteOldest(TABLE_WELD_SIGNATURE);
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_DELETE_SPECIFIC:
-		ErrCode = _ObjDBConn->DeleteSpecificRecipe(message.Buffer);
+		ErrCode = ((_ObjDBConn->DeleteSpecificRecipe(message.Buffer) == OK)? DELETE_RECIPE_OK : DELETE_RECIPE_ERROR);
 		sendErrorCode(ErrCode);
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_CLEAR:
@@ -388,8 +391,29 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		}
 		break;
 	case TO_DATA_TASK_WELD_RECIPE_RENAME:
-		ErrCode = _ObjDBConn->RenameWeldRecipe(message.Buffer);
+		ErrCode = ((_ObjDBConn->RenameWeldRecipe(message.Buffer) == OK)? RENAME_RECIPE_OK : RENAME_RECIPE_ERROR);
 		sendErrorCode(ErrCode);
+		break;
+	case TO_DATA_TASK_PERMISSION_SCREEN_SET:
+		updateScreenPermission(message.Buffer);
+		break;
+	case TO_DATA_TASK_PASSCODE_UPDATE:
+		updateUserPassword(message.Buffer);
+		break;
+	case TO_DATA_TASK_READ_WELDRESULTHISTORY_POWER_DATA:
+		_ObjDBConn->QueryWeldSignature(message.Buffer);
+		message.msgID = UserInterface::TO_UI_TASK_GET_WELDRESULTHISTORY_POWER_DATA;
+		SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
+	case TO_DATA_TASK_READ_WELDRESULTHISTORY_HEIGHT_DATA:
+		_ObjDBConn->QueryWeldSignature(message.Buffer);
+		message.msgID = UserInterface::TO_UI_TASK_GET_WELDRESULTHISTORY_HEIGHT_DATA;
+		SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
+	case TO_DATA_TASK_READ_WELDRESULTHISTORY_FREQUENCY_DATA:
+		_ObjDBConn->QueryWeldSignature(message.Buffer);
+		message.msgID = UserInterface::TO_UI_TASK_GET_WELDRESULTHISTORY_FREQUENCY_DATA;
+		SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	default:
 		LOGERR((char* )"DataTask: --------Unknown Message ID----------- : %d", message.msgID, 0, 0);
@@ -431,9 +455,14 @@ int DataTask::InitData()
     	SystemConfiguration::_SystemConfig->Set(SYSTEMCONFIG::POWER_OPT, &EEPROM::_System->Power);
     	Utility::SetSystemPower(EEPROM::_System->Power);
     	SystemConfiguration::_SystemConfig->Set(SYSTEMCONFIG::FREQUENCY_OPT, &EEPROM::_System->Frequency);
-    	UINT32 amplitude = 72;
+    	Utility::SetSystemFrequency(EEPROM::_System->Frequency);
+    	UINT32 amplitude = DEFAULT_72UM_AMPLITUDE;
     	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::MAX_AMPLITUDE, &amplitude);
     	Utility::SetSystemAmplitude(amplitude);
+    	
+    	CommonProperty::SystemInfo.psFrequency 	= Utility::GetSystemFrequency();
+    	CommonProperty::SystemInfo.psWatt 		= Utility::GetSystemPower();
+    	
     }
 	if(_ObjDBConn->QueryBlockTeachModeSetting(nullptr) <= 0)
 	{
@@ -447,15 +476,18 @@ int DataTask::InitData()
 	{
 		return ERROR;
 	}
-	//TODO need to do further testing
-//	if(_ObjDBConn->QueryConnectivity(nullptr) != OK)
-//	{
-//		return ERROR;
-//	}
-//	if(_ObjDBConn->QueryGatewayMachine(nullptr) <= 0)
-//	{
-//		return ERROR;
-//	}
+	if(_ObjDBConn->QueryConnectivity(nullptr) != OK)
+	{
+		return ERROR;
+	}
+	if(_ObjDBConn->QueryGatewayMachine(nullptr) <= 0)
+	{
+		return ERROR;
+	}
+	if(_ObjDBConn->QueryLatestWeldResult(nullptr) != OK)
+	{
+		return ERROR;
+	}
     return OK;		
 }
 
@@ -518,3 +550,81 @@ void DataTask::Data_Task(void)
 	DBInit = NULL;
 	taskSuspend(taskIdSelf());
 }
+
+
+/**************************************************************************//**
+* 
+* \brief   - Update screen permission to db.
+*
+* \param   - char* messagebuf.
+*
+* \return  - None.
+*
+******************************************************************************/
+void DataTask::updateScreenPermission(char* messagebuf)
+{
+	int iErrCode = 0;
+	int vtScreenLen = 0;
+	vector<int> vtScreenIndex;
+	MESSAGE message;
+	memcpy(&vtScreenLen, messagebuf, sizeof(int));
+	//1. Get screen index.
+	for(int i = 0; i < vtScreenLen; i++)
+	{
+		int iScreenTmp;
+		memcpy(&iScreenTmp, messagebuf + sizeof(int) + (i * sizeof(int)), sizeof(int));
+		vtScreenIndex.push_back(iScreenTmp);
+	}
+	//2. Update permission by screen index.
+	for(vector<int>::iterator iter = vtScreenIndex.begin(); iter != vtScreenIndex.end(); iter++)
+	{
+		int iScreenIndex = *iter;
+		char ScreenArr[4];
+		memcpy(&ScreenArr, &iScreenIndex, sizeof(int));
+		iErrCode |= _ObjDBConn->UpdatePrivilegeConfigure(ScreenArr);
+	}
+	//3. Sending update result to UI task.
+    message.msgID = UserInterface::TO_UI_TASK_PERMISSION_SCREEN_SET_RESPOMSE;
+    memset(message.Buffer, 0x00, sizeof(message.Buffer));
+    memcpy(message.Buffer, &iErrCode, sizeof(int));
+    SendToMsgQ(message, UI_MSG_Q_ID);
+}
+
+/**************************************************************************//**
+* 
+* \brief   -  Update user password to db.
+*
+* \param   - char* messagebuf.
+*
+* \return  - None.
+*
+******************************************************************************/
+void DataTask::updateUserPassword(char* messagebuf)
+{
+	int iErrCode = 0;
+	int vtLevelLen = 0;
+	vector<int> vtLevel;
+	MESSAGE message;
+	memcpy(&vtLevelLen,messagebuf, sizeof(int));
+	//1. Get level value.
+	for(int i = 0; i < vtLevelLen; i++)
+	{
+		int iLevelTmp;
+		memcpy(&iLevelTmp, messagebuf + sizeof(int) + (i *  sizeof(int)), sizeof(int));
+		vtLevel.push_back(iLevelTmp);
+	}
+	//2. Update password by level.
+	for(vector<int>::iterator iter = vtLevel.begin(); iter != vtLevel.end(); iter++)
+	{
+		char LevelArr[4];
+		int iLevel = *iter;
+		memcpy(&LevelArr, &iLevel, sizeof(int));
+		iErrCode |= _ObjDBConn->UpdateUserProfiles(LevelArr);
+	}
+	//3. Sending update result to UI task.
+    message.msgID = UserInterface::TO_UI_TASK_PASSCODE_UPDATE_RESPOMSE;
+    memset(message.Buffer, 0x00, sizeof(message.Buffer));
+    memcpy(message.Buffer, &iErrCode, sizeof(int));
+    SendToMsgQ(message, UI_MSG_Q_ID);
+}
+

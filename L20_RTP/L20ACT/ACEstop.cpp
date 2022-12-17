@@ -13,6 +13,8 @@
 
 #include "ACEstop.h"
 #include "../ACStateMachine.h"
+#include "../ActuatorTask.h"
+#include "../Commons/AuxMotionUI.h"
 /**************************************************************************//**
 * \brief   - Constructor - 
 *

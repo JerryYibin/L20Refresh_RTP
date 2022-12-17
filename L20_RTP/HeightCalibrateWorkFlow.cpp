@@ -35,6 +35,7 @@ HeightCalibrateWorkFlow::HeightCalibrateWorkFlow() {
 	m_CalibrateReference.push_back(THIRD_PRESSURE);
 	m_CalibrateStep = 0;
 	m_OperationMode = IDLE;
+	m_State = WorkFlow::INVALID;
 }
 
 /**************************************************************************//**
@@ -61,11 +62,14 @@ HeightCalibrateWorkFlow::~HeightCalibrateWorkFlow() {
 ******************************************************************************/
 void HeightCalibrateWorkFlow::InitProcess(void)
 {
-	m_CalibrateStep = 0;
-	m_Pressure = m_CalibrateReference[0] * PRESSURE_FACTOR;
-	for(int i = 0; i < PRESSURE_NUM; i++)
+	if(m_OperationMode == HEIGHT_CALIBRATE)
 	{
-		HeightEncoder::HeightCalibratedMap[i].Calibrated = false;
+		m_CalibrateStep = 0;
+		m_Pressure = m_CalibrateReference[0] * PRESSURE_FACTOR;
+		for(int i = 0; i < PRESSURE_NUM; i++)
+		{
+			HeightEncoder::HeightCalibratedMap[i].Calibrated = false;
+		}
 	}
 }
 
@@ -80,9 +84,13 @@ void HeightCalibrateWorkFlow::InitProcess(void)
 ******************************************************************************/
 void HeightCalibrateWorkFlow::TriggerProcess(void)
 {
-	HeightEncoder::HeightProperty.Pressure = m_Pressure;
-	ACStateMachine::AC_RX->TargetPressure = m_Pressure;
-	SCStateMachine::getInstance()->ExecuteStateAction(SCState::READY_FOR_TRIGGER);
+	if((m_State == WorkFlow::INVALID) ||(m_State = WorkFlow::FINISH))
+	{
+		HeightEncoder::HeightProperty.Pressure = m_Pressure;
+		ACStateMachine::AC_RX->TargetPressure = m_Pressure;
+		SCStateMachine::getInstance()->ExecuteStateAction(SCState::READY_FOR_TRIGGER);
+		m_State = WorkFlow::ONGOING;
+	}
 }
 
 /**************************************************************************//**
@@ -153,7 +161,6 @@ int HeightCalibrateWorkFlow::UpdateResult(void)
 ******************************************************************************/
 int HeightCalibrateWorkFlow::RunProcess(void)
 {
-	STATE state = WorkFlow::ONGOING;
 	int index = 0;
 	switch(m_OperationMode)
 	{
@@ -169,19 +176,24 @@ int HeightCalibrateWorkFlow::RunProcess(void)
 		else
 		{
 			if(UpdateResult() == OK)
-				state = WorkFlow::FINISH;
+				m_State = WorkFlow::FINISH;
 			else
-				state = WorkFlow::INVALID;
+				m_State = WorkFlow::INVALID;
 		}
 		break;
 	case HEIGHT_CHECK:
 		m_RawCount = HeightEncoder::RawHeight.ZeroCount;
-		state = WorkFlow::FINISH;
+		m_State = WorkFlow::FINISH;
 		break;
 	default:
 		break;
 	}
-	return state;
+	return m_State;
+}
+
+void HeightCalibrateWorkFlow::ResetProcess(void)
+{
+	m_State = WorkFlow::INVALID;
 }
 
 /**************************************************************************//**

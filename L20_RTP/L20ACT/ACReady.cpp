@@ -15,6 +15,7 @@
 #include "../ACStateMachine.h"
 #include "../ActuatorTask.h"
 #include "../SCStateMachine/SCState.h"
+#include "../Commons/AuxMotionUI.h"
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -53,7 +54,8 @@ ACReady::~ACReady() {
 ******************************************************************************/
 void ACReady::Enter()
 {
-	vxbGpioSetValue(GPIO::O_HORN, GPIO_VALUE_LOW);
+	ActuatorTask::GetInstance()->DoAuxMotion(DO_HORN_UP);
+	ActuatorTask::GetInstance()->DoAuxMotion(DO_COOLING_OFF);
 	ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(CTRL_AC_MOVE_DISABLE);
 	ACStateMachine::AC_TX->AC_StatusEvent |= BIT_MASK(STATUS_AC_MOVE_DISABLE);
 }

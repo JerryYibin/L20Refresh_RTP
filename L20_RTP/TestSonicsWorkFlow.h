@@ -19,9 +19,9 @@ class TestSonicsWorkFlow: public WorkFlow
 {
 private:
 	unsigned int				m_Amplitude;
-	int							m_TriggerCounter;
 public:
 	static SONICS_TEST 	TestResult;
+	static unsigned int	TriggerCounter;
 public:
 	TestSonicsWorkFlow();
 	virtual ~TestSonicsWorkFlow();
@@ -30,6 +30,7 @@ public:
 	virtual void 	TriggerProcess		(void) override;
 	virtual int 	UpdateResult		(void) override;
 	virtual int 	RunProcess			(void) override;
+	virtual void	ResetProcess		(void) override;
 	virtual void 	SetAmplitude		(unsigned int amplitude);
 };
 

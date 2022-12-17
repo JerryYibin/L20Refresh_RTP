@@ -219,15 +219,17 @@ bool CommunicationInterfaceTCP::establishTCPIPSocket()
 		LOGERR((char*) "TCP Socket listening failed", 0, 0, 0);
 		return false;
 	}
-
+#if SOCKET_DBG
 	LOG("TCP Socket listening on IP %s, Port: %d\n", ip, iPort);
-
+#endif
 	// stay in accept mode until proper connection or error
 	m_nDescriptor = m_objImplementor->NBAccept(ip);
 
 	if(m_nDescriptor == ERROR)
 	{
+#if SOCKET_DBG
 		LOGERR((char *) "TCP Socket Error on socket accept\n", 0, 0, 0);
+#endif
 		return false;
 	}
 	else

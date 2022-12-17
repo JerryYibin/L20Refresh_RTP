@@ -23,6 +23,7 @@ extern "C"
 }
 
 #define NO_ERROR				0
+#define ERR_BATCH_SIZE			1 //BIT(0)
 #define ERR_OVERLOAD			BIT(1)
 #define ERR_TIME_MS				BIT(2)
 #define ERR_TIME_PL				BIT(3)

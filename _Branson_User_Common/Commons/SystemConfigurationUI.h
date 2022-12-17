@@ -94,6 +94,7 @@ struct SYSTEMCONFIGFORUI
 	bool bHeightEncoder;
 	bool bFootPedalAbort;
 	bool bLockOnAlarm;
+	bool bFirstScreen;
 	COOLING Cooling;
 	unsigned int CoolingDuration;
 	unsigned int CoolingDelay;

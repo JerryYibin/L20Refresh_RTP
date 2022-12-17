@@ -29,6 +29,7 @@ The SC state machine shall run the generic work flow.
 #include "Recipe.h"
 #include "SystemConfiguration.h"
 #include "ExternalManager.h"
+#include "ActuatorTask.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -45,13 +46,13 @@ WorkFlow* ControlTask::_WorkFlowObj = nullptr;
 * \return  - None.
 ******************************************************************************/
 ControlTask::ControlTask()
-	:m_OperationMode(SCStateMachine::END_OPERATION)
+	:m_OperationMode(SCStateMachine::NO_OPERATION)
 {
 	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 	string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
 	DATA_MSG_Q_ID_CTRL = CP->getMsgQId(Data_Task + "/Control");
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
-
+	ACT_MSG_Q_ID  = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]);
 }
 
 /**************************************************************************//**
@@ -110,7 +111,16 @@ void ControlTask::updateWorkFlow(char* buff)
 			if(SCStateMachine::getInstance()->GetStateMachineState() == false)
 				m_OperationMode = SCStateMachine::NO_OPERATION;
 			else
+			{
 				m_OperationMode = tmpOperationMode;
+				if(_WorkFlowObj != nullptr)
+				{
+					if(m_OperationMode == SCStateMachine::BATCH_WELD)
+						((WeldWorkFlow*)_WorkFlowObj)->SetOperationMode(WeldWorkFlow::BATCH);
+					else
+						((WeldWorkFlow*)_WorkFlowObj)->SetOperationMode(WeldWorkFlow::SETUP);
+				}
+			}
 			return;
 		}
 	}
@@ -196,12 +206,22 @@ void ControlTask::responseStateMachineProcess(MESSAGE& message)
 				break;
 			case SCStateMachine::BATCH_WELD:
 				_WorkFlowObj->UpdateResult();
-				message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_INSERT;
-				SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
-				message.msgID = DataTask::TO_DATA_TASK_WELD_SIGN_INSERT;
-				SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
+				if(((SCStateMachine::getInstance()->GetCoreState() & ERR_PRE_HEIGHT_PL) != ERR_PRE_HEIGHT_PL) &&
+						((SCStateMachine::getInstance()->GetCoreState() & ERR_PRE_HEIGHT_MS) != ERR_PRE_HEIGHT_MS))
+				{
+					message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_INSERT;
+					SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
+					message.msgID = DataTask::TO_DATA_TASK_WELD_SIGN_INSERT;
+					SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
+					//TODO the operation should be added in power down checking in future.
+					message.msgID = DataTask::TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
+					int recipeID = Recipe::ActiveRecipeSC->m_RecipeID;
+					memcpy(message.Buffer, &recipeID, sizeof(int));
+					SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
+				}
 				message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
 				SendToMsgQ(message, UI_MSG_Q_ID);
+					
 				break;
 			default:
 				
@@ -227,8 +247,19 @@ void ControlTask::responseStateMachineProcess(MESSAGE& message)
 				break;
 			case SCStateMachine::BATCH_WELD:
 				_WorkFlowObj->UpdateResult();
-				message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_INSERT;
-				SendToMsgQ(message,DATA_MSG_Q_ID_CTRL);
+				if(((SCStateMachine::getInstance()->GetCoreState() & ERR_PRE_HEIGHT_PL) != ERR_PRE_HEIGHT_PL) &&
+						((SCStateMachine::getInstance()->GetCoreState() & ERR_PRE_HEIGHT_MS) != ERR_PRE_HEIGHT_MS))
+				{
+					message.msgID = DataTask::TO_DATA_TASK_WELD_RESULT_INSERT;
+					SendToMsgQ(message,DATA_MSG_Q_ID_CTRL);
+					message.msgID = DataTask::TO_DATA_TASK_WELD_SIGN_INSERT;
+					SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
+					//TODO the operation should be added in power down checking in future.
+					message.msgID = DataTask::TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
+					int recipeID = Recipe::ActiveRecipeSC->m_RecipeID;
+					memcpy(message.Buffer, &recipeID, sizeof(int));
+					SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
+				}
 				message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
 				SendToMsgQ(message, UI_MSG_Q_ID);
 				break;
@@ -258,6 +289,13 @@ void ControlTask::ProcessTaskMessage(MESSAGE& message)
 	{
 	case TO_CTRL_OPERATE_MODE_SET:
 		updateWorkFlow(message.Buffer);
+		if((m_OperationMode == SCStateMachine::BATCH_WELD) || (m_OperationMode == SCStateMachine::WELD)) 
+			tmp = TRUE;
+		else
+			tmp = FALSE;
+		memcpy(message.Buffer, &tmp, sizeof(UINT32));
+		message.msgID = ActuatorTask::TO_ACT_TASK_COOLING_TIMER_ENABLE;
+		SendToMsgQ(message, ACT_MSG_Q_ID);
 		break;
 	case TO_CTRL_TRIGGER_HEIGHT_CALIBRATE:
 		if(_WorkFlowObj != nullptr)
@@ -309,6 +347,8 @@ void ControlTask::ProcessTaskMessage(MESSAGE& message)
 		responseStateMachineProcess(message);
 		break;
 	case TO_CTRL_ALARM_EVENT:
+		if(_WorkFlowObj != nullptr)
+			_WorkFlowObj->ResetProcess();
 		message.msgID = DataTask::TO_DATA_TASK_ALARM_LOG_INSERT;
 		SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
 		break;

@@ -58,11 +58,25 @@ WaitForReadyPosition::~WaitForReadyPosition() {
 ******************************************************************************/
 void WaitForReadyPosition::Enter()
 {
-	m_bHeightEncoder = true;
+	bool isLockAlarm = false;
 	m_iABDuration = 0;
 	m_iABTimeDelay = 0;
 	m_iABAmplitude = 0;
-	ACStateMachine::AC_RX->MasterState = SCState::WAIT_FOR_READY_POSITION;
+	if(SCStateMachine::getInstance()->GetCoreState() != 0)
+	{
+		SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::LOCK_ON_ALARM, &isLockAlarm);
+		if(isLockAlarm == false)
+		{
+			// Set AC Master State as WAITFORREAYPOSITION.
+			ACStateMachine::AC_RX->MasterState = SCState::WAIT_FOR_READY_POSITION;
+		}
+		m_Actions = SCState::FAIL;
+	}
+	else
+	{
+		// Set AC Master State as WAITFORREAYPOSITION.
+		ACStateMachine::AC_RX->MasterState = SCState::WAIT_FOR_READY_POSITION;
+	}
 	ACStateMachine::AC_RX->MasterEvents &= ~BIT_MASK(ACState::CTRL_AC_MOVE_DISABLE);
 	ACStateMachine::AC_RX->MasterEvents |= BIT_MASK(ACState::CTRL_ULS_ENABLE);
 	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AFTER_BURST_TIME, &m_iABDuration);
@@ -91,10 +105,6 @@ void WaitForReadyPosition::Enter()
 ******************************************************************************/
 void WaitForReadyPosition::Loop()
 {
-	if(SCStateMachine::getInstance()->GetCoreState() != 0)
-	{
-		m_Actions = SCState::FAIL;
-	}
 	if(ACStateMachine::AC_TX->ACState == ACState::AC_ALARM)
 	{
 		m_Actions = SCState::FAIL;

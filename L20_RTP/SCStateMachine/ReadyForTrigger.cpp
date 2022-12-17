@@ -121,6 +121,8 @@ void ReadyForTrigger::Fail()
 int ReadyForTrigger::Execute(void* _obj)
 {
 	ReadyForTrigger* _ReadyForTrigger = (ReadyForTrigger*)_obj;
+	//The task switch speed is faster than state machine running
 	_ReadyForTrigger->m_Actions = SCState::JUMP;
+
 	return OK;
 }

@@ -6,10 +6,11 @@
  */
 
 #include "Utility.h"
+#include "commons.h"
 #include <sstream>
-UINT32 Utility::SystemPower = 5500;
-UINT32 Utility::SystemFrequency = 19450;
-UINT32 Utility::SystemAmplitude = 72;
+UINT32 Utility::SystemPower = DEFAULT_5_5KW_POWER;
+UINT32 Utility::SystemFrequency = DEFAULT_20K_FREQUENCY;
+UINT32 Utility::SystemAmplitude = DEFAULT_72UM_AMPLITUDE;
 Utility::Utility() {
 	// TODO Auto-generated constructor stub
 
@@ -48,7 +49,26 @@ UINT32 Utility::GetSystemPower()
 
 void Utility::SetSystemFrequency(const SYSTEMCONFIG::FREQUENCY frequency)
 {
-	//TODO need to add 40KHz process
+	switch (frequency)
+	{
+	case SYSTEMCONFIG::FREQ_20KHZ:
+		SystemFrequency = 20000;
+		break;
+	case SYSTEMCONFIG::FREQ_30KHZ:
+		SystemFrequency = 30000;
+		break;
+	case SYSTEMCONFIG::FREQ_40KHZ:
+		SystemFrequency = 40000;
+		break;
+	default:
+		SystemPower = 20000;
+		break;
+	}
+}
+
+UINT32 Utility::GetSystemFrequency()
+{
+	return SystemFrequency;
 }
 
 void Utility::SetSystemAmplitude(const UINT32 amplitude)

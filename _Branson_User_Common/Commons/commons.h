@@ -29,6 +29,10 @@ database directory and alarm index.
 #define INCLUDE_TI_AM5708_JN		0
 #define UNITTEST_DATABASE			0
 
+#define DEFAULT_20K_FREQUENCY			20000
+#define DEFAULT_5_5KW_POWER				5500
+#define DEFAULT_72UM_AMPLITUDE			72
+
 //MMC2/eMMC Storage
 #define MMC_EMMC_DEV_NAME	"/mmc1"
 

@@ -20,6 +20,7 @@
 #include "../ControlTask.h"
 #include "../Utility.h"
 #include "../SystemConfiguration.h"
+#include "../ActuatorTask.h"
 
 unsigned int WeldSonicOn::PwrBuffer[PWR_SIZE] = {0};
 unsigned int WeldSonicOn::PwrIndex = 0;
@@ -87,19 +88,20 @@ void WeldSonicOn::Enter()
 	ClearWeldData();
 	WeldResults::_WeldResults->Set(WeldResults::PRE_HEIGHT, &ACStateMachine::AC_TX->ActualHeight);
 	currentValue = ACStateMachine::AC_TX->ActualHeight;
-	//TODO Need to consider to move cooling control to the specific actuator task.
-	CoolAirControl(0, 0);
+	ActuatorTask::GetInstance()->ResetCoolingTimer();
 	if (bHeightEncoder == true)
 	{
 		if ((currentValue < lowerLimit) && (lowerLimit != 0))
 		{
 			SCStateMachine::getInstance()->SetCoreState(ERR_PRE_HEIGHT_MS);
 			m_Actions = SCState::FAIL;
+			return;
 		}
 		else if (currentValue > upperLimit)
 		{
 			SCStateMachine::getInstance()->SetCoreState(ERR_PRE_HEIGHT_PL);
 			m_Actions = SCState::FAIL;
+			return;
 		}
 	}
 
@@ -123,30 +125,30 @@ void WeldSonicOn::Loop()
 	bool ErrorOn = false;
 	unsigned int tmpHeight = 0;
 	unsigned int tmpPower = 0;
+	unsigned int actualPower = 0;
+	unsigned int actualFrequency = 0;
 	shared_ptr<WeldResultSignatureDefine> _Signature = WeldResultSignatureDefine::GetWeldSignature();
 	WELDMODE m_WeldMode = INVALID_MODE; 
 	int m_TimeMin = 0;
+	int m_TimeMax = 0;
 
 	m_WeldTime += 1;
 	tmpPower = GetFilteredPower();
-	_Signature->Set(WeldResultSignatureDefine::POWER, tmpPower);
+	actualPower = Utility::HEX2Power(tmpPower);
+	_Signature->Set(WeldResultSignatureDefine::POWER, actualPower);
 	if (tmpPower > m_PeakPower)
 		m_PeakPower = tmpPower;
 	m_EnergyAccumulator += tmpPower;
-		
-	if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
-	{
-		SCStateMachine::getInstance()->SetCoreState(ERR_OVERLOAD);
-		m_Actions = SCState::FAIL;
-	}
-
+	
 	_Signature->Set(WeldResultSignatureDefine::HEIGHT, ACStateMachine::AC_TX->ActualHeight);
-	_Signature->Set(WeldResultSignatureDefine::FRQUENCY, PCStateMachine::PC_TX->Frequency);
+	actualFrequency = Utility::HEX2Frequency(PCStateMachine::PC_TX->Frequency);
+	_Signature->Set(WeldResultSignatureDefine::FRQUENCY, actualFrequency);
 	if (WeldResultSignature::_OrignalSignature->size() < ABSMAXTIME)
 	{
 		WeldResultSignature::_OrignalSignature->push_back(_Signature);
 	}
 		
+
 	if (m_WeldTime > ABSMAXTIME)
 	{
 		SCStateMachine::getInstance()->SetCoreState(ERR_TIME_PL);
@@ -154,11 +156,18 @@ void WeldSonicOn::Loop()
 	}
 	else
 	{
+		if(PCStateMachine::PC_TX->PCState == PCState::PC_ALARM)
+		{
+			SCStateMachine::getInstance()->SetCoreState(ERR_OVERLOAD);
+			m_Actions = SCState::FAIL;
+		}
+		
 		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::WELD_MODE, &m_WeldMode);
 		switch (m_WeldMode)
 		{
 		case ENERGY_MODE:
-			if((m_EnergyAccumulator > m_EnergyTarget) || (m_WeldTime > ABSMAXTIME))
+			Recipe::ActiveRecipeSC->Get(WeldRecipeSC::TIME_MAX, &m_TimeMax);
+			if((m_EnergyAccumulator > m_EnergyTarget) || (m_WeldTime > m_TimeMax))
 				m_Actions = SCState::JUMP;
 			break;
 		case TIME_MODE:
@@ -209,25 +218,7 @@ void WeldSonicOn::Exit()
 	AlarmFlags = SCStateMachine::getInstance()->GetCoreState();
 	WeldResults::_WeldResults->Set(WeldResults::ALARM_ID, &AlarmFlags);
 	
-//		if (SysConfig.m_SystemInfo.CoolingType == WelderSystem::SECOND_PER_100JOULE)
-//		{
-//			if (WeldData.m_WeldResult.Energy < JOULE500)
-//			{
-//				CoolAirControl(SysConfig.m_SystemInfo.CoolingDelay, DELAY5SEC);
-//			}
-//			else
-//			{
-//				CoolAirControl(SysConfig.m_SystemInfo.CoolingDelay, WeldData.m_WeldResult.Energy * 10);
-//			}
-//		}
-//		else if(SysConfig.m_SystemInfo.CoolingType == WelderSystem::STANDARD)
-//		{
-//			CoolAirControl(SysConfig.m_SystemInfo.CoolingDelay, SysConfig.m_SystemInfo.CoolingDuration);
-//		}
-//		else
-//		{
-		CoolAirControl(0, 0);
-//		}
+	ActuatorTask::GetInstance()->SetCoolingTimer();
 	LOG("m_StepIndex: Weld Sonics Loop - Result Update! Weld Time = %d Timeout = %d\n", m_WeldTime, m_Timeout);
 	SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_SC_RESPONSE);
 	ChangeExtDgtOutput(ScDgtOutputTask::TO_DGT_OUTPUT_TASK_SONICS_RESET);
@@ -259,8 +250,8 @@ void WeldSonicOn::Fail()
 ******************************************************************************/
 void WeldSonicOn::ClearWeldData()
 {
-	if(WeldResults::_WeldResults->RecipeID != Recipe::ActiveRecipeSC->m_RecipeNumber)
-		WeldResults::_WeldResults->RecipeID = 0;
+	if(WeldResults::_WeldResults->RecipeID != Recipe::ActiveRecipeSC->m_RecipeID)
+		WeldResults::_WeldResults->RecipeID = Recipe::ActiveRecipeSC->m_RecipeID;
 	WeldResults::_WeldResults->Energy = 0;
 
 	WeldResults::_WeldResults->WeldTime = 0;
@@ -301,39 +292,6 @@ unsigned int WeldSonicOn::GetFilteredPower()
 	result = Utility::Average((const int*)PwrBuffer, PWR_SIZE);
 	
 	return result;
-}
-
-/**************************************************************************//**
-*
-* \brief   - Cooling Control.
-*
-* \param   - None.
-*
-* \return  - None.
-*
-******************************************************************************/
-//Todo Consider to use ACCoolAir State
-void WeldSonicOn::CoolAirControl(unsigned int delay, unsigned duration)
-{
-	/* Delay and Duration in 1/100 second units*/
-	if (duration == 0)
-	{
-		SCStateMachine::getInstance()->SetCoolingTimer(0, 0);
-		//GPIOE_SetFieldValue(GPIOE, COOLINGON, OFF);
-		vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_LOW);
-		return;
-	}
-
-	SCStateMachine::getInstance()->SetCoolingTimer(delay, duration);
-	/* Turn it on if there is no delay */
-	if (delay == 0)
-	{
-		vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_HIGH);
-	}
-	else /* Turn it off to insure delay */
-	{
-		vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_LOW);
-	}
 }
 
 void WeldSonicOn::CheckWeldAlarm()

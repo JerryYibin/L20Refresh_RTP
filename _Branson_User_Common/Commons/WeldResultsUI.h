@@ -21,7 +21,7 @@ struct WeldResultsUI{
 	char DateTime[WELD_TIME_SIZE];
 	int AlarmID;
 	int WeldMode;
-	
+	int WeldResultID;
 	int Energy;
 	int EnergySetting;
 	

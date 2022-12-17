@@ -37,7 +37,7 @@ extern "C"
 #define TRSMASK					BIT(5)
 #define BOTHSTARTSWITCHMASK		(BIT(1) | BIT(2))
 
-#define HORN_MOVE_TIMEOUT			6000 
+#define HORN_MOVE_TIMEOUT			3000 
 class ACState 
 {
 public:

@@ -21,6 +21,7 @@ public:
 		/* Macro defined to UIC */
 		TO_ACT_TASK_PRESSURE_SET = 0,
 		TO_ACT_TASK_AUX_MOTION,
+		TO_ACT_TASK_COOLING_TIMER_ENABLE
 	};
 	ActuatorTask();
 	virtual					~ActuatorTask();
@@ -33,6 +34,9 @@ public:
 	virtual unsigned int	GetMaxSpeed							() = 0;
 	virtual void			InitHeightSystem					() = 0;
 	virtual void 			ScanInputs							() = 0;
+	virtual	void			DoAuxMotion							(int motion) = 0;
+	virtual void			SetCoolingTimer						() = 0;
+	virtual void			ResetCoolingTimer					() = 0;
 	
 	static unsigned int		GetCoreState						();
 	static void				SetCoreState						(unsigned int coreState);
@@ -49,7 +53,7 @@ protected:
 	static unsigned int CoreState;
 	static ActuatorTask* _ACObj;
 	static UINT32		Tick_1ms;
-	virtual	void			DoAuxMotion							(int motion) = 0;
+	static UINT32		CoolingTimerOption;		
 private:
 	int					m_DebounceCount;
 	unsigned int 		m_PB1;

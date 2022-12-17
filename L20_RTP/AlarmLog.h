@@ -24,7 +24,7 @@ public:
 public:
 	AlarmLog();
 	~AlarmLog();
-	static std::vector<UI_ALARM_LOG> TransformAlarmLogVector();
+	static unique_ptr<vector<UI_ALARM_LOG>> TransformAlarmLogVector();
 };
 
 #endif

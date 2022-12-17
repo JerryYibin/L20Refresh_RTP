@@ -30,6 +30,7 @@ public:
 	static void		SetSystemPower(const SYSTEMCONFIG::POWER power);
 	static UINT32	GetSystemPower();
 	static void		SetSystemFrequency(const SYSTEMCONFIG::FREQUENCY frequency);
+	static UINT32	GetSystemFrequency();
 	static void		SetSystemAmplitude(const UINT32 amplitude);
 	static UINT32	GetSystemAmplitude();
 	

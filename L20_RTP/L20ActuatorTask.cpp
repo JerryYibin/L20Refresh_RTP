@@ -31,9 +31,12 @@
 #include "DAC_SPI.h"
 #include "Recipe.h"
 #include "AuxMotionUI.h"
+#include "SystemConfiguration.h"
+#include "WeldResults.h"
 //#include "ACState.h"
 CommunicationInterface_CAN* L20ActuatorTask::_ObjDCan 	= nullptr;
 ACStateMachine::RxPDO_AC L20ActuatorTask::RXBackup;
+L20ActuatorTask::COOLING L20ActuatorTask::CoolingTimer;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -46,6 +49,8 @@ L20ActuatorTask::L20ActuatorTask() {
 	_ObjDCan = CommunicationInterface_CAN::GetInstance();
 	RXBackup.TargetPressure = 0;
 	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TP_PRESSURE, &ACStateMachine::AC_RX->TargetPressure);
+	CoolingTimer.Delay = 0;
+	CoolingTimer.Duration = 0;
 	InitMovingProcess();
 }
 
@@ -118,10 +123,9 @@ void L20ActuatorTask::PDODownloadRequest()
 			m_IsMoving = MovingCheckProcess();
 		
 	}
-	
+	RunCoolingTimer();
 	ScanInputs();
 }
-
 
 /**************************************************************************//**
 * \brief   - To check if the horn is still moving. 
@@ -215,6 +219,39 @@ void L20ActuatorTask::InitMovingProcess()
 	MaxSpeed = 0;
 	OldPosition = 0;
 	m_IsMoving = true;
+}
+
+/**************************************************************************//**
+* \brief   - Run Cooling Timer. The function will be recalled by Actuator Task per each 1ms.
+* 			 If the Cooling Timer Option is false, the function will be bypass.
+* 			 There are two options for the cooling control process, one is Delay, another is Duration.
+* 			 If the current sequence is weld cycle, the Cooling Timer Option is enabled. 
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
+void L20ActuatorTask::RunCoolingTimer()
+{
+	if(CoolingTimerOption == FALSE)
+		return;
+	if (CoolingTimer.Delay != 0)
+	{
+		CoolingTimer.Delay--;
+		return;
+	}
+	else if (CoolingTimer.Duration != 0)
+	{
+		vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_HIGH);
+		CoolingTimer.Duration--;
+		return;
+	}
+	else
+	{
+		//Turn OFF cooling air
+		vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_LOW);
+	}
 }
 
 /**************************************************************************//**
@@ -313,4 +350,65 @@ void L20ActuatorTask::DoAuxMotion(int motion)
 	default:
 		break;
 	}
+}
+
+/**************************************************************************//**
+* \brief   - Set Cooling Timer. There are two options for the Cooling mode, 
+* 			 one is normal mode that includes time delay and time duration.
+* 			 another is 1 second per 100 Joule. If the total energy is less than 500 Joule, 
+* 			 the duration is the default setting 5s.  
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
+void L20ActuatorTask::SetCoolingTimer()
+{
+	vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_LOW);
+	L20_SYSTEMCONFIG::COOLING option = L20_SYSTEMCONFIG::DISABLE;
+	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::COOLING_OPTION, &option);
+	UINT32 duration = 0;
+	UINT joule = 0;
+	switch(option)
+	{
+		case L20_SYSTEMCONFIG::DISABLE:
+			SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::COOLING_DELAY,	&CoolingTimer.Delay);
+			SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::COOLING_DURATION,	&CoolingTimer.Duration);
+			break;
+		case L20_SYSTEMCONFIG::SECOND_PER_100JOULE:
+			SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::COOLING_DELAY,	&CoolingTimer.Delay);
+			//energy = _WeldResult->Energy / 10
+			duration = WeldResults::_WeldResults->Energy/1000;
+			if(CoolingTimer.Duration < 5)
+				CoolingTimer.Duration = 5000;
+			else
+				CoolingTimer.Duration = duration * 1000;
+			break;
+		default:
+			CoolingTimer.Delay = 0;
+			CoolingTimer.Duration = 0;
+			break;
+	}
+	if((CoolingTimer.Delay == 0) && (CoolingTimer.Duration != 0))
+	{
+		vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_HIGH);
+	}
+}
+
+/**************************************************************************//**
+* \brief   - Reset Cooling Timer. 
+*            Once the new weld cycle start the cooling should be close until the current weld cycle finished.  
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
+
+void L20ActuatorTask::ResetCoolingTimer()
+{
+	CoolingTimer.Delay 	= 0;
+	CoolingTimer.Duration 	= 0;
+	vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_LOW);
 }

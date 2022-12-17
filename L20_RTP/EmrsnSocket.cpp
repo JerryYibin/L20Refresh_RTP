@@ -299,9 +299,9 @@ bool EmrsnSocket::Bind(const char * address,const unsigned int port)
 		return false;
 	}
 	
-
+#if SOCKET_DEBUG
 	LOG("\nEmrsnSocket::Bind: IP Address %s, Port ID: %d\n", address, port);
-	
+#endif	
 
 	return true;
 }
@@ -669,6 +669,7 @@ int EmrsnSocket::Send(const char *buff, const unsigned int bufflen)
 		{
 		printf("%x,",buff[i]);
 		}
+	printf("\nEmrsnSocket::Send -- length = %d\n",bufflen);
 #endif
 	
 	dwReturnCode = send(dwsock, buff, bufflen, 0);
@@ -708,8 +709,8 @@ int EmrsnSocket::Send(const char *buff, const unsigned int bufflen, bool newsock
 		{
 		printf("%x,",buff[i]);
 		}
-#endif
 	printf("\nEmrsnSocket::Send -- length = %d\n",bufflen);
+#endif
 	dwReturnCode = send(socketid, buff, bufflen, 0);
 	if(dwReturnCode < 0)
 	{

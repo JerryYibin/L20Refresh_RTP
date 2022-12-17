@@ -59,7 +59,7 @@ SCStateMachine::SCStateMachine() {
 	m_semaphoreMutex = semMCreate(SEM_Q_FIFO);
 	initStateMap();
 	_objActionMap = new map<SCState::STATE, SCState*>();
-	AlarmStateIndex = 0;
+	SelectAlarmEStopSequence();
 }
 
 /**************************************************************************//**
@@ -175,17 +175,6 @@ void SCStateMachine::addActionToMap(SCState::STATE stateIdx, SCState* _action)
 ******************************************************************************/
 void SCStateMachine::RunStateMachine()
 {
-	//Once the ESTOP is detected by AC, the SC will go to ESTOP state directly for E-Stop handling.
-	if(ACStateMachine::AC_TX->ACState == ACState::AC_ESTOP)
-	{
-		if(m_objState->m_State != SCState::ESTOP)
-		{
-			m_objState->Exit();
-			m_objState->m_Actions = SCState::INIT;
-			m_StateIndex = EStopStateIndex;
-		}
-	}
-	
 	if (_objStateList->size() == 0)
 	{
 		m_IsRunning = false;
@@ -200,6 +189,17 @@ void SCStateMachine::RunStateMachine()
 		return;
 	}
 	
+	//Once the ESTOP is detected by AC, the SC will go to ESTOP state directly for E-Stop handling.
+	if(ACStateMachine::AC_TX->ACState == ACState::AC_ESTOP)
+	{
+		if(m_objState->m_State != SCState::ESTOP)
+		{
+			m_objState->Exit();
+			m_objState->m_Actions = SCState::INIT;
+			m_StateIndex = EStopStateIndex;
+		}
+	}
+	
 	m_IsRunning = true;
 	if(m_StateIndex >= _objStateList->size())
 		m_StateIndex = 0;
@@ -209,7 +209,8 @@ void SCStateMachine::RunStateMachine()
 	case SCState::INIT:
 		m_objState->m_StepIndex = m_StateIndex;
 		m_objState->Enter();
-		m_objState->m_Actions = SCState::LOOP;    // Only Enter INIT State Once
+		if(m_objState->m_Actions == SCState::INIT)
+			m_objState->m_Actions = SCState::LOOP;    // Only Enter INIT State Once
 		break;
 	case SCState::LOOP:
 		m_objState->Loop();
@@ -477,39 +478,6 @@ int	SCStateMachine::ExecuteStateAction(SCState::STATE stateIdx)
 }
 
 /**************************************************************************//**
-*
-* \brief   - Trigger Cooling
-*
-* \param   - None.
-*
-* \return  - None.
-*
-******************************************************************************/
-//TODO Need to move to L20 actuator task, because it should be specific for L20 only.
-void SCStateMachine::XTickTock()
-{
-	if (m_CoolDelayTimer == 0)
-	{
-		if (m_CoolDurationTimer != 0)
-		{
-			m_CoolDelayTimer--;
-			if (m_CoolDelayTimer == 0)
-			{
-				//Turn OFF cooling air
-				vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_LOW);
-			}
-		}
-	}
-	else
-	{
-		m_CoolDelayTimer--;
-		if(m_CoolDelayTimer == 0)
-			vxbGpioSetValue(GPIO::O_COOLAIR, GPIO_VALUE_HIGH);
-
-	}
-}
-
-/**************************************************************************//**
 * \brief  	- Specific SC core status
 *
 * \param	- None
@@ -547,20 +515,3 @@ void SCStateMachine::ClearCoreState(unsigned int coreState)
 {
 	CoreState &= ~coreState;
 }
-
-/**************************************************************************//**
-*
-* \brief   - Set Cooling Timer
-*
-* \param   - Cooling delay time, Cooling duration
-*
-* \return  - None.
-*
-******************************************************************************/
-//TODO Need to move to L20 actuator task, because it should be specific for L20 only.
-void SCStateMachine::SetCoolingTimer(unsigned int delay, unsigned int duration)
-{
-	m_CoolDelayTimer = delay;
-	m_CoolDurationTimer = duration;
-}
-

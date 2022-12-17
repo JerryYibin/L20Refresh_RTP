@@ -15,6 +15,7 @@
 
 
 #include "CommonProperty.h"
+#include "commons.h"
 /* static initializations */
 CommonProperty*							CommonProperty::m_CPObj							= nullptr;
 const char*								CommonProperty::cTaskName[TOTAL_NUM_OF_TASK]	= {0};
@@ -35,8 +36,8 @@ CommonProperty::CommonProperty()
 	#endif
 	
 	SystemInfo.psLifeCounter = 0;
-	SystemInfo.psFrequency = 20;
-	SystemInfo.psWatt = 4000;
+	SystemInfo.psFrequency = DEFAULT_20K_FREQUENCY;
+	SystemInfo.psWatt = DEFAULT_5_5KW_POWER;
 }
 
 /**************************************************************************//**

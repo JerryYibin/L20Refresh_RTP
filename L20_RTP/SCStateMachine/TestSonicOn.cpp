@@ -114,6 +114,7 @@ void TestSonicOn::Exit()
 	PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
 	PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_WELDTEST_ENABLE);
 	ChangeExtDgtOutput(ScDgtOutputTask::TO_DGT_OUTPUT_TASK_SONICS_RESET);
+	TestSonicsWorkFlow::TriggerCounter = 0;
 	LOG("Test Sonics Weld Time = %d Timeout = %d\n", m_Timeout);
 }
 
@@ -148,7 +149,8 @@ void TestSonicOn::Fail()
 int	TestSonicOn::Execute(void* _obj)
 {
 	TestSonicOn* _TestSonic = (TestSonicOn*)_obj;
-	_TestSonic->m_Actions = SCState::JUMP;		 //  If the button is released, JUMP state.
+	if(_TestSonic->m_Actions == SCState::LOOP)
+		_TestSonic->m_Actions = SCState::JUMP;		 //  If the button is released, JUMP state.
 	return OK;
 }
 

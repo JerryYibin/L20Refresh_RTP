@@ -51,3 +51,13 @@ void P1ActuatorTask::DoAuxMotion(int motion)
 {
 	
 }
+
+void P1ActuatorTask::SetCoolingTimer()
+{
+	
+}
+
+void P1ActuatorTask::ResetCoolingTimer()
+{
+	
+}

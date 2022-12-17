@@ -70,12 +70,12 @@ int FirmwareUpgrade::USBDetect(void)
 	/* check Whether it is connected or not */
 	if (fd < 0) 
 	{
-		LOGERR("FW_T : USB IS NOT DETECTED  %s\n", (_Vx_usr_arg_t )USB_PATH, 0, 0);
+		//LOGERR("FW_T : USB IS NOT DETECTED  %s\n", (_Vx_usr_arg_t )USB_PATH, 0, 0);
 		return USB_DETECT_FAIL;
 	} 
 	else 
 	{
-		LOG("FW_T : USB IS DETECED SUCCESS  %s\n", (_Vx_usr_arg_t )USB_PATH, 0, 0);
+		//LOG("FW_T : USB IS DETECED SUCCESS  %s\n", (_Vx_usr_arg_t )USB_PATH, 0, 0);
 		return USB_DETECT_SUCCESS;
 	}
 	

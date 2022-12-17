@@ -41,7 +41,6 @@ public:
 private:
 	void 			ClearWeldData		();
 	unsigned int 	GetFilteredPower	(void);
-	void 			CoolAirControl		(unsigned int delay, unsigned duration);
 	void			CheckWeldAlarm		();
 };
 

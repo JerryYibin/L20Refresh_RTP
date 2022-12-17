@@ -49,6 +49,8 @@ void PCEstop::Enter()
 	// turn off sonics
 	vxbGpioSetValue(GPIO::O_RUN_PSI, GPIO_VALUE_LOW);
 	vxbGpioSetValue(GPIO::O_EXT_SEEK_PSI, GPIO_VALUE_LOW);
+	vxbGpioSetValue(GPIO::O_SONICS_ON, GPIO_VALUE_LOW);
+	vxbGpioSetValue(GPIO::O_TEST_PSI, GPIO_VALUE_LOW);
 	PCStateMachine::PC_RX->MasterEvents |= BIT_MASK(CTRL_PC_SONIC_DISABLE);
 	PCStateMachine::PC_RX->TargetAmplitude = 0;
 }

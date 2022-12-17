@@ -38,10 +38,13 @@ UserInterface owned using the class object pointer.
 #include "WeldResultSignature.h"
 #include "AlarmManager.h"
 #include "AlarmLog.h"
+#include "UserAuthority.h"
+#include "UserPrivilege.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
 	#include "hwif/drv/resource/vxbRtcLib.h"
+	#include "net/if.h"
 }
 
 /**************************************************************************//**
@@ -139,12 +142,8 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		updateLastWeldResult();
 		break;
 	case TO_UI_TASK_SYSCONFIG_READ:
-		//TODO System Configure should be read from database once after power up.
-		responseSystemConfig();	
+		responseSystemConfig();
 		break;
-//	case TO_UI_TASK_SYSCONFIG_READ_RESPONSE:
-//		responseSystemConfig();
-//		break;
 	case TO_UI_TASK_SYSCONFIG_WRITE:
 		updateSystemConfigData(message.Buffer);
 		message.msgID = DataTask::TO_DATA_TASK_SYS_CONFIG_UPDATE;
@@ -334,11 +333,50 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_FREQUENCY_CURVE_EXTERNAL_REQ:
 		ExternalManager::GetInstance()->Send(ExternalManager::REPLYFREQUENCYCURVE);
-		break;	
+		break;
+	case TO_UI_TASK_PERMISSION_SCREEN_GET:
+		responsePermissionScreenGetRequest();
+		break;
+	case TO_UI_TASK_PERMISSION_SCREEN_SET:
+		setScreenPermission(message.Buffer);
+		break;
+	case TO_UI_TASK_PASSCODE_LIST_GET:
+		responsePasscodeListGetRequest();
+		break;
+	case TO_UI_TASK_PASSCODE_UPDATE:
+		updateUserPasscode(message.Buffer);
+		break;
+	case TO_UI_TASK_VALIDATE_PASSCODE:
+		responseCheckPasscodeRequest(message.Buffer);
+		break;
+	case TO_UI_TASK_PERMISSION_SCREEN_SET_RESPOMSE:
+		responsePermissionScreenSetRequest(message.Buffer);
+		break;
+	case TO_UI_TASK_PASSCODE_UPDATE_RESPOMSE:
+		responseUpdatePasscodeRequest(message.Buffer);
+		break;
 	case TO_UI_TASK_AMPLITUDE_CALIBRATE_SAVE_IDX:
 		SystemConfiguration::_SystemConfig->Set(SYSTEMCONFIG::MAX_AMPLITUDE, message.Buffer);
 		message.msgID = DataTask::TO_DATA_TASK_SYS_CONFIG_UPDATE;
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		break;
+	case TO_UI_TASK_READ_WELDRESULTHISTORY_POWER_GRAPH:
+		getWeldReslutHistoryPowerDataByID(message.Buffer);
+		break;
+	case TO_UI_TASK_READ_WELDRESULTHISTORY_HEIGHT_GRAPH:
+		getWeldReslutHistoryHeightDataByID(message.Buffer);
+		break;
+	case TO_UI_TASK_READ_WELDRESULTHISTORY_FREQUENCY_GRAPH:
+		getWeldReslutHistoryFrequencyDataByID(message.Buffer);
+		break;
+	case TO_UI_TASK_GET_WELDRESULTHISTORY_POWER_DATA:
+		responseReadHistoryPowerGraphRequest();
+		break;
+	case TO_UI_TASK_GET_WELDRESULTHISTORY_HEIGHT_DATA:
+		responseReadHistoryHeightGraphRequest();
+		break;
+	case TO_UI_TASK_GET_WELDRESULTHISTORY_FREQUENCY_DATA:
+		responseReadHistoryFrquencyGraphRequest();
 		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
@@ -364,7 +402,8 @@ void UserInterface::responseHeartbeat()
 	sendMsg.msgID	= REQ_HEART_BEAT_IDX;
 	sendMsg.msgLen  = 0;
 	sendMsg.rspCode = 0;
-	m_stHeartbeat.AlarmCode = AlarmManager::GetInstance()->GetAlarmType();	
+	m_stHeartbeat.AlarmCode = AlarmManager::GetInstance()->GetAlarmType();
+	m_stHeartbeat.CycleCounter = WeldResults::_WeldResults->CycleCounter;
 	memcpy(sendMsg.Buffer, &m_stHeartbeat, sizeof(HEARTBEAT));
 	sendMsg.msgLen = sizeof(HEARTBEAT);
 	
@@ -488,10 +527,12 @@ void UserInterface::responseSystemInfo()
 	sendMsg.msgLen  = 0;
 	sendMsg.rspCode = 0;
 	string timeStamp;
-	char macaddr[6] = {0,0,0,0,0,0};
-	char macAddr[20]={0x00};
 
-	
+	char macaddr[6] = {0x00,0x40,0x47,0xE0,0xA8,0x32};
+	char macAddr[20]={0x00};
+	char ipAddr[SYSINFO_SIZE] = {0};
+	//Get IP address
+	getIPaddress(ipAddr);
 	sprintf(CommonProperty::SystemInfo.version_SC,"%d.%d.%d.%d",FWVersion::Get(FW_VERSION_SC, VERSION_MAJOR), 
 											FWVersion::Get(FW_VERSION_SC, VERSION_MINOR),
 											FWVersion::Get(FW_VERSION_SC, VERSION_BUILD),
@@ -511,8 +552,8 @@ void UserInterface::responseSystemInfo()
 			macaddr[5]);
 
 	sprintf(CommonProperty::SystemInfo.psMacID, "%s", macAddr);
-	sprintf(CommonProperty::SystemInfo.psIP, "%s", "127.0.0.1");
-	sprintf(CommonProperty::SystemInfo.modelName, "%s", "L20 Refresh");
+	memcpy(&CommonProperty::SystemInfo.psIP, &ipAddr, SYSINFO_SIZE);
+	sprintf(CommonProperty::SystemInfo.modelName, "%s", "GMX-L20A");
 	
 	memset(CommonProperty::SystemInfo.dateTime, 0, SYSINFO_SIZE * 2);
 	getDateAndTime(CommonProperty::SystemInfo.dateTime);
@@ -536,6 +577,39 @@ void UserInterface::getDateAndTime(char* timebuf)
 	struct tm time;
 	vxbRtcGet(&time);
 	sprintf(timebuf,"%d/%02d/%02d",time.tm_year+1900,time.tm_mon+1,time.tm_mday);
+}
+/**************************************************************************//**
+* 
+* \brief   - Set current system date and time 
+*
+* \param   - char* datetime
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::setSystemTime(char* datetime)
+{
+	struct tm time;
+	sscanf_s(datetime, "%d/%02d/%02d %02d:%02d:%02d", &time.tm_year, &time.tm_mon,&time.tm_mday, &time.tm_hour, &time.tm_min, &time.tm_sec);
+    time.tm_year -= 1900;
+    time.tm_mon  -=1;
+    vxbRtcSet(&time);
+}
+/**************************************************************************//**
+* 
+* \brief   - Get current system date and time 
+*
+* \param   - char* datetime
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::getSystemTime(char* datetime)
+{
+	struct tm time;
+	vxbRtcGet(&time);
+	sprintf_s(datetime,TIME_SIZE,"%d/%02d/%02d %02d:%02d:%02d",time.tm_year+1900,time.tm_mon+1,time.tm_mday,time.tm_hour,
+			time.tm_min,time.tm_sec);
 }
 
 /**************************************************************************//**
@@ -794,12 +868,12 @@ void UserInterface::responseAlarmLogLib()
 	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
 	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
 	sendMsg.msgID = REQ_ALARM_LOG_IDX;
-	sendMsg.msgLen = AlarmLog::TransformAlarmLogVector().size() * sizeof(UI_ALARM_LOG);
+	auto AlarmLogUIVector = AlarmLog::TransformAlarmLogVector();
+	sendMsg.msgLen = AlarmLogUIVector->size() * sizeof(UI_ALARM_LOG);
 	sendMsg.rspCode = 0;
-	memcpy(sendMsg.Buffer, &AlarmLog::TransformAlarmLogVector()[0], sendMsg.msgLen);
+	memcpy(sendMsg.Buffer, &AlarmLogUIVector->front(), sendMsg.msgLen);
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 	AlarmLog::AlarmVector.clear();
-	AlarmLog::TransformAlarmLogVector().clear();
 }
 
 /**************************************************************************//**
@@ -856,6 +930,7 @@ void UserInterface::responseSystemConfig()
 
 	SYSTEMCONFIGFORUI sysConfigUI;
 	SystemConfiguration::Get(&sysConfigUI);
+	getSystemTime(sysConfigUI.DateTime);
 	sendMsg.msgLen = sizeof(SYSTEMCONFIGFORUI);
 	memcpy(sendMsg.Buffer, reinterpret_cast<char*>(&sysConfigUI), sendMsg.msgLen);
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
@@ -874,6 +949,7 @@ void UserInterface::updateSystemConfigData(char* messagebuf)
 	SYSTEMCONFIGFORUI sysConfigUI;
 	memcpy(reinterpret_cast<char*>(&sysConfigUI), messagebuf, sizeof(SYSTEMCONFIGFORUI));
 	SystemConfiguration::Set(&sysConfigUI);
+	setSystemTime(sysConfigUI.DateTime);
 }
 
 /**************************************************************************//**
@@ -1160,5 +1236,331 @@ void UserInterface::responseCurrentAlarmEventReset()
 	sendMsg.msgID = REQ_RESET_CURRENT_ALARM_IDX;
 	sendMsg.msgLen = 0;
 	sendMsg.rspCode = 0;
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response get the permission of screen
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responsePermissionScreenGetRequest()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_GET_PERMISSION_SCREEN;
+	sendMsg.rspCode = 0;
+	UserAuthority::GetInstance()->UpdateUserPrivileges(UserAuthority::GetInstance()->_UserPrivilegesSC);
+	sendMsg.msgLen = UserAuthority::GetInstance()->_UserPrivilegesUI->size() * sizeof(USER_PRIVILEGE);
+	memcpy(sendMsg.Buffer, &UserAuthority::GetInstance()->_UserPrivilegesUI->front(), sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - set screen permission
+*
+* \param   - char* messagebuf
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::setScreenPermission(char* messagebuf)
+{	
+	int i = 0;
+	int iScreenPermissionSize = 0;
+	vector<int> vtEntryScreenIndex;
+	MESSAGE message;
+	//1. Update _UserPrivilegesUI.
+	UserAuthority::GetInstance()->_UserPrivilegesUI->clear();
+	memcpy(&iScreenPermissionSize, messagebuf, sizeof(int));
+	for(int i = 0; i < iScreenPermissionSize; i++)
+	{
+		USER_PRIVILEGE  userPrivilegeTmp;
+		memcpy(&userPrivilegeTmp, messagebuf + sizeof(int) + (i *  sizeof(USER_PRIVILEGE)), sizeof(USER_PRIVILEGE));
+		UserAuthority::GetInstance()->_UserPrivilegesUI->push_back(userPrivilegeTmp);
+	}
+	UserAuthority::GetInstance()->UpdateUserPrivileges(UserAuthority::GetInstance()->_UserPrivilegesUI);
+	//2. Send message to data task for update db.
+	message.msgID = DataTask::TO_DATA_TASK_PERMISSION_SCREEN_SET;
+	memset(message.Buffer, 0x00, sizeof(message.Buffer));
+	for(vector<USER_PRIVILEGE>::iterator iter = UserAuthority::GetInstance()->_UserPrivilegesUI->begin(); iter != UserAuthority::GetInstance()->_UserPrivilegesUI->end(); iter++)
+	{
+		vtEntryScreenIndex.push_back(iter->EntryScreenIndex);
+	}
+	memcpy(message.Buffer, &iScreenPermissionSize, sizeof(int));
+	memcpy(message.Buffer + sizeof(int), &vtEntryScreenIndex[0], vtEntryScreenIndex.size() * sizeof(int));
+	SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response to get the password list
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responsePasscodeListGetRequest()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_GET_PASSCODE_LIST;
+	sendMsg.rspCode = 0;
+	UserAuthority::GetInstance()->UpdateUserProfiles(UserAuthority::GetInstance()->_UserProfilesSC);
+	sendMsg.msgLen = UserAuthority::GetInstance()->_UserProfilesUI->size() * sizeof(USER_PROFILE);
+	memcpy(sendMsg.Buffer, &UserAuthority::GetInstance()->_UserProfilesUI->front(), sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - excute update user passcode
+*
+* \param   - char* messagebuf
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::updateUserPasscode(char* messagebuf)
+{
+	MESSAGE message;
+	int iUserPasscodeSize = 0;
+	vector<int> vtLevel;
+	//1. Update _UserProfilesSC
+	UserAuthority::GetInstance()->_UserProfilesUI->clear();
+	memcpy(&iUserPasscodeSize, messagebuf, sizeof(int));
+	for(int i = 0; i < iUserPasscodeSize; i++)
+	{
+		USER_PROFILE userProfileTmp;
+		memcpy(&userProfileTmp, messagebuf + sizeof(int) + (i *  sizeof(USER_PROFILE)), sizeof(USER_PROFILE));
+		UserAuthority::GetInstance()->_UserProfilesUI->push_back(userProfileTmp);
+	}
+	UserAuthority::GetInstance()->UpdateUserProfiles(UserAuthority::GetInstance()->_UserProfilesUI);
+	//2. Send message to data task for updating DB.
+	message.msgID = DataTask::TO_DATA_TASK_PASSCODE_UPDATE;
+	for(vector<USER_PROFILE>::iterator iter = UserAuthority::GetInstance()->_UserProfilesUI->begin(); iter != UserAuthority::GetInstance()->_UserProfilesUI->end(); iter++)
+	{
+		vtLevel.push_back(iter->Level);
+	}
+	memset(message.Buffer, 0x00, sizeof(message.Buffer));
+	memcpy(message.Buffer, &iUserPasscodeSize, sizeof(int));
+	memcpy(message.Buffer + sizeof(int), &vtLevel[0], vtLevel.size() * sizeof(int));
+	SendToMsgQ(message, DATA_MSG_Q_ID_DATA);	
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response to check password request
+*
+* \param   - char* messagebuf
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseCheckPasscodeRequest(char* messagebuf)
+{
+	int iCheckStatus = PASSWORD_CHECK_FAIL;
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_VALIDATE_PASSCODE;
+	sendMsg.rspCode = 0;
+	sendMsg.msgLen = sizeof(iCheckStatus);
+	USER_PAGE_PASSWORD userPagePasswordTmp;
+	memcpy(&userPagePasswordTmp, messagebuf, sizeof(USER_PAGE_PASSWORD));
+	iCheckStatus = UserAuthority::GetInstance()->CheckScreenAccessAuthority(userPagePasswordTmp.Password, userPagePasswordTmp.PageIndex);
+	memcpy(sendMsg.Buffer, &iCheckStatus, sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);	
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response to set screen permission request
+*
+* \param   - char* messagebuf
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responsePermissionScreenSetRequest(char* messagebuf)
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	sendMsg.msgLen = sizeof(int);
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	memcpy(sendMsg.Buffer, messagebuf, sizeof(int));
+	sendMsg.msgID = REQ_SET_PERMISSION_SCREEN;
+	sendMsg.rspCode = 0;
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response to update password request
+*
+* \param   - char* messagebuf
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseUpdatePasscodeRequest(char* messagebuf)
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	sendMsg.msgLen = sizeof(int);
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	memcpy(sendMsg.Buffer, messagebuf, sizeof(int));
+	sendMsg.msgID = REQ_UPDATE_PASSCODE;
+	sendMsg.rspCode = 0;
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+	
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Get machine ip address
+*
+* \param   - char* ipbuffer
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::getIPaddress(char* ipbuffer)
+{
+
+    int iSocketId;
+    sockaddr_in stuSin;
+    ifreq stuIfr;
+    string strEthName = "cpsw0";
+    iSocketId = socket(AF_INET, SOCK_DGRAM, 0);
+    if(iSocketId >= 0)
+    {
+    	memcpy(stuIfr.ifr_name, strEthName.c_str(), strEthName.size());
+    	if(ioctl(iSocketId, SIOCGIFADDR, &stuIfr) >= 0)
+    	{
+    		 memcpy(&stuSin, &stuIfr.ifr_addr, sizeof(sockaddr_in));
+    		 memcpy(ipbuffer, inet_ntoa(stuSin.sin_addr), 16);
+    	}
+    }
+    close(iSocketId);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Get history power data from WeldResult table by ID
+*
+* \param   - char* messagebuf
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::getWeldReslutHistoryPowerDataByID(char* messagebuf)
+{
+	MESSAGE message;
+	message.msgID = DataTask::TO_DATA_TASK_READ_WELDRESULTHISTORY_POWER_DATA;
+	memset(message.Buffer, 0x00, sizeof(message.Buffer));
+	memcpy(message.Buffer, messagebuf, sizeof(int));
+	SendToMsgQ(message, DATA_MSG_Q_ID_DATA);	
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Get history height data from WeldResult table by ID
+*
+* \param   - char* messagebuf
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::getWeldReslutHistoryHeightDataByID(char* messagebuf)
+{
+	MESSAGE message;
+	message.msgID = DataTask::TO_DATA_TASK_READ_WELDRESULTHISTORY_HEIGHT_DATA;
+	memset(message.Buffer, 0x00, sizeof(message.Buffer));
+	memcpy(message.Buffer, messagebuf, sizeof(int));
+	SendToMsgQ(message, DATA_MSG_Q_ID_DATA);	
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Get history frequency data from WeldResult table by ID
+*
+* \param   - char* messagebuf
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::getWeldReslutHistoryFrequencyDataByID(char* messagebuf) 
+{
+	MESSAGE message;
+	message.msgID = DataTask::TO_DATA_TASK_READ_WELDRESULTHISTORY_FREQUENCY_DATA;
+	memset(message.Buffer, 0x00, sizeof(message.Buffer));
+	memcpy(message.Buffer, messagebuf, sizeof(int));
+	SendToMsgQ(message, DATA_MSG_Q_ID_DATA);	
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response the history power graph points to HMI
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseReadHistoryPowerGraphRequest()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_READ_WELDRESULTHISTORY_POWER_GRAPH;
+	sendMsg.rspCode = 0;
+	WeldResultSignature::GetInstance()->SelectGraphCurvePointsHandler(GRAPH_POWER);
+	sendMsg.msgLen = WeldResultSignature::GetInstance()->L20PowerGraphCurvePointVector.size() * sizeof(GraphCurvePoint);
+	memcpy(sendMsg.Buffer, &WeldResultSignature::GetInstance()->L20PowerGraphCurvePointVector[0], sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response the history height graph points to HMI
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseReadHistoryHeightGraphRequest()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_READ_WELDRESULTHISTORY_HEIGHT_GRAPH;
+	sendMsg.rspCode = 0;
+	WeldResultSignature::GetInstance()->SelectGraphCurvePointsHandler(GRAPH_HEIGHT);
+	sendMsg.msgLen = WeldResultSignature::GetInstance()->L20HeightGraphCurvePointVector.size() * sizeof(GraphCurvePoint);
+	memcpy(sendMsg.Buffer, &WeldResultSignature::GetInstance()->L20HeightGraphCurvePointVector[0], sendMsg.msgLen);
+	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
+}
+
+/**************************************************************************//**
+* 
+* \brief   - Response the history frquency graph points to HMI
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void UserInterface::responseReadHistoryFrquencyGraphRequest()
+{
+	CommunicationInterface_HMI::CLIENT_MESSAGE sendMsg;
+	memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+	sendMsg.msgID = REQ_READ_WELDRESULTHISTORY_FREQUENCY_GRAPH;
+	sendMsg.rspCode = 0;
+	WeldResultSignature::GetInstance()->SelectGraphCurvePointsHandler(GRAPH_FRQUENCY);
+	sendMsg.msgLen = WeldResultSignature::GetInstance()->L20FrquencyGraphCurvePointVector.size() * sizeof(GraphCurvePoint);
+	memcpy(sendMsg.Buffer, &WeldResultSignature::GetInstance()->L20FrquencyGraphCurvePointVector[0], sendMsg.msgLen);
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }

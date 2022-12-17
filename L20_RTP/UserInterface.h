@@ -90,7 +90,20 @@ public:
 		TO_UI_TASK_POWER_CURVE_EXTERNAL_REQ,
 		TO_UI_TASK_HEIGHT_CURVE_EXTERNAL_REQ,
 		TO_UI_TASK_FREQUENCY_CURVE_EXTERNAL_REQ,
-		TO_UI_TASK_AMPLITUDE_CALIBRATE_SAVE_IDX
+		TO_UI_TASK_AMPLITUDE_CALIBRATE_SAVE_IDX,
+		TO_UI_TASK_PERMISSION_SCREEN_GET,
+		TO_UI_TASK_PERMISSION_SCREEN_SET,
+		TO_UI_TASK_PERMISSION_SCREEN_SET_RESPOMSE,
+		TO_UI_TASK_PASSCODE_LIST_GET,
+		TO_UI_TASK_PASSCODE_UPDATE,
+		TO_UI_TASK_PASSCODE_UPDATE_RESPOMSE,
+		TO_UI_TASK_VALIDATE_PASSCODE,
+		TO_UI_TASK_READ_WELDRESULTHISTORY_POWER_GRAPH,    
+		TO_UI_TASK_READ_WELDRESULTHISTORY_HEIGHT_GRAPH,   
+		TO_UI_TASK_READ_WELDRESULTHISTORY_FREQUENCY_GRAPH,
+		TO_UI_TASK_GET_WELDRESULTHISTORY_POWER_DATA,
+		TO_UI_TASK_GET_WELDRESULTHISTORY_HEIGHT_DATA,
+		TO_UI_TASK_GET_WELDRESULTHISTORY_FREQUENCY_DATA
 	};
 	UserInterface();
 	~UserInterface();
@@ -137,7 +150,7 @@ private:
 	
 	void            responseDetectUSBdevice             ();
 	void            firmWareUpgradeHandler              ();
-	void 			responseFirmwareUPgradeHandler        ();
+	void 			responseFirmwareUPgradeHandler      ();
 	void 			responseFirmwareUpgradeProgress     (char* messagebuf);
 	void 			setEthernetConfigData               (char* messagebuf);
 	void 			responseEthernetConfigData			();
@@ -148,6 +161,22 @@ private:
 	void 			responseReadFrquencyGraphRequest    ();
 	void			responseCurrentAlarmEventRequest	();
 	void			responseCurrentAlarmEventReset		();
+	void 			responsePermissionScreenGetRequest  ();
+	void 			setScreenPermission         		(char* messagebuf);
+	void 			responsePasscodeListGetRequest      ();
+	void 			updateUserPasscode                  (char* messagebuf);
+	void 			responseCheckPasscodeRequest		(char* messagebuf);
+	void 			responsePermissionScreenSetRequest  (char* messagebuf);
+	void 			responseUpdatePasscodeRequest       (char* messagebuf);
+	void 			setSystemTime						(char* datetime);
+	void 			getSystemTime						(char* datetime);
+	void 			getIPaddress						(char* ipbuffer);
+	void 			getWeldReslutHistoryPowerDataByID   (char* messagebuf);
+	void 			getWeldReslutHistoryHeightDataByID  (char* messagebuf);
+	void 			getWeldReslutHistoryFrequencyDataByID(char* messagebuf);
+	void 			responseReadHistoryPowerGraphRequest();
+	void 			responseReadHistoryHeightGraphRequest();
+	void 			responseReadHistoryFrquencyGraphRequest();
 };
 
 #endif /* USERINTERFACE_H_ */

@@ -15,7 +15,6 @@
 **********************************************************************************************************/
 #include "DBAccess_l20_db.h"
 #include "commons.h"
-#include "AlarmCodeUI.h"
 #include "../Utility.h"
 #include "../Recipe.h"
 #include "../HeightEncoder.h"
@@ -168,11 +167,33 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
     unsigned int PreHeight 			= 0;
     unsigned int PostHeight 		= 0;
     int AlarmID 					= 0;
+    int TimePlus					= 0;
+    int TimeMinus					= 0;
+    int PeakPowerPlus				= 0;
+    int PeakPowerMinus				= 0;
+    int TriggerHeightPlus			= 0;
+    int TriggerHeightMinus			= 0;
+    int WeldHeightPlus				= 0;
+    int WeldHeightMinus				= 0;
+    int WeldMode					= 0;
+    int ModeValueSetting			= 0;
     WeldResults::_WeldResults->Get(WeldResults::TRIGGER_PRESSURE, &TriggerPressure);
     WeldResults::_WeldResults->Get(WeldResults::WELD_PRESSURE, &WeldPressure);
     WeldResults::_WeldResults->Get(WeldResults::PRE_HEIGHT, &PreHeight);
     WeldResults::_WeldResults->Get(WeldResults::POST_HEIGHT, &PostHeight);
     WeldResults::_WeldResults->Get(WeldResults::ALARM_ID, &AlarmID);
+    
+    
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TIME_MAX, &TimePlus);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::TIME_MIN, &TimeMinus);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::PEAK_POWER_MAX, &PeakPowerPlus);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::PEAK_POWER_MIN, &PeakPowerMinus);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::PRE_HEIGHT_MAX, &TriggerHeightPlus);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::PRE_HEIGHT_MIN, &TriggerHeightMinus);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::HEIGHT_MAX, &WeldHeightPlus);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::HEIGHT_MIN, &WeldHeightMinus);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::WELD_MODE, &WeldMode);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::PARALIST::ENERGY_SETTING, &ModeValueSetting);
 
 	struct tm timeStamp;
     char timeBuf[20];
@@ -189,13 +210,15 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 
 	string strStore =
         "insert into " + string(TABLE_WELD_RESULT) +
-        " (PartID, DateTime, RecipeID, WeldEnergy, TriggerPressure, WeldPressure, " +
+        " (PartID, DateTime, RecipeName, WeldEnergy, TriggerPressure, WeldPressure, " +
 		"WeldAmplitude, WeldTime, WeldPeakPower, TriggerHeight, WeldHeight, " +
-		"AlarmFlag, SequenceID, CycleCounter) " +
+		"AlarmFlag, SequenceID, CycleCounter, TimePlus, TimeMinus, PeakPowerPlus, " + 
+		"PeakPowerMinus, TriggerHeightPlus, TriggerHeightMinus, WeldHeightPlus, " + 
+		"WeldHeightMinus, WeldMode, ModeValueSetting) " +
 		"values ('"+
 		WeldResults::_WeldResults->PartID+"','"+//PartID
-		timeBuf+"',"+//DateTime
-		std::to_string(Recipe::ActiveRecipeSC->m_RecipeID/*pData->RecipeNumber*/)+","+//RecipeID
+		timeBuf+"','"+//DateTime
+		Recipe::ActiveRecipeSC->m_RecipeName/*pData->RecipeNumber*/+"',"+//RecipeName
 		std::to_string(WeldResults::_WeldResults->Energy)+","+//WeldEnergy
 		std::to_string(TriggerPressure)+","+//TriggerPressure
 		std::to_string(WeldPressure)+","+//WeldPressure
@@ -206,12 +229,23 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 		std::to_string(PostHeight)+","+//WeldHeight
 		std::to_string(AlarmID)+","+//AlarmFlag
 		std::to_string(0)+","+//SequenceID
-		std::to_string(WeldResults::_WeldResults->CycleCounter)+");";//CycleCounter
+		std::to_string(WeldResults::_WeldResults->CycleCounter)+","+//CycleCounter
+		std::to_string(TimePlus)+","+//TimePlus
+		std::to_string(TimeMinus)+","+
+		std::to_string(PeakPowerPlus)+","+
+		std::to_string(PeakPowerMinus)+","+
+		std::to_string(TriggerHeightPlus)+","+
+		std::to_string(TriggerHeightMinus)+","+
+		std::to_string(WeldHeightPlus)+","+
+		std::to_string(WeldHeightMinus)+","+
+		std::to_string(WeldMode)+","+
+		std::to_string(ModeValueSetting)+");";//ModeValueSetting
 
 	int nErrCode = SingleTransaction(strStore);
     int id = ERROR;
     getLatestID(TABLE_WELD_RESULT, &id);
-    WeldResults::_WeldResults->WeldResultID = id;
+    if(id != ERROR)
+    	WeldResults::_WeldResults->WeldResultID = id;
 
 	if(nErrCode == 0)
 	{
@@ -336,7 +370,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 	{
 		LOGERR((char*) "Database_T: '%s' already exists in table WeldRecipe\n",
                 (int)Recipe::RecipeSC->m_RecipeName, 0, 0);
-    	return NEW_RECIPE_ERROR;
+    	return ERROR;
 	}
 
     WeldStepValueSetting m_EnergyStep[STEP_MAX];
@@ -400,7 +434,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 	{
 		LOGERR((char*) "Get Error.\n", 0, 0, 0);
 		//Recipe::RecipeSC = nullptr;
-        return NEW_RECIPE_ERROR;
+        return ERROR;
 	}
     
 	struct tm timeStamp;
@@ -471,7 +505,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 	if(nErrCode != 0)
 	{
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
-		return NEW_RECIPE_ERROR;
+		return ERROR;
 	}
 
 	// delete oldest record when record reaches 1000
@@ -484,7 +518,7 @@ int DBAccessL20DB::StoreWeldRecipe(char* buffer)
 	{
         DeleteOldest(TABLE_WELD_RECIPE);
 	}
-	return NEW_RECIPE_OK;
+	return OK;
 }
 
 /**************************************************************************//**
@@ -502,7 +536,7 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	int nErrCode = SQLITE_ERROR;
 	AlarmEvent event;
 	memcpy((void*)&event, buffer, sizeof(AlarmEvent));
-	if(event.m_Source == AlarmEvent::ALARM_SC)
+	if(event.m_AlarmActions.CYCLE_COUNTER == true)
 		event.m_WeldResultID = WeldResults::_WeldResults->WeldResultID;
 
 	str =
@@ -550,7 +584,7 @@ int DBAccessL20DB::QueryWeldResultLatestPage(char* buffer)
 {
 	sendDataNum = ONE_RESULT_PAGE_NUM;
 	string strQuery = "select * from " + string(TABLE_WELD_RESULT)
-			+ " order by DateTime DESC limit " + std::to_string(sendDataNum)
+			+ " order by ID DESC limit " + std::to_string(sendDataNum)
 			+ ";";
 	string str = ExecuteQuery(strQuery);
 	if (str.empty()) {
@@ -566,7 +600,7 @@ int DBAccessL20DB::QueryWeldResultLatestPage(char* buffer)
 int DBAccessL20DB::QueryWeldResultNextPage(char* buffer)
 {
 	string strQuery = "select * from " + string(TABLE_WELD_RESULT)
-			+ " order by DateTime DESC limit " + std::to_string(sendDataNum)
+			+ " order by ID DESC limit " + std::to_string(sendDataNum)
 			+ ", " + std::to_string(ONE_RESULT_PAGE_NUM) + ";";
 	string str = ExecuteQuery(strQuery);
 	if (str.empty()) {
@@ -591,71 +625,57 @@ int DBAccessL20DB::QueryWeldResultNextPage(char* buffer)
 ******************************************************************************/
 void DBAccessL20DB::assignWeldResult(const string& buffer)
 {
-	vector<string> tmpStr, data;
+	vector<string> tmpStr;
     Utility::StringToTokens(buffer, ',', tmpStr);
 	for(int count = 0; count < tmpStr.size()/TABLE_RESULT_MEM; count++)
 	{
 		shared_ptr<WeldResults> ptr_WeldResults = WeldResults::GetWeldResults();
-		strncpy(ptr_WeldResults->PartID, tmpStr[count*TABLE_RESULT_MEM+1].c_str(), BARCODE_DATA_SIZE);
-		strncpy(ptr_WeldResults->DateTime, tmpStr[count*TABLE_RESULT_MEM+2].c_str(), WELD_TIME_SIZE);
-		ptr_WeldResults->RecipeID = atoi(tmpStr[count*TABLE_RESULT_MEM+3].c_str());//RecipeID
-		
-	    string strQuery =
-	        "select * from "+string(TABLE_WELD_RECIPE)+
-	        " where ID="+
-	        std::to_string(ptr_WeldResults->RecipeID)+";";
-	    string str = ExecuteQuery(strQuery);
-	    if(str.empty()){
-	    	strncpy(ptr_WeldResults->RecipeName, "N/A", USER_NAME_SIZE);
-	    }
-	    else{
-	    	Utility::StringToTokens(str, ',', data);
-	    	
-	    	unsigned int m_AmplitudeSetting = stoi(data.at(6));	
-	    	int m_WPpressureSetting 		= stoi(data.at(8));
-	    	int m_TPpressureSetting			= stoi(data.at(9));
-	    	int m_TimeMax 					= stoi(data.at(10));
-	    	int m_TimeMin 					= stoi(data.at(11));
-	    	unsigned int m_PeakPowerMax		= stoi(data.at(12));
-	    	unsigned int m_PeakPowerMin		= stoi(data.at(13));
-	    	int m_PreHeightMax				= stoi(data.at(14));
-	    	int m_PreHeightMin				= stoi(data.at(15));
-	    	int m_HeightMax					= stoi(data.at(16));
-	    	int m_HeightMin 				= stoi(data.at(17));
-	    	ptr_WeldResults->WeldMode 		= stoi(data.at(18));
-	    	unsigned int m_EnergySetting 	= stoi(data.at(19));
-	    	
-	    	strncpy(ptr_WeldResults->RecipeName, data[1].c_str(), USER_NAME_SIZE);//RecipeName
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::AMPLITUDE_SETTING, &m_AmplitudeSetting);	//AmplitudeSetting
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::W_PRESSURE_SETTING, &m_WPpressureSetting);	//WPpressureSetting
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::T_PRESSURE_SETTING, &m_TPpressureSetting);	//TPpressureSetting
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_WELD_TIME, &m_TimeMax);
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_WELD_TIME, &m_TimeMin);
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_POWER, &m_PeakPowerMax);
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_POWER, &m_PeakPowerMin);
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_PRE_HEIGHT, &m_PreHeightMax);
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_PRE_HEIGHT, &m_PreHeightMin);
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_POST_HEIGHT, &m_HeightMax);
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_POST_HEIGHT, &m_HeightMin);
-	    	ptr_WeldResults->Set(WeldResults::PARALIST::ENERGY_SETTING, &m_EnergySetting);  //EnergySetting
-	    	data.clear();
-	    }
-		
-		ptr_WeldResults->Energy = atoi(tmpStr[count*TABLE_RESULT_MEM+4].c_str());//WeldEnergy
-		int TriggerPressure = atoi(tmpStr[count*TABLE_RESULT_MEM+5].c_str());
-		ptr_WeldResults->Set(WeldResults::PARALIST::TRIGGER_PRESSURE, &TriggerPressure);//TriggerPressure
-		int WeldPressure = atoi(tmpStr[count*TABLE_RESULT_MEM+6].c_str());
-		ptr_WeldResults->Set(WeldResults::PARALIST::WELD_PRESSURE, &WeldPressure);//WeldPressure
-		ptr_WeldResults->Amplitude = atoi(tmpStr[count*TABLE_RESULT_MEM+7].c_str());//WeldAmplitude
-		ptr_WeldResults->WeldTime = atoi(tmpStr[count*TABLE_RESULT_MEM+8].c_str());//WeldTime
-		ptr_WeldResults->PeakPower = atoi(tmpStr[count*TABLE_RESULT_MEM+9].c_str());//WeldPeakPower
-		int PreHeight = atoi(tmpStr[count*TABLE_RESULT_MEM+10].c_str());
-		ptr_WeldResults->Set(WeldResults::PARALIST::TRIGGER_PRESSURE, &PreHeight);//TriggerHeight
-		int PostHeight = atoi(tmpStr[count*TABLE_RESULT_MEM+11].c_str());
-		ptr_WeldResults->Set(WeldResults::PARALIST::WELD_PRESSURE, &PostHeight);//WeldHeight
-		int AlarmFlag = atoi(tmpStr[count*TABLE_RESULT_MEM+12].c_str());
-		ptr_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, &AlarmFlag);//AlarmID
-		ptr_WeldResults->CycleCounter = atoi(tmpStr[count*TABLE_RESULT_MEM+14].c_str());//CycleCounter
+		strncpy(ptr_WeldResults->PartID, tmpStr[count*TABLE_RESULT_MEM+1].c_str(), BARCODE_DATA_SIZE);	//PartID
+		strncpy(ptr_WeldResults->DateTime, tmpStr[count*TABLE_RESULT_MEM+2].c_str(), WELD_TIME_SIZE);  	//DateTime 	
+	    strncpy(ptr_WeldResults->RecipeName, tmpStr[count*TABLE_RESULT_MEM+3].c_str(), USER_NAME_SIZE);	//RecipeName
+	    
+		int m_TriggerPressure 			= atoi(tmpStr[count*TABLE_RESULT_MEM+5].c_str());
+		int m_WeldPressure 				= atoi(tmpStr[count*TABLE_RESULT_MEM+6].c_str());	
+    	int m_TPpressureSetting 		= atoi(tmpStr[count*TABLE_RESULT_MEM+5].c_str());
+    	int m_WPpressureSetting			= atoi(tmpStr[count*TABLE_RESULT_MEM+6].c_str());
+    	unsigned int m_AmplitudeSetting = atoi(tmpStr[count*TABLE_RESULT_MEM+7].c_str());
+		int m_PreHeight 				= atoi(tmpStr[count*TABLE_RESULT_MEM+10].c_str());
+		int m_PostHeight 				= atoi(tmpStr[count*TABLE_RESULT_MEM+11].c_str());
+		int m_AlarmFlag 				= atoi(tmpStr[count*TABLE_RESULT_MEM+12].c_str());
+    	int m_TimeMax 					= atoi(tmpStr[count*TABLE_RESULT_MEM+15].c_str());
+    	int m_TimeMin 					= atoi(tmpStr[count*TABLE_RESULT_MEM+16].c_str());
+    	unsigned int m_PeakPowerMax		= atoi(tmpStr[count*TABLE_RESULT_MEM+17].c_str());
+    	unsigned int m_PeakPowerMin		= atoi(tmpStr[count*TABLE_RESULT_MEM+18].c_str());
+    	int m_PreHeightMax				= atoi(tmpStr[count*TABLE_RESULT_MEM+19].c_str());
+    	int m_PreHeightMin				= atoi(tmpStr[count*TABLE_RESULT_MEM+20].c_str());
+    	int m_HeightMax					= atoi(tmpStr[count*TABLE_RESULT_MEM+21].c_str());
+    	int m_HeightMin 				= atoi(tmpStr[count*TABLE_RESULT_MEM+22].c_str());
+    	ptr_WeldResults->WeldMode 		= atoi(tmpStr[count*TABLE_RESULT_MEM+23].c_str());
+    	unsigned int m_EnergySetting 	= atoi(tmpStr[count*TABLE_RESULT_MEM+24].c_str());
+	    
+		ptr_WeldResults->Energy 		= atoi(tmpStr[count*TABLE_RESULT_MEM+4].c_str());		//WeldEnergy
+		ptr_WeldResults->Amplitude 		= atoi(tmpStr[count*TABLE_RESULT_MEM+7].c_str());		//WeldAmplitude
+		ptr_WeldResults->WeldTime 		= atoi(tmpStr[count*TABLE_RESULT_MEM+8].c_str());		//WeldTime
+		ptr_WeldResults->PeakPower 		= atoi(tmpStr[count*TABLE_RESULT_MEM+9].c_str());		//WeldPeakPower
+		ptr_WeldResults->CycleCounter 	= atoi(tmpStr[count*TABLE_RESULT_MEM+14].c_str());		//CycleCounter
+		ptr_WeldResults->WeldResultID   = atoi(tmpStr[count*TABLE_RESULT_MEM].c_str()); 
+		ptr_WeldResults->Set(WeldResults::PARALIST::TRIGGER_PRESSURE, 	&m_TriggerPressure);	//TriggerPressure
+		ptr_WeldResults->Set(WeldResults::PARALIST::WELD_PRESSURE, 		&m_WeldPressure);		//WeldPressure
+		ptr_WeldResults->Set(WeldResults::PARALIST::PRE_HEIGHT, 		&m_PreHeight);			//TriggerHeight
+		ptr_WeldResults->Set(WeldResults::PARALIST::POST_HEIGHT, 		&m_PostHeight);			//WeldHeight
+		ptr_WeldResults->Set(WeldResults::PARALIST::ALARM_ID, 			&m_AlarmFlag);			//AlarmID
+    	ptr_WeldResults->Set(WeldResults::PARALIST::AMPLITUDE_SETTING, 	&m_AmplitudeSetting);	//AmplitudeSetting
+    	ptr_WeldResults->Set(WeldResults::PARALIST::W_PRESSURE_SETTING, &m_WPpressureSetting);	//WPpressureSetting
+    	ptr_WeldResults->Set(WeldResults::PARALIST::T_PRESSURE_SETTING, &m_TPpressureSetting);	//TPpressureSetting
+    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_WELD_TIME, 		&m_TimeMax);			//TimeMax
+    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_WELD_TIME, 		&m_TimeMin);			//TimeMin
+    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_POWER, 			&m_PeakPowerMax);		//PeakPowerMax
+    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_POWER, 			&m_PeakPowerMin);		//PeakPowerMin
+    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_PRE_HEIGHT, 	&m_PreHeightMax);		//PreHeightMax
+    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_PRE_HEIGHT, 	&m_PreHeightMin);		//PreHeightMin
+    	ptr_WeldResults->Set(WeldResults::PARALIST::MAX_POST_HEIGHT, 	&m_HeightMax);			//HeightMax
+    	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_POST_HEIGHT, 	&m_HeightMin);			//HeightMin
+    	ptr_WeldResults->Set(WeldResults::PARALIST::ENERGY_SETTING, 	&m_EnergySetting);  	//EnergySetting
 		WeldResult::WeldResultVector.push_back(ptr_WeldResults);
 #if UNITTEST_DATABASE
     if(str.size()>0)
@@ -738,25 +758,31 @@ int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
 * \return  - int - count of records
 *
 ******************************************************************************/
-int DBAccessL20DB::QueryBlockWeldResult(char* buffer)
+int DBAccessL20DB::QueryLatestWeldResult(char* buffer)
 {
-    int count;
-    string str;
 	vector<string> tmpStr;
-	int id = *(int* )buffer;
-
-    str = ExecuteQuery(
-                string("select * from ")+string(TABLE_WELD_RESULT)+
-                " where ID <= "+std::to_string(id)+" and ID > "+
-                std::to_string(id-RESULT_FOR_UI_MAX)+
-                " order by ID desc;");
+	int errorCode = 0;
+    string str = ExecuteQuery("select ID,CycleCounter from "+string(TABLE_WELD_RESULT)+
+                " where ID = (select max(ID) from "+string(TABLE_WELD_RESULT)+
+				") limit 1;", &errorCode);
+    if(str.empty())
+    {
+    	CommonProperty::SystemInfo.psLifeCounter = 0;
+    	WeldResults::_WeldResults->CycleCounter = 0;
+    	if(errorCode != SQLITE_OK)
+    		return ERROR;
+    }
+	else {
+		Utility::StringToTokens(str, ',', tmpStr);
+		CommonProperty::SystemInfo.psLifeCounter = atoi(tmpStr[1].c_str());
+		WeldResults::_WeldResults->CycleCounter = atoi(tmpStr[2].c_str());
+	}
 #if UNITTEST_DATABASE
-    LOG("QueryBlockWeldResult:\n%s\n\n", str.c_str());
+    LOG("QueryLatestWeldResult:\n%s\n\n", str.c_str());
 #endif
-
-    Utility::StringToTokens(str, ',', tmpStr);
-    return count;
+    return OK;
 }
+
 #endif
 /**************************************************************************//**
 * \brief   - Query Weld Signature from DB
@@ -866,7 +892,7 @@ int DBAccessL20DB::QueryWeldRecipeLatestPage()
 	
     string strQuery =
         "select rowid,ID,RecipeName,DateTime from "+string(TABLE_WELD_RECIPE)+
-        " order by rowid DESC limit "+std::to_string(sendDataNum)+";";
+        " order by DateTime DESC limit "+std::to_string(sendDataNum)+";";
     string str = ExecuteQuery(strQuery);
     
     if(!pushWeldRecipeLib(str))
@@ -891,7 +917,7 @@ int DBAccessL20DB::QueryWeldRecipeNextPage()
 {
     string strQuery =
         "select rowid,ID,RecipeName,DateTime from "+string(TABLE_WELD_RECIPE)+
-        " order by rowid DESC limit "+ std::to_string(sendDataNum) +", " + std::to_string(ONE_PAGE_NUM) +";";
+        " order by DateTime DESC limit "+ std::to_string(sendDataNum) +", " + std::to_string(ONE_PAGE_NUM) +";";
     string str = ExecuteQuery(strQuery);
     
     if(!pushWeldRecipeLib(str))
@@ -1458,8 +1484,8 @@ int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
 		auto iter = UserAuthority::_UserProfilesSC->find((int)tmpUser.m_Level);	
 	    if(iter != UserAuthority::_UserProfilesSC->end())
 		{
-			iter->second->m_Level = tmpUser.m_Level;
-			iter->second->m_Password = tmpUser.m_Password;
+			iter->second.m_Level = tmpUser.m_Level;
+			iter->second.m_Password = tmpUser.m_Password;
 #if UNITTEST_DATABASE
             LOG("\tm_Level(%d)\n", iter->second->m_Level);
             LOG("\tm_Password(%s)\n", iter->second->m_Password.c_str());
@@ -1523,8 +1549,7 @@ int DBAccessL20DB::QueryBlockPrivilegeConfigure(char* buffer)
 *
 ******************************************************************************/
 int DBAccessL20DB::QueryBlockPrivilegeConfigure(char* buffer)
-{
-    int ScreenIndex;
+{ 
     int count;
 	vector<string> tmpStr;
 	int nErrCode = SQLITE_ERROR;
@@ -1534,12 +1559,13 @@ int DBAccessL20DB::QueryBlockPrivilegeConfigure(char* buffer)
     if(nErrCode != SQLITE_OK)
     	return 0;
     Utility::StringToTokens(str, ',', tmpStr);
-	UserAuthority::_UserPrivilegesSC->clear();
 	for(count = 0; count < tmpStr.size()/2; count++)
 	{
-        UserAuthority::_UserPrivilegesSC->insert(
-             pair<int, int>
-            (atoi(tmpStr[count*2].c_str()),atoi(tmpStr[count*2+1].c_str())));
+		auto iter = UserAuthority::_UserPrivilegesSC->find(atoi(tmpStr[count*2].c_str()));
+		if(iter != UserAuthority::_UserPrivilegesSC->end())
+		{
+			iter->second = atoi(tmpStr[count*2+1].c_str());
+		}
 	}
 #if UNITTEST_DATABASE
     map<int,int>::iterator st;
@@ -1986,11 +2012,12 @@ int DBAccessL20DB::QueryConnectivity(char* buffer)
 int DBAccessL20DB::QueryGatewayMachine(char* buffer)
 {
 #if UNITTEST_DATABASE
-    if(Connectivity::_DIGMachinesSC == nullptr)
+    if(Connectivity::_DIGMachinesUI == nullptr)
         {
 		Connectivity::GetInstance();
-        LOG("new _DIGMachinesSC\n");
+        LOG("new _DIGMachinesUI\n");
         }
+    Connectivity::_DIGMachinesUI->clear();
 #endif
 	vector<string> tmpStr;
     string str;
@@ -2011,9 +2038,9 @@ int DBAccessL20DB::QueryGatewayMachine(char* buffer)
 			memcpy(iter->second.DIG_MachineIP, tmpStr[count*TABLE_GATEWAY_MACHINE_MEM+3].c_str(), IP_ADD_LEN); /* ServerIP */
 	#if UNITTEST_DATABASE
 			LOG("ID: %s\n", tmpStr[count*TABLE_GATEWAY_MACHINE_MEM].c_str());
-			LOG("DIG_MachineName: %s\n", iter->second.DIG_MachineName);
-			LOG("DIG_MachinePort: %d\n", iter->second.DIG_MachinePort);
-			LOG("DIG_MachineIP: %s\n", iter->second.DIG_MachineIP);
+			LOG("DIG_MachineName: %s\n", machine.DIG_MachineName);
+			LOG("DIG_MachinePort: %d\n", machine.DIG_MachinePort);
+			LOG("DIG_MachineIP: %s\n", machine.DIG_MachineIP);
 			LOG("\n");
 	#endif
         }
@@ -2103,7 +2130,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
     !Recipe::RecipeSC->Get(WeldRecipeSC::PARALIST::RECIPE_PIC_PATH, m_RecipePicPath))
 	{
 		LOGERR((char*) "Get Error.\n", 0, 0, 0);
-        return UPDATE_RECIPE_ERROR;
+        return ERROR;
 	}
 	
 	///////////////////////////////////////////////////////////////////////
@@ -2168,7 +2195,7 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
 	if(nErrCode != SQLITE_OK)
 	{
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
-		return UPDATE_RECIPE_ERROR;
+		return ERROR;
 	}
     
     string str = ExecuteQuery(
@@ -2188,11 +2215,11 @@ int DBAccessL20DB::UpdateWeldRecipe(char *buffer)
     	if(nErrCode != SQLITE_OK)
     	{
     		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
-    		return UPDATE_RECIPE_ERROR;
+    		return ERROR;
     	}
     }
 
-	return UPDATE_RECIPE_OK;
+	return OK;
 }
 
 /**************************************************************************//**
@@ -2220,7 +2247,7 @@ int DBAccessL20DB::RenameWeldRecipe(char* buffer)
 	if(!strStore.empty())
 	{
 		LOGERR((char*) "Database_T: %s already exists in table WeldRecipe\n", (int)Recipe::RecipeSC->m_RecipeName, 0, 0);
-    	return RENAME_RECIPE_ERROR;
+    	return ERROR;
 	}
 
 	struct tm timeStamp;
@@ -2242,10 +2269,10 @@ int DBAccessL20DB::RenameWeldRecipe(char* buffer)
 	if(nErrCode != SQLITE_OK)
 	{
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
-		return RENAME_RECIPE_ERROR;
+		return ERROR;
 	}
 
-	return RENAME_RECIPE_OK;
+	return OK;
 }
 
 /**************************************************************************//**
@@ -2303,12 +2330,12 @@ int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 	{
 	    return ERROR;
 	}
-    User* _User = iter->second;
+    User _User = iter->second;
     //TODO, handle user passwords security in future.
 	string strStore =
         "update " 	+ string(TABLE_USER_PROFILE) +
-        " set Password='" + _User->m_Password.c_str()+//Password
-        "' where PermissionLevel="+ std::to_string(_User->m_Level)+";";//PermissionLevel
+        " set Password='" + _User.m_Password.c_str()+//Password
+        "' where PermissionLevel="+ std::to_string(_User.m_Level)+";";//PermissionLevel
 	int nErrCode = SingleTransaction(strStore);
 	if(nErrCode != SQLITE_OK)
 		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
@@ -2536,7 +2563,7 @@ int DBAccessL20DB::DeleteSpecificRecipe(const char *buffer)
     if(str.size() != 0)
     {
     	LOGERR((char*) "Database_T: Not Delete ActiveRecipe.ID = %d\n", Index, 0, 0);
-    	return DELETE_RECIPE_ERROR;
+    	return ERROR;
     }
 	
 	string strQuery = "delete from "+string(TABLE_WELD_RECIPE)+" where ID = "+ std::to_string(Index) +";";
@@ -2544,9 +2571,9 @@ int DBAccessL20DB::DeleteSpecificRecipe(const char *buffer)
 	if(nErrCode != 0)
 	{
 		LOGERR((char*) "Database_T: Delete Specific Recipe Error. %d\n", nErrCode, 0, 0);
-		return DELETE_RECIPE_ERROR;
+		return ERROR;
 	}
-	return DELETE_RECIPE_OK;
+	return OK;
 }
 
 /**************************************************************************//**
@@ -2836,6 +2863,7 @@ int DBAccessL20DB::JSON2Vector(const string jsonStr, vector<WELD_SIGNATURE>* _pt
 ******************************************************************************/
 int DBAccessL20DB::String2Vector(const string str, vector<shared_ptr<WeldResultSignatureDefine>>* _ptrVector)
 {
+
 	int iResult = ERROR;
 	shared_ptr<WeldResultSignatureDefine> _Signature = WeldResultSignatureDefine::GetWeldSignature();
 
@@ -2847,11 +2875,11 @@ int DBAccessL20DB::String2Vector(const string str, vector<shared_ptr<WeldResultS
 	vector<string> tmpStringData;
 	if (Utility::StringToTokens(str, ';', tmpStringlist) == 0)
 		return ERROR;
-
-	int vectorIndex = 0;
+	int vectorIndex;
 	unsigned int data = 0;
 	for (int i = 0; i < tmpStringlist.size(); i++)
 	{
+		vectorIndex = 0;
     	tmpStringData.clear();
 		if (Utility::StringToTokens(tmpStringlist[i], ',', tmpStringData) > 0)
 		{
@@ -2860,7 +2888,7 @@ int DBAccessL20DB::String2Vector(const string str, vector<shared_ptr<WeldResultS
 				data = std::stoi(tmpStringData[vectorIndex]);
 				if(_Signature->Set(j, data) == OK)
 					vectorIndex++;
-			}
+			}	
 			_ptrVector->push_back(_Signature);
 		}
 		else

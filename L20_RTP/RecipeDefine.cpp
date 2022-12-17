@@ -458,7 +458,7 @@ void L20_WeldRecipeSC::Init()
 	m_QualityWindowSetting.m_HeightMin 		= HEIGHT_MIN_NUM;
 	m_QualityWindowSetting.m_HeightMax 		= HEIGHT_MAX_NUM;
 	m_QualityWindowSetting.m_PeakPowerMin 	= PEAK_POWER_MIN_NUM;
-	m_QualityWindowSetting.m_PeakPowerMax 	= Utility::GetSystemPower() * 1.2;;
+	m_QualityWindowSetting.m_PeakPowerMax 	= Utility::GetSystemPower() * 1.2;
 	m_QualityWindowSetting.m_TimeMin 		= TIME_MIN_NUM;
 	m_QualityWindowSetting.m_TimeMax 		= TIME_MAX_NUM;
 	m_AdvancedSetting.m_WeldMode 			= WELD_MODE_NUM;

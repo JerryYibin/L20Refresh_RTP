@@ -17,9 +17,9 @@ class Alarm: public SCState {
 private:
 	unsigned int m_iHoldTime;
 private:
-	int getACAlarmEvents();
-	int getPCAlarmEvents();
-	int getSCAlarmEvents();
+	int getACAlarmEvents(bool isLogAlarm = false);
+	int getPCAlarmEvents(bool isLogAlarm = false);
+	int getSCAlarmEvents(bool isLogAlarm = false);
 public:
 	Alarm();
 	virtual ~Alarm();

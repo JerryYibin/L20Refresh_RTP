@@ -158,8 +158,11 @@ void HeightCalibrate::Exit()
 {
 	MESSAGE message;
 	m_Actions = SCState::INIT; 
-	HeightEncoder::RawHeight.Calibrated = true;
-	SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_SC_RESPONSE);
+	if(ACStateMachine::AC_TX->ACState == ACState::AC_READY)
+	{
+		HeightEncoder::RawHeight.Calibrated = true;
+		SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_SC_RESPONSE);
+	}
 }
 
 /**************************************************************************//**

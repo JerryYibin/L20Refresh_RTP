@@ -17,12 +17,7 @@
 #include "HeartBeatUI.h"
 #include "WeldResultsDefine.h"
 #include <vector>
-///////////////////////////////////
 
-#define L20REFRESH 							1
-#define USER_NAME_SIZE						16
-#define BARCODE_DATA_SIZE					50
-#define TABLE_RESULT_MEM                    15 /* there are 15 columns in table WeldResult */
 using namespace std;
 #if GSX
 	struct WELD_RESULT

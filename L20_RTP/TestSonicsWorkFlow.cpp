@@ -15,6 +15,7 @@
 #include "PCStateMachine.h"
 #include "commons.h"
 SONICS_TEST TestSonicsWorkFlow::TestResult;
+unsigned int TestSonicsWorkFlow::TriggerCounter = 0;
 /**************************************************************************//**
 * \brief   - Constructor - 
 * 
@@ -25,7 +26,7 @@ SONICS_TEST TestSonicsWorkFlow::TestResult;
 *
 ******************************************************************************/
 TestSonicsWorkFlow::TestSonicsWorkFlow() {
-	m_TriggerCounter = 0;
+	TriggerCounter = 0;
 }
 
 /**************************************************************************//**
@@ -38,7 +39,7 @@ TestSonicsWorkFlow::TestSonicsWorkFlow() {
 *
 ******************************************************************************/
 TestSonicsWorkFlow::~TestSonicsWorkFlow() {
-	m_TriggerCounter = 0;
+	TriggerCounter = 0;
 }
 
 /**************************************************************************//**
@@ -67,11 +68,8 @@ void TestSonicsWorkFlow::InitProcess(void)
 ******************************************************************************/
 void TestSonicsWorkFlow::TriggerProcess(void)
 {
-	if(m_TriggerCounter == 0)
-	{
-		InitProcess();
-	}
-	m_TriggerCounter++;
+	InitProcess();
+	TriggerCounter++;
 }
 
 /**************************************************************************//**
@@ -102,16 +100,21 @@ int TestSonicsWorkFlow::RunProcess(void)
 {
 	STATE state = WorkFlow::ONGOING;
 	//TODO not sure if there is anything need to do for ACE, because the ACE needs to update curve.
-	if(m_TriggerCounter != 0)
+	if(TriggerCounter != 0)
 	{
-		m_TriggerCounter--;
-		if(m_TriggerCounter == 0)
+		TriggerCounter--;
+		if(TriggerCounter == 0)
 		{
 			SCStateMachine::getInstance()->ExecuteStateAction(SCState::TEST_SONIC_ON);
 			state = WorkFlow::FINISH;
 		}	
 	}
 	return state;
+}
+
+void TestSonicsWorkFlow::ResetProcess(void)
+{
+	
 }
 
 /**************************************************************************//**

@@ -61,10 +61,11 @@ int SystemConfiguration::Set(const SYSTEMCONFIGFORUI* _sysConfigUI)
 	_SystemConfig->Set(SYSTEMCONFIG::HGT_ENCODER, 		(void*)(&_sysConfigUI->bHeightEncoder));
 	_SystemConfig->Set(SYSTEMCONFIG::FOOT_PEDAL_ABORT, 	(void*)(&_sysConfigUI->bFootPedalAbort));
 	_SystemConfig->Set(SYSTEMCONFIG::LOCK_ON_ALARM, 	(void*)(&_sysConfigUI->bLockOnAlarm));
+	_SystemConfig->Set(SYSTEMCONFIG::FIRST_SCREEN_OPT,  (void*)(&_sysConfigUI->bFirstScreen));
 	
 	_SystemConfig->Set(SYSTEMCONFIG::COOLING_OPTION, 	(void*)(&_sysConfigUI->Cooling));
 	_SystemConfig->Set(SYSTEMCONFIG::COOLING_DURATION, 	(void*)(&_sysConfigUI->CoolingDuration));
-	_SystemConfig->Set(SYSTEMCONFIG::COLLING_DELAY, 	(void*)(&_sysConfigUI->CoolingDelay));
+	_SystemConfig->Set(SYSTEMCONFIG::COOLING_DELAY, 	(void*)(&_sysConfigUI->CoolingDelay));
 	_SystemConfig->Set(SYSTEMCONFIG::AMP_UNIT_OPT, 		(void*)(&_sysConfigUI->Amplitude_Unit));
 	_SystemConfig->Set(SYSTEMCONFIG::PRESSURE_UNIT_OPT, (void*)(&_sysConfigUI->Pressure_Unit));
 	_SystemConfig->Set(SYSTEMCONFIG::HGT_UNIT_OPT, 		(void*)(&_sysConfigUI->Height_Unit));
@@ -80,8 +81,6 @@ int SystemConfiguration::Set(const SYSTEMCONFIGFORUI* _sysConfigUI)
 	_SystemConfig->Set(SYSTEMCONFIG::TEACH_PREHGT_MS, 	(void*)(&_sysConfigUI->TeachMode.PreHeight_Lower));
 	_SystemConfig->Set(SYSTEMCONFIG::TEACH_HGT_PL, 		(void*)(&_sysConfigUI->TeachMode.PostHeight_Upper));
 	_SystemConfig->Set(SYSTEMCONFIG::TEACH_HGT_MS, 		(void*)(&_sysConfigUI->TeachMode.PostHeight_Lower));
-	
-	_SystemConfig->Set(SYSTEMCONFIG::DATE_TIME, 		(void*)(_sysConfigUI->DateTime));
 	return OK;
 }
 
@@ -105,10 +104,11 @@ int SystemConfiguration::Get(SYSTEMCONFIGFORUI* _sysConfigUI)
 	_SystemConfig->Get(SYSTEMCONFIG::HGT_ENCODER, 		(void*)(&_sysConfigUI->bHeightEncoder));
 	_SystemConfig->Get(SYSTEMCONFIG::FOOT_PEDAL_ABORT, 	(void*)(&_sysConfigUI->bFootPedalAbort));
 	_SystemConfig->Get(SYSTEMCONFIG::LOCK_ON_ALARM, 	(void*)(&_sysConfigUI->bLockOnAlarm));
+	_SystemConfig->Get(SYSTEMCONFIG::FIRST_SCREEN_OPT,	(void*)(&_sysConfigUI->bFirstScreen));
 	
 	_SystemConfig->Get(SYSTEMCONFIG::COOLING_OPTION, 	(void*)(&_sysConfigUI->Cooling));
 	_SystemConfig->Get(SYSTEMCONFIG::COOLING_DURATION, 	(void*)(&_sysConfigUI->CoolingDuration));
-	_SystemConfig->Get(SYSTEMCONFIG::COLLING_DELAY, 	(void*)(&_sysConfigUI->CoolingDelay));
+	_SystemConfig->Get(SYSTEMCONFIG::COOLING_DELAY, 	(void*)(&_sysConfigUI->CoolingDelay));
 	_SystemConfig->Get(SYSTEMCONFIG::AMP_UNIT_OPT, 		(void*)(&_sysConfigUI->Amplitude_Unit));
 	_SystemConfig->Get(SYSTEMCONFIG::PRESSURE_UNIT_OPT, (void*)(&_sysConfigUI->Pressure_Unit));
 	_SystemConfig->Get(SYSTEMCONFIG::HGT_UNIT_OPT, 		(void*)(&_sysConfigUI->Height_Unit));
@@ -123,9 +123,6 @@ int SystemConfiguration::Get(SYSTEMCONFIGFORUI* _sysConfigUI)
 	_SystemConfig->Get(SYSTEMCONFIG::TEACH_PREHGT_PL, 	(void*)(&_sysConfigUI->TeachMode.PreHeight_Upper));
 	_SystemConfig->Get(SYSTEMCONFIG::TEACH_PREHGT_MS, 	(void*)(&_sysConfigUI->TeachMode.PreHeight_Lower));
 	_SystemConfig->Get(SYSTEMCONFIG::TEACH_HGT_PL, 		(void*)(&_sysConfigUI->TeachMode.PostHeight_Upper));
-	_SystemConfig->Get(SYSTEMCONFIG::TEACH_HGT_MS, 		(void*)(&_sysConfigUI->TeachMode.PostHeight_Lower));
-	
-	_SystemConfig->Get(SYSTEMCONFIG::DATE_TIME, 		(void*)(_sysConfigUI->DateTime));
-	
+	_SystemConfig->Get(SYSTEMCONFIG::TEACH_HGT_MS, 		(void*)(&_sysConfigUI->TeachMode.PostHeight_Lower));	
 	return OK;
 }

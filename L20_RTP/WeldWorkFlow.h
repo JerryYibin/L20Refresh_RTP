@@ -30,6 +30,7 @@ public:
 	virtual void 	TriggerProcess		(void) override;
 	virtual int		RunProcess			(void) override;
 	virtual int 	UpdateResult		(void) override;
+	virtual void	ResetProcess		(void) override;
 	virtual void	SetOperationMode	(unsigned int operation);
 	virtual int		GetOperationMode	();
 };
