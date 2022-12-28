@@ -151,6 +151,8 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_INITIALIZATION:
 		responseInitializationData();
+		message.msgID = DataTask::TO_DATA_TASK_SYS_CONFIG_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	case TO_UI_TASK_HEIGHT_CALIBRATE_START:
 		message.msgID = ControlTask::TO_CTRL_TRIGGER_HEIGHT_CALIBRATE;
@@ -226,6 +228,8 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		sendWeldRecipeErrCode(message.Buffer);
 		break;
 	case TO_UI_SET_ACTIVE_RECIPE:
+		//The Cycle Counter needs to be reset when the current active recipe is changed.
+		WeldResults::_WeldResults->CycleCounter = 0;
 		message.msgID = DataTask::TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		// TODO: GET ACTIVE
@@ -377,6 +381,12 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_GET_WELDRESULTHISTORY_FREQUENCY_DATA:
 		responseReadHistoryFrquencyGraphRequest();
+		break;
+	case TO_UI_TASK_CLEAR_WELD_COUNTER_IDX:
+		WeldResults::_WeldResults->CycleCounter = 0;
+		memcpy(message.Buffer, &Recipe::ActiveRecipeSC->m_RecipeID, sizeof(int));
+		message.msgID = DataTask::TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);

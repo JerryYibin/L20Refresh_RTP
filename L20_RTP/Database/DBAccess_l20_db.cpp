@@ -251,10 +251,10 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 	{
 #if UNITTEST_DATABASE
         if((id%10000)==0)
-            {
-        LOG("# store WeldResult to ID %u\n", id);
-        LOG("# %s\n", strStore.c_str());
-            }
+		{
+        	LOG("# store WeldResult to ID %u\n", id);
+        	LOG("# %s\n", strStore.c_str());
+		}
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -566,9 +566,9 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	{
 #if UNITTEST_DATABASE
         if((id%10000)==0)
-            {
+		{
             LOG("# store AlarmLog to ID(%u) with WeldResultID(%u)\n", id, event.m_WeldResultID);
-            }
+		}
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -628,7 +628,7 @@ int DBAccessL20DB::QueryWeldResultNextPage(char* buffer)
 #endif
 	assignWeldResult(str);
 
-	sendDataNum += ONE_PAGE_NUM;
+	sendDataNum += ONE_RESULT_PAGE_NUM;
 
 	return OK;
 }
@@ -1155,8 +1155,18 @@ void DBAccessL20DB::assignAlarmLog(const string& buffer)
 	    }
 	    else{
 	    	strncpy(RecipeName, str.c_str(), USER_NAME_SIZE);
-	    }
+	    } 
 	    ptr_Alarm->Set(AlarmLogDefine::PARALIST::RECIPE_NAME, RecipeName);//RecipeName
+	    
+	    int WeldResultID = atoi(tmpStr[count*TABLE_ALARM_MEM+4].c_str());
+	    strQuery = "select CycleCounter from "+string(TABLE_WELD_RESULT)+
+	    	        " where ID="+
+	    	        std::to_string(WeldResultID)+";";
+	    str = ExecuteQuery(strQuery);
+	    if(!str.empty()){
+	    	int WeldCounter = std::atoi(str.c_str());
+	    	ptr_Alarm->Set(AlarmLogDefine::PARALIST::WELD_COUNT, &WeldCounter);//RecipeName
+	    }
 	    AlarmLog::AlarmVector.push_back(ptr_Alarm);
 #if UNITTEST_DATABASE
     if(str.size()>0)
@@ -1452,15 +1462,16 @@ int DBAccessL20DB::QuerySystemConfigure(char* buffer)
     tmpSysCon.bFootPedalAbort      =                 atoi(tmpStr[0].c_str()); //FootPedalAbort
     tmpSysCon.bLockOnAlarm         =                 atoi(tmpStr[1].c_str()); //LockOnAlarm
     tmpSysCon.bHeightEncoder       =                 atoi(tmpStr[2].c_str()); //HeightEncoder
-    tmpSysCon.Cooling              =        (COOLING)atoi(tmpStr[3].c_str()); //CoolingOption
-    tmpSysCon.CoolingDuration      =                 atoi(tmpStr[4].c_str()); //CoolingDuration
-    tmpSysCon.CoolingDelay         =                 atoi(tmpStr[5].c_str()); //CoolingDelay
-    tmpSysCon.Language             =       (LANGUAGE)atoi(tmpStr[6].c_str()); //Language
-    tmpSysCon.Amplitude_Unit       = (AMPLITUDE_UNIT)atoi(tmpStr[7].c_str()); //AmplitudeUnit
-    tmpSysCon.Pressure_Unit        =  (PRESSURE_UNIT)atoi(tmpStr[8].c_str()); //PressureUnit
-    tmpSysCon.Height_Unit          =    (HEIGHT_UNIT)atoi(tmpStr[9].c_str()); //HeightUnit
-    tmpSysCon.MaxAmplitude         =                 atoi(tmpStr[10].c_str()); //MaxAmplitude
-    tmpSysCon.TeachMode.Teach_mode = (TEACHMODE_TYPE)atoi(tmpStr[11].c_str()); //TeachModeID
+    tmpSysCon.bFirstScreen		   =                 atoi(tmpStr[3].c_str()); //FirstScreen
+    tmpSysCon.Cooling              =        (COOLING)atoi(tmpStr[4].c_str()); //CoolingOption
+    tmpSysCon.CoolingDuration      =                 atoi(tmpStr[5].c_str()); //CoolingDuration
+    tmpSysCon.CoolingDelay         =                 atoi(tmpStr[6].c_str()); //CoolingDelay
+    tmpSysCon.Language             =       (LANGUAGE)atoi(tmpStr[7].c_str()); //Language
+    tmpSysCon.Amplitude_Unit       = (AMPLITUDE_UNIT)atoi(tmpStr[8].c_str()); //AmplitudeUnit
+    tmpSysCon.Pressure_Unit        =  (PRESSURE_UNIT)atoi(tmpStr[9].c_str()); //PressureUnit
+    tmpSysCon.Height_Unit          =    (HEIGHT_UNIT)atoi(tmpStr[10].c_str()); //HeightUnit
+    tmpSysCon.MaxAmplitude         =                 atoi(tmpStr[11].c_str()); //MaxAmplitude
+    tmpSysCon.TeachMode.Teach_mode = (TEACHMODE_TYPE)atoi(tmpStr[12].c_str()); //TeachModeID
 
 	struct tm timeStamp;
 	vxbRtcGet(&timeStamp);
@@ -2112,6 +2123,7 @@ int DBAccessL20DB::UpdateSystemConfigure(char* buffer)
         " set FootPedalAbort=" 	+ std::to_string(tmpSysCon.bFootPedalAbort)+
         ", LockOnAlarm=" 		+ std::to_string(tmpSysCon.bLockOnAlarm)+
         ", HeightEncoder=" 		+ std::to_string(tmpSysCon.bHeightEncoder)+
+		", FirstScreen="		+ std::to_string(tmpSysCon.bFirstScreen)+
         ", CoolingOption=" 		+ std::to_string(tmpSysCon.Cooling)+
         ", CoolingDuration=" 	+ std::to_string(tmpSysCon.CoolingDuration)+
         ", CoolingDelay=" 		+ std::to_string(tmpSysCon.CoolingDelay)+
@@ -2260,17 +2272,17 @@ int DBAccessL20DB::getLatestID(const string table, int* _id)
         "';";
     string str = ExecuteQuery(strQuery, &errorCode);
     if(errorCode == SQLITE_OK)
-        {
+	{
 	    if(_id == nullptr)
         {   
 #if UNITTEST_DATABASE
             LOG("latest id of table %s is %u\n", table.c_str(), atoi(str.c_str()));
 #endif
             errorCode = SQLITE_ERROR;
-        }
+		}
         else
         	*_id = atoi(str.c_str());
-        }
+	}
     return errorCode;
 }
 

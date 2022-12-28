@@ -48,13 +48,23 @@ SQLiteDB::~SQLiteDB() {
 ******************************************************************************/
 int SQLiteDB::Callback(void *vPtrData, int argc, char **argv, char **azColName)
 {
+	int nIndex = 0;
+	
 	string *strData = static_cast<string*>(vPtrData);
-	for(int nIndex = 0; nIndex < argc; nIndex++)
+		
+	for(nIndex = 0; nIndex < argc; nIndex++)
 	{
-		strData->append(argv[nIndex]);
-		strData->append(DB_VALUE_SEPARATOR);
+		if(argv[nIndex] != nullptr)
+		{
+			strData->append(argv[nIndex]);
+			strData->append(DB_VALUE_SEPARATOR);
+		}
+		else
+		{
+			strData->append(DB_VALUE_SEPARATOR);
+		}
 	}
-	strData->replace(strData->size() - 1, 1, DB_VALUE_SEPARATOR);
+	
 	return 0;
 }
 

@@ -19,6 +19,7 @@
 #include "SystemType.h"
 #include "commons.h"
 #include "Utility.h"
+#include "EEPROM.h"
 
 /**************************************************************************//**
 * 
@@ -319,14 +320,14 @@ int L20_SYSTEMCONFIG::Set(const int index, const void* _data)
 void L20_SYSTEMCONFIG::Init()
 {
 	Language 					= English;
-	PowerSupply 				= POWER_3300W;
-	Frequency 					= FREQ_20KHZ;
+	PowerSupply 				= EEPROM::_System->Power;
+	Frequency 					= EEPROM::_System->Frequency;
 	bHeightEncoder				= true;
 	bFootPedalAbort				= false;
 	bLockOnAlarm				= false;
 	bFirstScreen				= false;
 	Cooling						= DISABLE;
-	CoolingDuration				= 0;
+	CoolingDuration				= 1000;//1 second
 	CoolingDelay				= 0;
 
 	Amplitude_Unit				= MICRON;

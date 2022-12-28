@@ -439,14 +439,17 @@ int DataTask::InitData()
     }
     if(_ObjDBConn->QueryDbVersion(nullptr) != OK)
     {
+    	LOGERR((char* )"DataTask: --------Init Db Version Error--- : ", 0, 0, 0);
     	return ERROR;
     }
     if(_ObjDBConn->QueryBlockPowerSupply(nullptr) <= 0)
     {
+    	LOGERR((char* )"DataTask: --------Init Query Block Power Supply Error--- : ", 0, 0, 0);
     	return ERROR;
     }
     if(_ObjDBConn->QuerySystemConfigure(nullptr) != OK)
     {
+    	LOGERR((char* )"DataTask: --------Init Query System Configure Error--- : ", 0, 0, 0);
     	return ERROR;
     }
     else
@@ -466,26 +469,32 @@ int DataTask::InitData()
     }
 	if(_ObjDBConn->QueryBlockTeachModeSetting(nullptr) <= 0)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Block Teach Mode Setting Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
 	if(_ObjDBConn->QueryHeightCalibration(nullptr) <= 0)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Height Calibration Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
 	if(_ObjDBConn->QueryBlockUserProfiles(nullptr) <= 0)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Block User Profiles Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
 	if(_ObjDBConn->QueryConnectivity(nullptr) != OK)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Connectivity Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
 	if(_ObjDBConn->QueryGatewayMachine(nullptr) <= 0)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Gateway Machine Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
 	if(_ObjDBConn->QueryLatestWeldResult(nullptr) != OK)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Latest Weld Result Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
     return OK;		
