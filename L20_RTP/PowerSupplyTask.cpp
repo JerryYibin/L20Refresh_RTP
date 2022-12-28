@@ -16,8 +16,9 @@
 #include "Utils.h"
 #include "Recipe.h"
 /* Static member variables are initialized */
-unsigned int PowerSupplyTask::CoreState = 0;
-PowerSupplyTask* PowerSupplyTask::_PCObj = nullptr;
+unsigned int 		PowerSupplyTask::CoreState 	= 0;
+PowerSupplyTask*	PowerSupplyTask::_PCObj 	= nullptr;
+UINT32				PowerSupplyTask::Tick_1ms 	= 0;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -164,6 +165,7 @@ void PowerSupplyTask::PowerSupply_Task(void)
 				if(events & PS_TASK_1MS_EVENT)
 				{
 					PCStateMachine::RunStateMachine();
+					Tick_1ms++;
 				}
 				if(events & PS_TASK_QEVENT)
 				{

@@ -25,9 +25,11 @@ public:
 		ONGOING = 0,
 		FINISH
 	};
+protected:
+	STATE 	m_State;
 public:
-	WorkFlow(){};
-	virtual ~WorkFlow(){};
+	WorkFlow(){m_State = WorkFlow::INVALID;};
+	virtual ~WorkFlow(){m_State = WorkFlow::INVALID;};
 public:
 	virtual void 	InitProcess		(void) = 0;
 	virtual void 	TriggerProcess	(void) = 0;

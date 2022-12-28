@@ -85,6 +85,9 @@ void ACStrokeDown::Loop()
 		return;
 	}
 	
+	if(ACStateMachine::AC_RX->MasterState == SCState::PRE_READY)
+		ChangeState(AC_READY);
+	
 	//If the current count is less than Moved Count, it means the horn has been moving.
 	if(HeightEncoder::GetInstance()->GetPositionCount() < m_MovedCount)
 	{

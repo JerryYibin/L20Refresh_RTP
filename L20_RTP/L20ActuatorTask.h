@@ -14,7 +14,7 @@
 #include "ActuatorTask.h"
 #include "CommunicationInterfaceCAN.h"
 #include "ACStateMachine.h"
-#define MIN_DOWN_SPEED	100 //0.5mm/s
+#define MIN_DOWN_SPEED	6000 //3mm/s
 class L20ActuatorTask: public ActuatorTask 
 {
 private:

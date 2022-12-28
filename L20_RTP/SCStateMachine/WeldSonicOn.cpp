@@ -205,21 +205,24 @@ void WeldSonicOn::Exit()
 	int WeldPressure = 0;
 	unsigned int AlarmFlags = 0;
 	PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
-	WeldResults::_WeldResults->Energy = Utility::HEX2Energy(m_EnergyAccumulator);
-	WeldResults::_WeldResults->WeldTime = m_WeldTime;
-	WeldResults::_WeldResults->Set(WeldResults::POST_HEIGHT, &ACStateMachine::AC_TX->ActualHeight);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::TP_PRESSURE, &TriggerPressure);
-	WeldResults::_WeldResults->Set(WeldResults::TRIGGER_PRESSURE, &TriggerPressure);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::WP_PRESSURE, &WeldPressure);
-	WeldResults::_WeldResults->Set(WeldResults::WELD_PRESSURE, &WeldPressure);
-	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AMPLITUDE, &WeldResults::_WeldResults->Amplitude);
-	WeldResults::_WeldResults->PeakPower = Utility::HEX2Power(m_PeakPower);
-	CheckWeldAlarm();
+	if(((SCStateMachine::getInstance()->GetCoreState() & ERR_PRE_HEIGHT_MS) != ERR_PRE_HEIGHT_MS) && 
+			((SCStateMachine::getInstance()->GetCoreState() & ERR_PRE_HEIGHT_PL) != ERR_PRE_HEIGHT_PL))
+	{
+		WeldResults::_WeldResults->Energy = Utility::HEX2Energy(m_EnergyAccumulator);
+		WeldResults::_WeldResults->WeldTime = m_WeldTime;
+		WeldResults::_WeldResults->Set(WeldResults::POST_HEIGHT, &ACStateMachine::AC_TX->ActualHeight);
+		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::TP_PRESSURE, &TriggerPressure);
+		WeldResults::_WeldResults->Set(WeldResults::TRIGGER_PRESSURE, &TriggerPressure);
+		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::WP_PRESSURE, &WeldPressure);
+		WeldResults::_WeldResults->Set(WeldResults::WELD_PRESSURE, &WeldPressure);
+		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AMPLITUDE, &WeldResults::_WeldResults->Amplitude);
+		WeldResults::_WeldResults->PeakPower = Utility::HEX2Power(m_PeakPower);
+		CheckWeldAlarm();
+		ActuatorTask::GetInstance()->SetCoolingTimer();
+		LOG("m_StepIndex: Weld Sonics Loop - Result Update! Weld Time = %d Timeout = %d\n", m_WeldTime, m_Timeout);
+	}
 	AlarmFlags = SCStateMachine::getInstance()->GetCoreState();
 	WeldResults::_WeldResults->Set(WeldResults::ALARM_ID, &AlarmFlags);
-	
-	ActuatorTask::GetInstance()->SetCoolingTimer();
-	LOG("m_StepIndex: Weld Sonics Loop - Result Update! Weld Time = %d Timeout = %d\n", m_WeldTime, m_Timeout);
 	SendMsgToCtrlMsgQ(ControlTask::TO_CTRL_SC_RESPONSE);
 	ChangeExtDgtOutput(ScDgtOutputTask::TO_DGT_OUTPUT_TASK_SONICS_RESET);
 
@@ -250,8 +253,8 @@ void WeldSonicOn::Fail()
 ******************************************************************************/
 void WeldSonicOn::ClearWeldData()
 {
-	if(WeldResults::_WeldResults->RecipeID != Recipe::ActiveRecipeSC->m_RecipeID)
-		WeldResults::_WeldResults->RecipeID = Recipe::ActiveRecipeSC->m_RecipeID;
+//	if(WeldResults::_WeldResults->RecipeID != Recipe::ActiveRecipeSC->m_RecipeID)
+//		WeldResults::_WeldResults->RecipeID = Recipe::ActiveRecipeSC->m_RecipeID;
 	WeldResults::_WeldResults->Energy = 0;
 
 	WeldResults::_WeldResults->WeldTime = 0;
@@ -263,11 +266,16 @@ void WeldSonicOn::ClearWeldData()
 	int WeldPressure = 0;
 	int TriggerPressure = 0;
 	int AlarmID = 0;
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::TP_PRESSURE, &TriggerPressure);
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::WP_PRESSURE, &WeldPressure);
 	
 	WeldResults::_WeldResults->Set(WeldResults::PRE_HEIGHT, &PreHeight);
 	WeldResults::_WeldResults->Set(WeldResults::POST_HEIGHT, &PostHeight);
 	WeldResults::_WeldResults->Set(WeldResults::WELD_PRESSURE, &WeldPressure);
 	WeldResults::_WeldResults->Set(WeldResults::TRIGGER_PRESSURE, &TriggerPressure);
+	
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::AMPLITUDE, &WeldResults::_WeldResults->Amplitude);
+	
 	WeldResults::_WeldResults->Set(WeldResults::ALARM_ID, &AlarmID);
 }
 

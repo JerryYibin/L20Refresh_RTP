@@ -90,7 +90,8 @@ ACStateMachine::~ACStateMachine() {
 void ACStateMachine::RunStateMachine()
 {
 	ACStateMachine::GetInstance();
-	if(((AC_RX->MasterEvents & BIT_MASK(ACState::CTRL_ESTOP)) == BIT_MASK(ACState::CTRL_ESTOP)) && (CurrentStateObj->stateType != ACState::AC_ESTOP))
+	if(((AC_RX->MasterEvents & BIT_MASK(ACState::CTRL_ESTOP)) == BIT_MASK(ACState::CTRL_ESTOP)) && 
+			((CurrentStateObj->stateType != ACState::AC_ESTOP) && (CurrentStateObj->stateType != ACState::AC_POWERUP)))
 	{		
 		ChangeState(ACState::AC_ESTOP);
 	}

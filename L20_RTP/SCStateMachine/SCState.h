@@ -33,6 +33,7 @@ extern "C"
 #define ERR_PRE_HEIGHT_PL		BIT(7)
 #define ERR_POST_HEIGHT_MS		BIT(8)
 #define ERR_POST_HEIGHT_PL		BIT(9)
+#define ERR_WELD_ABORT			BIT(10)
 
 
 //TODO SC should be a interface class so every function should be true virtual.
@@ -91,12 +92,17 @@ public:
 	//virtual bool SendToMsgQ(MESSAGE& msgBuffer, const int& msgQID);
 	void					SendMsgToCtrlMsgQ		(const ControlTask::MESSAGE_IDENTIFY msgID, const char* _event = nullptr);
 	void 					ChangeExtDgtOutput		(const ScDgtOutputTask::MESSAGE_IDENTIFY msgID);
+protected:
+	void					CheckStartSwitch		();
+	void					ProcessGeneralAlarm		();
 private:
 	CommonProperty*							CP;
+	unsigned int	m_GeneralAlarmTimer;
 	STATUS			SendToMsgQ 				(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks_t waitType = NO_WAIT);
 protected:
 	MSG_Q_ID	CTL_MSG_Q_ID;
 	MSG_Q_ID	DGTOUT_MSG_Q_ID;
+	bool		m_bStartSwitchLost;
 };
 
 #endif /* SCSTATE_H_ */

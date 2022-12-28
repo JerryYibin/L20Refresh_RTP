@@ -19,9 +19,9 @@ class TestSonicsWorkFlow: public WorkFlow
 {
 private:
 	unsigned int				m_Amplitude;
+	unsigned int				m_TriggerCounter;
 public:
 	static SONICS_TEST 	TestResult;
-	static unsigned int	TriggerCounter;
 public:
 	TestSonicsWorkFlow();
 	virtual ~TestSonicsWorkFlow();

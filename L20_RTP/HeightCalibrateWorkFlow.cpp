@@ -35,7 +35,6 @@ HeightCalibrateWorkFlow::HeightCalibrateWorkFlow() {
 	m_CalibrateReference.push_back(THIRD_PRESSURE);
 	m_CalibrateStep = 0;
 	m_OperationMode = IDLE;
-	m_State = WorkFlow::INVALID;
 }
 
 /**************************************************************************//**
@@ -191,6 +190,15 @@ int HeightCalibrateWorkFlow::RunProcess(void)
 	return m_State;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Reset Height Calibration process.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void HeightCalibrateWorkFlow::ResetProcess(void)
 {
 	m_State = WorkFlow::INVALID;
@@ -210,6 +218,15 @@ void HeightCalibrateWorkFlow::SetPressure(unsigned int pressure)
 	m_Pressure = pressure;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Correct the specific height point with the shim.
+*
+* \param   - Setting height value that should include shim.
+*
+* \return  - None.
+*
+******************************************************************************/
 void HeightCalibrateWorkFlow::SetCorrectHeight(unsigned int height)
 {
 	unsigned int correctZeroHeight = m_RawCount - height / RESOLUTION;

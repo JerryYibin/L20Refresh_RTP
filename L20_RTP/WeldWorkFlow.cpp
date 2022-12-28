@@ -14,6 +14,7 @@
 **********************************************************************************************************/
 
 #include "WeldWorkFlow.h"
+#include "Utils.h"
 #include "CommonProperty.h"
 #include "Recipe.h"
 #include "SystemConfiguration.h"
@@ -84,27 +85,27 @@ void WeldWorkFlow::TriggerProcess(void)
 ******************************************************************************/
 int WeldWorkFlow::RunProcess(void)
 {
-	STATE state = INVALID;
 	unsigned int batchCount;
+	Recipe::ActiveRecipeSC->Get(WeldRecipeSC::BATCH_SIZE, &batchCount);
 	if(m_OperationMode == SETUP)
-		state =  FINISH;
+		m_State =  FINISH;
 	else
 	{
-		if(SCStateMachine::getInstance()->GetCoreState() == 0)
+		if(((SCStateMachine::getInstance()->GetCoreState() & ERR_PRE_HEIGHT_PL) != ERR_PRE_HEIGHT_PL) &&
+							((SCStateMachine::getInstance()->GetCoreState() & ERR_PRE_HEIGHT_MS) != ERR_PRE_HEIGHT_MS))
 		{
-			WeldResults::_WeldResults->CycleCounter += 1;
+			if(SCStateMachine::getInstance()->GetCoreState() == 0)
+				WeldResults::_WeldResults->CycleCounter += 1;
+			if(WeldResults::_WeldResults->CycleCounter >= batchCount)
+				SCStateMachine::getInstance()->SetCoreState(ERR_BATCH_SIZE);
 			ExternalManager::GetInstance()->Send(ExternalManager::AFTERWELD);
 		}
-		Recipe::ActiveRecipeSC->Get(WeldRecipeSC::BATCH_SIZE, &batchCount);
 		if(WeldResults::_WeldResults->CycleCounter >= batchCount)
-		{
-			SCStateMachine::getInstance()->SetCoreState(ERR_BATCH_SIZE);
-			state = FINISH;
-		}
+			m_State = FINISH;
 		else
-			state = ONGOING;
+			m_State = ONGOING;
 	}
-	return state;
+	return m_State;
 }
 
 /**************************************************************************//**
@@ -132,16 +133,43 @@ int WeldWorkFlow::UpdateResult(void)
 	return 0;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Reset Weld Cycle process
+*
+* \param   - None.
+*
+* \return  - None
+*
+******************************************************************************/
 void WeldWorkFlow::ResetProcess(void)
 {
 	
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Set Operation Mode
+*
+* \param   - Operation.
+*
+* \return  - None
+*
+******************************************************************************/
 void WeldWorkFlow::SetOperationMode(unsigned int operation)
 {
 	m_OperationMode = operation;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Get Operation Mode
+*
+* \param   - Operation.
+*
+* \return  - None
+*
+******************************************************************************/
 int WeldWorkFlow::GetOperationMode()
 {
 	return m_OperationMode;

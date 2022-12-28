@@ -215,7 +215,7 @@ void L20ActuatorTask::InitMovingProcess()
 	{
 		DeltaPosition[i] = 0;
 	}
-	MinMoveCount = 10;
+	MinMoveCount = 20;
 	MaxSpeed = 0;
 	OldPosition = 0;
 	m_IsMoving = true;

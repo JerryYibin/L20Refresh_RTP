@@ -26,6 +26,8 @@ extern "C"
 	#include "vxbSp25QspiFlash.h"
 	#include "timerDev.h"
 }
+FirmwareUpgrade::USB_PATH 	FirmwareUpgrade::CurrentPath 	= PRIMARY_PATH;
+string 						FirmwareUpgrade::USBDirectory 	= "/bd0a/";
 /******************************************************************************
  * \brief   - Initialization of class members and memory for object.
  *
@@ -63,23 +65,49 @@ FirmwareUpgrade::~FirmwareUpgrade()
 int FirmwareUpgrade::USBDetect(void) 
 {
 	int fd = 0;
-	
-	/* open the USB */
-	fd = open(USB_PATH, RDONLY);
-
-	/* check Whether it is connected or not */
-	if (fd < 0) 
+	int iResult = USB_DETECT_FAIL;
+	switch(CurrentPath)
 	{
-		//LOGERR("FW_T : USB IS NOT DETECTED  %s\n", (_Vx_usr_arg_t )USB_PATH, 0, 0);
-		return USB_DETECT_FAIL;
-	} 
-	else 
-	{
-		//LOG("FW_T : USB IS DETECED SUCCESS  %s\n", (_Vx_usr_arg_t )USB_PATH, 0, 0);
-		return USB_DETECT_SUCCESS;
+	case PRIMARY_PATH:
+		USBDirectory = "/bd0a/";
+		/* open the USB */
+		fd = open(USBDirectory.c_str(), RDONLY);
+		/* check Whether it is connected or not */
+		if (fd < 0)
+		{
+			CurrentPath = ADDITIONAL_PATH;
+			iResult = USB_DETECT_FAIL;
+		}
+		else
+		{
+			CurrentPath = PRIMARY_PATH;
+			iResult = USB_DETECT_SUCCESS;
+		}
+		close(fd); 
+		break;
+	case ADDITIONAL_PATH:
+		USBDirectory = "/bd0/";
+		/* open the USB */
+		fd = open(USBDirectory.c_str(), RDONLY);
+		/* check Whether it is connected or not */
+		if (fd < 0)
+		{
+			CurrentPath = PRIMARY_PATH;
+			iResult = USB_DETECT_FAIL;
+		}
+		else
+		{
+			CurrentPath = ADDITIONAL_PATH;
+			iResult = USB_DETECT_SUCCESS;
+		}
+		close(fd); 
+		break;
+	default:
+		CurrentPath = PRIMARY_PATH;
+		iResult = USB_DETECT_FAIL;
+		break;
 	}
-	
-	return USB_DETECT_SUCCESS;
+	return iResult;
 }
 
 /******************************************************************************
@@ -148,7 +176,7 @@ int FirmwareUpgrade::checkFirmwareUpgradeFiles(void)
 	string strSCfilePath;
 	
 	//1.Check whether the USB can be opened normally
-	iUSBreadStatus = chdir(USB_PATH);
+	iUSBreadStatus = chdir(USBDirectory.c_str());
 	if(iUSBreadStatus != 0)
 	{
 		LOGERR("FW_T : FAILED TO OPEN USB\n", 0, 0, 0);
@@ -165,7 +193,7 @@ int FirmwareUpgrade::checkFirmwareUpgradeFiles(void)
 	}
 
 	//4. check if vxworks file open
-	strSCfilePath = string(USB_PATH) + m_strSCupgradeFileName;
+	strSCfilePath = USBDirectory + m_strSCupgradeFileName;
 	fp = fopen((char *) strSCfilePath.c_str(), READ_BINARY);
 	if (fp == NULL) 
 	{
@@ -213,7 +241,7 @@ int FirmwareUpgrade::ExcuteFirmwareUpgradeTask(void)
 	FILE  *fp;
 	UINT8 *pBuf;
 	UINT8 *pCheckBuf;
-	string strSCfilePath = string(USB_PATH) + m_strSCupgradeFileName;
+	string strSCfilePath = USBDirectory + m_strSCupgradeFileName;
 	
 	S25FL_Handle flashHandle;
 	S25FL_Transaction flashTransaction;
@@ -486,7 +514,7 @@ void FirmwareUpgrade::deleteTasks(void)
 	}
 	else
 	{
-		LOGERR("FW_T:Fail to get  ACTUATOR process Task",0,0,0);
+		LOGERR("FW_T:Fail to get ACTUATOR process Task",0,0,0);
 	}
 	
 	/* Get POWER supply task ID */
@@ -521,7 +549,7 @@ void FirmwareUpgrade::deleteTasks(void)
 void FirmwareUpgrade::getUSBdirFiles(vector<string>& vtFiles)
 {
 	struct dirent* entryDir;
-	DIR* usbDir = opendir(USB_PATH);
+	DIR* usbDir = opendir(USBDirectory.c_str());
 	if(usbDir != NULL)
 	{
 		while( (entryDir=readdir(usbDir)) != NULL)

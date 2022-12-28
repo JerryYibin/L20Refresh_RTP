@@ -18,7 +18,6 @@
 #include <string>
 #include "SCTask.h"
 
-#define   USB_PATH            		  "/bd0a/"
 #define   RDONLY                      0x0000
 #define   RDWR_CREAT         		  "w+"
 //#define   SC_FILE_NAME_FORMAT         "SC_*.bin"
@@ -28,11 +27,11 @@
 #define   SEEK_SET                     0
 #define	  READ_BYTE           		   1
 #define   SC_QSPI_ADDR                 0x1E0000
-#define   SC_FILE_NAME_SUB_STR         "SC"
-#define   SC_FILE_NAME_SUB_STR_LENGTH  2
+#define   SC_FILE_NAME_SUB_STR         "GMX"
+#define   SC_FILE_NAME_SUB_STR_LENGTH  3
 #define   SC_FINE_MIN_SIZE             0xA00000     /* minium size of SC file: 10M */
 #define   SC_FINE_MAX_SIZE             0x1E00000	/* maxium size of SC file: 30M */
-#define   SC_FILE_NAME_L20REFRESH      "L20Refresh"
+#define   SC_FILE_NAME_L20REFRESH      "SC"
 #define   SC_FILE_NAME_SUFFIX          "bin"
 #define   QSPI_FLASH_DATA_BLK_SIZE S25FL_FLASH_BLOCK_SIZE
 #define   QSPI_FLASH_DATA_BLK_CNT 480
@@ -51,6 +50,11 @@ typedef enum
 class FirmwareUpgrade : public SCTask 
 {
 public:
+	enum USB_PATH
+	{
+		PRIMARY_PATH,
+		ADDITIONAL_PATH
+	};
 	FirmwareUpgrade();
 	~FirmwareUpgrade();
 	static int       USBDetect                            (void);
@@ -66,13 +70,15 @@ private:
 	int              checkFirmwareUpgradeFiles            (void);
 	void             getUSBdirFiles                       (vector<string>& vtFiles);
 	void 			 splitString                          (string strSplitOrigin, string strPattern, vector<string>& strSplitOriginRes);
-	bool 			 allIsNum                             (string strCheck);
+	bool 			 allIsNum                             (string strCheck);		 
 private:
-	MSG_Q_ID                 UI_MSG_Q_ID;
-	int                      m_iSCupgradeFileSum = 0;
-	int                      m_iSCupgradeVersion = 0;   /* upgrade SC version   */
-	int                      m_iSCupgradefileSize = 0;  /* upgrade SC size      */
-	string                   m_strSCupgradeFileName;    /* upgrade SC file name */
+	MSG_Q_ID                UI_MSG_Q_ID;
+	int                     m_iSCupgradeFileSum = 0;
+	int                     m_iSCupgradeVersion = 0;   /* upgrade SC version   */
+	int                     m_iSCupgradefileSize = 0;  /* upgrade SC size      */
+	string                  m_strSCupgradeFileName;    /* upgrade SC file name */
+	static USB_PATH	  		CurrentPath;
+	static string 			USBDirectory;
 	
 };
 #endif

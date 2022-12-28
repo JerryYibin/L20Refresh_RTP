@@ -114,7 +114,6 @@ void TestSonicOn::Exit()
 	PCStateMachine::PC_RX->MasterState = SCState::NO_STATE;
 	PCStateMachine::PC_RX->MasterEvents &= ~BIT_MASK(PCState::CTRL_WELDTEST_ENABLE);
 	ChangeExtDgtOutput(ScDgtOutputTask::TO_DGT_OUTPUT_TASK_SONICS_RESET);
-	TestSonicsWorkFlow::TriggerCounter = 0;
 	LOG("Test Sonics Weld Time = %d Timeout = %d\n", m_Timeout);
 }
 

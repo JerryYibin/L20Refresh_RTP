@@ -16,19 +16,19 @@
 #include <memory>
 #include "RecipeUI.h"
 
-#define ENERGY_SETTING_NUM		100
-#define	AMPLITUDE_NUM			10
-#define	TPRESSURE_NUM			30000
-#define	WPRESSURE_NUM			30000
+#define ENERGY_SETTING_NUM		1000 //100.0
+#define	AMPLITUDE_NUM			36
+#define	TPRESSURE_NUM			30000 //30.0 psi
+#define	WPRESSURE_NUM			30000 //30.0 psi
 #define	WELD_STEP_MODE_NUM		-1
 #define	PRE_HEIGHT_MIN_NUM		0
-#define	PRE_HEIGHT_MAX_NUM		15000
+#define	PRE_HEIGHT_MAX_NUM		15000 //15.00 mm
 #define	HEIGHT_MIN_NUM			0
-#define	HEIGHT_MAX_NUM			15000
+#define	HEIGHT_MAX_NUM			15000 //15.00 mm
 #define	PEAK_POWER_MIN_NUM		0
-#define	PEAK_POWER_MAX_NUM		4800
+#define	PEAK_POWER_MAX_NUM		5500  //5500W
 #define	TIME_MIN_NUM			0
-#define	TIME_MAX_NUM			5000
+#define	TIME_MAX_NUM			5000  //5.00S
 #define	WELD_MODE_NUM			0
 #define	BATCH_SIZE_NUM			999999
 #define	DEFINE_NAME				"NewRecipe"

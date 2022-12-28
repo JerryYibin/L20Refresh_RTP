@@ -102,6 +102,7 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 	INT32 socketStatus = 0;
 	string details;
 	char signal;
+	UINT32 batchSize = BATCH_SIZE_NUM;
 	
 	switch(message.msgID)
 	{
@@ -151,6 +152,8 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_INITIALIZATION:
 		responseInitializationData();
+		message.msgID = DataTask::TO_DATA_TASK_SYS_CONFIG_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	case TO_UI_TASK_HEIGHT_CALIBRATE_START:
 		message.msgID = ControlTask::TO_CTRL_TRIGGER_HEIGHT_CALIBRATE;
@@ -226,6 +229,10 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		sendWeldRecipeErrCode(message.Buffer);
 		break;
 	case TO_UI_SET_ACTIVE_RECIPE:
+		//The Cycle Counter needs to be reset when the current active recipe is changed.
+		//The Batch Size needs to be reset with default setting when the current active recipe is changed.
+		WeldResults::_WeldResults->CycleCounter = 0;
+		Recipe::ActiveRecipeSC->Set(&batchSize, WeldRecipeSC::BATCH_SIZE);
 		message.msgID = DataTask::TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		// TODO: GET ACTIVE
@@ -263,8 +270,9 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_ETHERNET_CONFIG_SET:
 		setEthernetConfigData(message.Buffer);
-		message.msgID = DataTask::TO_DATA_TASK_ETHERNET_CONFIG_UPDATE;
+		message.msgID = DataTask::TO_DATA_TASK_CONNECTIVITY_UPDATE;
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
+		LOG("1111111111111111111111111111111111111111111111111111111111\n");
 		break;
 	case TO_UI_TASK_ETHERNET_CONFIG_GET:
 		responseEthernetConfigData();
@@ -339,12 +347,17 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_PERMISSION_SCREEN_SET:
 		setScreenPermission(message.Buffer);
+		message.msgID = DataTask::TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	case TO_UI_TASK_PASSCODE_LIST_GET:
 		responsePasscodeListGetRequest();
 		break;
 	case TO_UI_TASK_PASSCODE_UPDATE:
 		updateUserPasscode(message.Buffer);
+		//Send message to data task for updating DB.
+		message.msgID = DataTask::TO_DATA_TASK_USER_PROFILE_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);	
 		break;
 	case TO_UI_TASK_VALIDATE_PASSCODE:
 		responseCheckPasscodeRequest(message.Buffer);
@@ -377,6 +390,12 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_GET_WELDRESULTHISTORY_FREQUENCY_DATA:
 		responseReadHistoryFrquencyGraphRequest();
+		break;
+	case TO_UI_TASK_CLEAR_WELD_COUNTER_IDX:
+		WeldResults::_WeldResults->CycleCounter = 0;
+		memcpy(message.Buffer, &Recipe::ActiveRecipeSC->m_RecipeID, sizeof(int));
+		message.msgID = DataTask::TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	default:
 		LOGERR((char *)"UI_T : --------Unknown Message ID----------- : %d",message.msgID, 0, 0);
@@ -1272,29 +1291,15 @@ void UserInterface::responsePermissionScreenGetRequest()
 void UserInterface::setScreenPermission(char* messagebuf)
 {	
 	int i = 0;
-	int iScreenPermissionSize = 0;
-	vector<int> vtEntryScreenIndex;
-	MESSAGE message;
 	//1. Update _UserPrivilegesUI.
 	UserAuthority::GetInstance()->_UserPrivilegesUI->clear();
-	memcpy(&iScreenPermissionSize, messagebuf, sizeof(int));
-	for(int i = 0; i < iScreenPermissionSize; i++)
+	for(int i = 0; i < UserAuthority::GetInstance()->_UserPrivilegesSC->size(); i++)
 	{
-		USER_PRIVILEGE  userPrivilegeTmp;
-		memcpy(&userPrivilegeTmp, messagebuf + sizeof(int) + (i *  sizeof(USER_PRIVILEGE)), sizeof(USER_PRIVILEGE));
-		UserAuthority::GetInstance()->_UserPrivilegesUI->push_back(userPrivilegeTmp);
+		USER_PRIVILEGE  tmpPrivilege;
+		memcpy(&tmpPrivilege, messagebuf + (i *  sizeof(USER_PRIVILEGE)), sizeof(USER_PRIVILEGE));
+		UserAuthority::GetInstance()->_UserPrivilegesUI->push_back(tmpPrivilege);
 	}
 	UserAuthority::GetInstance()->UpdateUserPrivileges(UserAuthority::GetInstance()->_UserPrivilegesUI);
-	//2. Send message to data task for update db.
-	message.msgID = DataTask::TO_DATA_TASK_PERMISSION_SCREEN_SET;
-	memset(message.Buffer, 0x00, sizeof(message.Buffer));
-	for(vector<USER_PRIVILEGE>::iterator iter = UserAuthority::GetInstance()->_UserPrivilegesUI->begin(); iter != UserAuthority::GetInstance()->_UserPrivilegesUI->end(); iter++)
-	{
-		vtEntryScreenIndex.push_back(iter->EntryScreenIndex);
-	}
-	memcpy(message.Buffer, &iScreenPermissionSize, sizeof(int));
-	memcpy(message.Buffer + sizeof(int), &vtEntryScreenIndex[0], vtEntryScreenIndex.size() * sizeof(int));
-	SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 }
 
 /**************************************************************************//**
@@ -1329,29 +1334,15 @@ void UserInterface::responsePasscodeListGetRequest()
 ******************************************************************************/
 void UserInterface::updateUserPasscode(char* messagebuf)
 {
-	MESSAGE message;
-	int iUserPasscodeSize = 0;
-	vector<int> vtLevel;
 	//1. Update _UserProfilesSC
 	UserAuthority::GetInstance()->_UserProfilesUI->clear();
-	memcpy(&iUserPasscodeSize, messagebuf, sizeof(int));
-	for(int i = 0; i < iUserPasscodeSize; i++)
+	for(int i = 0; i < UserAuthority::GetInstance()->_UserProfilesSC->size(); i++)
 	{
-		USER_PROFILE userProfileTmp;
-		memcpy(&userProfileTmp, messagebuf + sizeof(int) + (i *  sizeof(USER_PROFILE)), sizeof(USER_PROFILE));
-		UserAuthority::GetInstance()->_UserProfilesUI->push_back(userProfileTmp);
+		USER_PROFILE tmpUser;
+		memcpy(&tmpUser, messagebuf + (i *  sizeof(USER_PROFILE)), sizeof(USER_PROFILE));
+		UserAuthority::GetInstance()->_UserProfilesUI->push_back(tmpUser);
 	}
 	UserAuthority::GetInstance()->UpdateUserProfiles(UserAuthority::GetInstance()->_UserProfilesUI);
-	//2. Send message to data task for updating DB.
-	message.msgID = DataTask::TO_DATA_TASK_PASSCODE_UPDATE;
-	for(vector<USER_PROFILE>::iterator iter = UserAuthority::GetInstance()->_UserProfilesUI->begin(); iter != UserAuthority::GetInstance()->_UserProfilesUI->end(); iter++)
-	{
-		vtLevel.push_back(iter->Level);
-	}
-	memset(message.Buffer, 0x00, sizeof(message.Buffer));
-	memcpy(message.Buffer, &iUserPasscodeSize, sizeof(int));
-	memcpy(message.Buffer + sizeof(int), &vtLevel[0], vtLevel.size() * sizeof(int));
-	SendToMsgQ(message, DATA_MSG_Q_ID_DATA);	
 }
 
 /**************************************************************************//**

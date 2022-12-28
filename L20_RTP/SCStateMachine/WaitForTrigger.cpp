@@ -13,6 +13,7 @@
 
 #include "WaitForTrigger.h"
 #include "Utils.h"
+#include "SCStateMachine.h"
 #include "../ACStateMachine.h"
 #include "../PCStateMachine.h"
 #include "../SystemConfiguration.h"
@@ -105,6 +106,13 @@ void WaitForTrigger::Loop()
 		m_Actions = SCState::FAIL;
 	}
 	
+	CheckStartSwitch();
+	if((SCStateMachine::getInstance()->GetCoreState() & ERR_WELD_ABORT) == ERR_WELD_ABORT)
+	{
+		m_Actions = SCState::FAIL;
+		return;
+	}
+	
 	switch(PCStateMachine::PC_TX->PCState)
 	{
 	case PCState::PC_READY:
@@ -164,7 +172,15 @@ void WaitForTrigger::Exit()
 ******************************************************************************/
 void WaitForTrigger::Fail()
 {
-	m_Actions = SCState::ABORT;
-	LOG("Trigger Alarm happened!\n");
+	if((SCStateMachine::getInstance()->GetCoreState() & ERR_WELD_ABORT) == ERR_WELD_ABORT)
+	{
+		
+		ProcessGeneralAlarm();
+	}
+	else
+	{
+		m_Actions = SCState::ABORT;
+		LOG("Trigger Alarm happened!\n");
+	}
 }
 

@@ -10,6 +10,8 @@
 
 #include "UserAuthority.h"
 #include "UserPrivilege.h"
+#include "ScreenIndexUI.h"
+#include "Logger.h"
 //Key is EntryScreenIndex, Value is premission Level;
 map<int, int>* UserAuthority::_UserPrivilegesSC 			= nullptr;
 //Key is PermissionLevel, Value is User instance;
@@ -29,8 +31,10 @@ UserAuthority* UserAuthority::_UserAuthorityObj				= nullptr;
 UserAuthority::UserAuthority() 
 {
 	int i = 0;
-	int PermissionLevel[] = {0, 2, 3};
-	int ScreenIndex[] = {1, 3, 9 , 13, 21, 24, 28, 33, 34, 37, 39, 40, 41};
+	PREMISSION_LEVEL levels[] = {EXECUTIVE, TECHNICIAN};
+	int ScreenIndex[] = {MENU_OPTIONS_SCREEN, RECIPE_LIBRARY_SCREEN, MAINTAIN_SCREEN, 
+			SYSTEM_CONFIG_SCREEN, ADMINISTRATOR_SCREEN, DATA_LOG_SCREEN, 
+			CONNECTIVITY_SCREEN, CALIBRATION_SCREEN, SYSTEM_INFORMATION_SCREEN};
 	
 	_UserPrivilegesSC 	= new map<int, int>();
 	_UserProfilesSC		= new map<int, User>();
@@ -42,12 +46,12 @@ UserAuthority::UserAuthority()
 		_UserPrivilegesSC->insert(pair<int, int>(ScreenIndex[i], 2));
 	}
 	//Init _UserProfilesSC
-	for(i = 0; i< (sizeof(PermissionLevel) / sizeof(int)); i++)
+	for(i = 0; i< (sizeof(levels) / sizeof(int)); i++)
 	{
-		User userTmp;
-		userTmp.m_Level = (PREMISSION_LEVEL)PermissionLevel[i];
-		userTmp.m_Password = "000000";
-		_UserProfilesSC->insert(pair<int, User>(PermissionLevel[i], userTmp));
+		User tmpUser;
+		tmpUser.m_Level = levels[i];
+		tmpUser.m_Password = "000000";
+		_UserProfilesSC->insert(pair<int, User>(levels[i], tmpUser));
 	}
 }
 
@@ -131,17 +135,17 @@ int UserAuthority::CheckScreenAccessAuthority(const string passcode, const int e
 * \return  - int
 *
 ******************************************************************************/
-int	UserAuthority::UpdateUserPrivileges(const vector<USER_PRIVILEGE>*)
+int	UserAuthority::UpdateUserPrivileges(const vector<USER_PRIVILEGE>* _PrivilegeList)
 {
-	for(vector<USER_PRIVILEGE>::iterator iter = _UserPrivilegesUI->begin(); iter != _UserPrivilegesUI->end(); iter++)
+	for(auto iter = _PrivilegeList->begin(); iter != _PrivilegeList->end(); iter++)
 	{
 		auto mt = _UserPrivilegesSC->find(iter->EntryScreenIndex);
 		if(mt != _UserPrivilegesSC->end())
 		{
 			mt->second = iter->PermissionLevel;
+			LOG("Screen index = %d PermissionLevel = %d\n", iter->EntryScreenIndex, iter->PermissionLevel);
 		}
 	}
-	
 	return 0;
 }
 
@@ -154,15 +158,16 @@ int	UserAuthority::UpdateUserPrivileges(const vector<USER_PRIVILEGE>*)
 * \return  - int 
 *
 ******************************************************************************/
-int UserAuthority::UpdateUserProfiles(const vector<USER_PROFILE>*)
+int UserAuthority::UpdateUserProfiles(const vector<USER_PROFILE>* _UserList)
 {
-	for(vector<USER_PROFILE>::iterator iter = _UserProfilesUI->begin(); iter != _UserProfilesUI->end(); iter++)
+	for(auto iter = _UserList->begin(); iter != _UserList->end(); iter++)
 	{
 		auto mt = _UserProfilesSC->find(iter->Level);
 		if(mt != _UserProfilesSC->end())
 		{
 			mt->second.m_Level = iter->Level;
 			mt->second.m_Password = string(iter->Password);
+			LOG("level = %d password = %s\n", iter->Level, iter->Password);
 		}
 	}
 	
@@ -178,18 +183,16 @@ int UserAuthority::UpdateUserProfiles(const vector<USER_PROFILE>*)
 * \return  - int 
 *
 ******************************************************************************/
-int	UserAuthority::UpdateUserPrivileges	(const map<int, int>*)
+int	UserAuthority::UpdateUserPrivileges	(const map<int, int>* _PrivilegeMap)
 {
 	_UserPrivilegesUI->clear();
-
-	for(map<int, int>::iterator iter = _UserPrivilegesSC->begin(); iter != _UserPrivilegesSC->end(); iter++)
+	for(auto iter = _PrivilegeMap->begin(); iter != _PrivilegeMap->end(); iter++)
 	{
-		USER_PRIVILEGE userPrivilegeTmp;
-		userPrivilegeTmp.EntryScreenIndex = iter->first;
-		userPrivilegeTmp.PermissionLevel = iter->second;
-		_UserPrivilegesUI->push_back(userPrivilegeTmp);
+		USER_PRIVILEGE tmpPrivilege;
+		tmpPrivilege.EntryScreenIndex = iter->first;
+		tmpPrivilege.PermissionLevel = iter->second;
+		_UserPrivilegesUI->push_back(tmpPrivilege);
 	}
-	
 	return 0;
 }
 
@@ -202,19 +205,17 @@ int	UserAuthority::UpdateUserPrivileges	(const map<int, int>*)
 * \return  - int
 *
 ******************************************************************************/
-int UserAuthority::UpdateUserProfiles(const map<int, User>*)
+int UserAuthority::UpdateUserProfiles(const map<int, User>* _UserMap)
 {
 	_UserProfilesUI->clear();
-	
-	for(map<int, User>::iterator iter = _UserProfilesSC->begin(); iter != _UserProfilesSC->end(); iter++)
+	for(auto iter = _UserMap->begin(); iter != _UserMap->end(); iter++)
 	{
-		USER_PROFILE userProfileTmp;
-		userProfileTmp.Level = (iter->second).m_Level;
-		memcpy(userProfileTmp.Password, (iter->second).m_Password.c_str(), sizeof(char) * (iter->second).m_Password.size());
-		userProfileTmp.Privileges = (iter->second).m_Privileges; 
-		_UserProfilesUI->push_back(userProfileTmp);
+		USER_PROFILE tmpUser;
+		tmpUser.Level = (iter->second).m_Level;
+		memcpy(tmpUser.Password, (iter->second).m_Password.c_str(), PASSWORD_LEN);
+		tmpUser.Privileges = (iter->second).m_Privileges; 
+		_UserProfilesUI->push_back(tmpUser);
 	}
-	
 	return 0;
 }
 

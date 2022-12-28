@@ -310,10 +310,18 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		sendErrorCode(ErrCode);
 		break;
 	case TO_DATA_TASK_USER_PROFILE_UPDATE:
-        _ObjDBConn->UpdateUserProfiles(message.Buffer);
+        ErrCode = _ObjDBConn->UpdateUserProfiles(message.Buffer);
+        message.msgID = UserInterface::TO_UI_TASK_PASSCODE_UPDATE_RESPOMSE;
+        memset(message.Buffer, 0x00, sizeof(message.Buffer));
+        memcpy(message.Buffer, &ErrCode, sizeof(int));
+        SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case TO_DATA_TASK_PRIVILEGE_CONFIG_UPDATE:
-        _ObjDBConn->UpdatePrivilegeConfigure(message.Buffer);
+		ErrCode = _ObjDBConn->UpdatePrivilegeConfigure(nullptr);
+	    message.msgID = UserInterface::TO_UI_TASK_PERMISSION_SCREEN_SET_RESPOMSE;
+	    memset(message.Buffer, 0x00, sizeof(message.Buffer));
+	    memcpy(message.Buffer, &ErrCode, sizeof(int));
+	    SendToMsgQ(message, UI_MSG_Q_ID);
 		break;
 	case TO_DATA_TASK_PWR_SUPPLY_UPDATE:
         _ObjDBConn->UpdateBlockPowerSupply(message.Buffer);
@@ -351,6 +359,7 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_DATA_TASK_CONNECTIVITY_UPDATE:
         _ObjDBConn->UpdateConnectivity(message.Buffer);
+        LOG("222222222222222222222222222222222222222222222\n");
 		break;
 
 	case TO_DATA_TASK_WELD_RECIPE_DELETE:
@@ -394,12 +403,6 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		ErrCode = ((_ObjDBConn->RenameWeldRecipe(message.Buffer) == OK)? RENAME_RECIPE_OK : RENAME_RECIPE_ERROR);
 		sendErrorCode(ErrCode);
 		break;
-	case TO_DATA_TASK_PERMISSION_SCREEN_SET:
-		updateScreenPermission(message.Buffer);
-		break;
-	case TO_DATA_TASK_PASSCODE_UPDATE:
-		updateUserPassword(message.Buffer);
-		break;
 	case TO_DATA_TASK_READ_WELDRESULTHISTORY_POWER_DATA:
 		_ObjDBConn->QueryWeldSignature(message.Buffer);
 		message.msgID = UserInterface::TO_UI_TASK_GET_WELDRESULTHISTORY_POWER_DATA;
@@ -439,14 +442,17 @@ int DataTask::InitData()
     }
     if(_ObjDBConn->QueryDbVersion(nullptr) != OK)
     {
+    	LOGERR((char* )"DataTask: --------Init Db Version Error--- : ", 0, 0, 0);
     	return ERROR;
     }
     if(_ObjDBConn->QueryBlockPowerSupply(nullptr) <= 0)
     {
+    	LOGERR((char* )"DataTask: --------Init Query Block Power Supply Error--- : ", 0, 0, 0);
     	return ERROR;
     }
     if(_ObjDBConn->QuerySystemConfigure(nullptr) != OK)
     {
+    	LOGERR((char* )"DataTask: --------Init Query System Configure Error--- : ", 0, 0, 0);
     	return ERROR;
     }
     else
@@ -466,26 +472,36 @@ int DataTask::InitData()
     }
 	if(_ObjDBConn->QueryBlockTeachModeSetting(nullptr) <= 0)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Block Teach Mode Setting Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
 	if(_ObjDBConn->QueryHeightCalibration(nullptr) <= 0)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Height Calibration Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
 	if(_ObjDBConn->QueryBlockUserProfiles(nullptr) <= 0)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Block User Profiles Error--- : ", 0, 0, 0);
 		return ERROR;
+	}
+	if(_ObjDBConn->QueryBlockPrivilegeConfigure(nullptr) <= 0)
+	{
+		LOGERR((char* )"DataTask: --------Init Query Block User Privilege Configure Error--- : ", 0, 0, 0);
 	}
 	if(_ObjDBConn->QueryConnectivity(nullptr) != OK)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Connectivity Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
 	if(_ObjDBConn->QueryGatewayMachine(nullptr) <= 0)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Gateway Machine Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
 	if(_ObjDBConn->QueryLatestWeldResult(nullptr) != OK)
 	{
+		LOGERR((char* )"DataTask: --------Init Query Latest Weld Result Error--- : ", 0, 0, 0);
 		return ERROR;
 	}
     return OK;		
@@ -549,82 +565,5 @@ void DataTask::Data_Task(void)
 	}
 	DBInit = NULL;
 	taskSuspend(taskIdSelf());
-}
-
-
-/**************************************************************************//**
-* 
-* \brief   - Update screen permission to db.
-*
-* \param   - char* messagebuf.
-*
-* \return  - None.
-*
-******************************************************************************/
-void DataTask::updateScreenPermission(char* messagebuf)
-{
-	int iErrCode = 0;
-	int vtScreenLen = 0;
-	vector<int> vtScreenIndex;
-	MESSAGE message;
-	memcpy(&vtScreenLen, messagebuf, sizeof(int));
-	//1. Get screen index.
-	for(int i = 0; i < vtScreenLen; i++)
-	{
-		int iScreenTmp;
-		memcpy(&iScreenTmp, messagebuf + sizeof(int) + (i * sizeof(int)), sizeof(int));
-		vtScreenIndex.push_back(iScreenTmp);
-	}
-	//2. Update permission by screen index.
-	for(vector<int>::iterator iter = vtScreenIndex.begin(); iter != vtScreenIndex.end(); iter++)
-	{
-		int iScreenIndex = *iter;
-		char ScreenArr[4];
-		memcpy(&ScreenArr, &iScreenIndex, sizeof(int));
-		iErrCode |= _ObjDBConn->UpdatePrivilegeConfigure(ScreenArr);
-	}
-	//3. Sending update result to UI task.
-    message.msgID = UserInterface::TO_UI_TASK_PERMISSION_SCREEN_SET_RESPOMSE;
-    memset(message.Buffer, 0x00, sizeof(message.Buffer));
-    memcpy(message.Buffer, &iErrCode, sizeof(int));
-    SendToMsgQ(message, UI_MSG_Q_ID);
-}
-
-/**************************************************************************//**
-* 
-* \brief   -  Update user password to db.
-*
-* \param   - char* messagebuf.
-*
-* \return  - None.
-*
-******************************************************************************/
-void DataTask::updateUserPassword(char* messagebuf)
-{
-	int iErrCode = 0;
-	int vtLevelLen = 0;
-	vector<int> vtLevel;
-	MESSAGE message;
-	memcpy(&vtLevelLen,messagebuf, sizeof(int));
-	//1. Get level value.
-	for(int i = 0; i < vtLevelLen; i++)
-	{
-		int iLevelTmp;
-		memcpy(&iLevelTmp, messagebuf + sizeof(int) + (i *  sizeof(int)), sizeof(int));
-		vtLevel.push_back(iLevelTmp);
-	}
-	//2. Update password by level.
-	for(vector<int>::iterator iter = vtLevel.begin(); iter != vtLevel.end(); iter++)
-	{
-		char LevelArr[4];
-		int iLevel = *iter;
-		memcpy(&LevelArr, &iLevel, sizeof(int));
-		iErrCode |= _ObjDBConn->UpdateUserProfiles(LevelArr);
-	}
-	//3. Sending update result to UI task.
-    message.msgID = UserInterface::TO_UI_TASK_PASSCODE_UPDATE_RESPOMSE;
-    memset(message.Buffer, 0x00, sizeof(message.Buffer));
-    memcpy(message.Buffer, &iErrCode, sizeof(int));
-    SendToMsgQ(message, UI_MSG_Q_ID);
 }
 

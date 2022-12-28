@@ -251,10 +251,10 @@ int DBAccessL20DB::StoreWeldResult(char* buffer)
 	{
 #if UNITTEST_DATABASE
         if((id%10000)==0)
-            {
-        LOG("# store WeldResult to ID %u\n", id);
-        LOG("# %s\n", strStore.c_str());
-            }
+		{
+        	LOG("# store WeldResult to ID %u\n", id);
+        	LOG("# %s\n", strStore.c_str());
+		}
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -566,9 +566,9 @@ int DBAccessL20DB::StoreAlarmLog(char* buffer)
 	{
 #if UNITTEST_DATABASE
         if((id%10000)==0)
-            {
+		{
             LOG("# store AlarmLog to ID(%u) with WeldResultID(%u)\n", id, event.m_WeldResultID);
-            }
+		}
 #endif
         if(id > DB_RECORDS_STORAGE_WELD_RESULT_LIMIT)
 		{
@@ -620,7 +620,6 @@ int DBAccessL20DB::QueryWeldResultNextPage(char* buffer)
 			+ ", " + std::to_string(ONE_RESULT_PAGE_NUM) + ";";
 	string str = ExecuteQuery(strQuery);
 	if (str.empty()) {
-		LOGERR((char*) "Weld Result is null\n", 0, 0, 0);
 		return ERROR;
 	}
 #if UNITTEST_DATABASE
@@ -628,7 +627,7 @@ int DBAccessL20DB::QueryWeldResultNextPage(char* buffer)
 #endif
 	assignWeldResult(str);
 
-	sendDataNum += ONE_PAGE_NUM;
+	sendDataNum += ONE_RESULT_PAGE_NUM;
 
 	return OK;
 }
@@ -707,7 +706,7 @@ void DBAccessL20DB::assignWeldResult(const string& buffer)
 /**************************************************************************//**
 * \brief   - Query the latest records from table Weld Result(Out of use)
 *
-* \param   - char* buffer - ID
+* \param   - char* buffer - No used
 *
 * \return  - int - count of records
 *
@@ -728,8 +727,8 @@ int DBAccessL20DB::QueryLatestWeldResult(char* buffer)
     }
 	else {
 		Utility::StringToTokens(str, ',', tmpStr);
-		CommonProperty::SystemInfo.psLifeCounter = atoi(tmpStr[1].c_str());
-		WeldResults::_WeldResults->CycleCounter = atoi(tmpStr[2].c_str());
+		CommonProperty::SystemInfo.psLifeCounter = atoi(tmpStr[0].c_str());
+		WeldResults::_WeldResults->CycleCounter = atoi(tmpStr[1].c_str());
 	}
 #if UNITTEST_DATABASE
     LOG("QueryLatestWeldResult:\n%s\n\n", str.c_str());
@@ -1155,8 +1154,18 @@ void DBAccessL20DB::assignAlarmLog(const string& buffer)
 	    }
 	    else{
 	    	strncpy(RecipeName, str.c_str(), USER_NAME_SIZE);
-	    }
+	    } 
 	    ptr_Alarm->Set(AlarmLogDefine::PARALIST::RECIPE_NAME, RecipeName);//RecipeName
+	    
+	    int WeldResultID = atoi(tmpStr[count*TABLE_ALARM_MEM+4].c_str());
+	    strQuery = "select CycleCounter from "+string(TABLE_WELD_RESULT)+
+	    	        " where ID="+
+	    	        std::to_string(WeldResultID)+";";
+	    str = ExecuteQuery(strQuery);
+	    if(!str.empty()){
+	    	int WeldCounter = std::atoi(str.c_str());
+	    	ptr_Alarm->Set(AlarmLogDefine::PARALIST::WELD_COUNT, &WeldCounter);//RecipeName
+	    }
 	    AlarmLog::AlarmVector.push_back(ptr_Alarm);
 #if UNITTEST_DATABASE
     if(str.size()>0)
@@ -1452,15 +1461,16 @@ int DBAccessL20DB::QuerySystemConfigure(char* buffer)
     tmpSysCon.bFootPedalAbort      =                 atoi(tmpStr[0].c_str()); //FootPedalAbort
     tmpSysCon.bLockOnAlarm         =                 atoi(tmpStr[1].c_str()); //LockOnAlarm
     tmpSysCon.bHeightEncoder       =                 atoi(tmpStr[2].c_str()); //HeightEncoder
-    tmpSysCon.Cooling              =        (COOLING)atoi(tmpStr[3].c_str()); //CoolingOption
-    tmpSysCon.CoolingDuration      =                 atoi(tmpStr[4].c_str()); //CoolingDuration
-    tmpSysCon.CoolingDelay         =                 atoi(tmpStr[5].c_str()); //CoolingDelay
-    tmpSysCon.Language             =       (LANGUAGE)atoi(tmpStr[6].c_str()); //Language
-    tmpSysCon.Amplitude_Unit       = (AMPLITUDE_UNIT)atoi(tmpStr[7].c_str()); //AmplitudeUnit
-    tmpSysCon.Pressure_Unit        =  (PRESSURE_UNIT)atoi(tmpStr[8].c_str()); //PressureUnit
-    tmpSysCon.Height_Unit          =    (HEIGHT_UNIT)atoi(tmpStr[9].c_str()); //HeightUnit
-    tmpSysCon.MaxAmplitude         =                 atoi(tmpStr[10].c_str()); //MaxAmplitude
-    tmpSysCon.TeachMode.Teach_mode = (TEACHMODE_TYPE)atoi(tmpStr[11].c_str()); //TeachModeID
+    tmpSysCon.bFirstScreen		   =                 atoi(tmpStr[3].c_str()); //FirstScreen
+    tmpSysCon.Cooling              =        (COOLING)atoi(tmpStr[4].c_str()); //CoolingOption
+    tmpSysCon.CoolingDuration      =                 atoi(tmpStr[5].c_str()); //CoolingDuration
+    tmpSysCon.CoolingDelay         =                 atoi(tmpStr[6].c_str()); //CoolingDelay
+    tmpSysCon.Language             =       (LANGUAGE)atoi(tmpStr[7].c_str()); //Language
+    tmpSysCon.Amplitude_Unit       = (AMPLITUDE_UNIT)atoi(tmpStr[8].c_str()); //AmplitudeUnit
+    tmpSysCon.Pressure_Unit        =  (PRESSURE_UNIT)atoi(tmpStr[9].c_str()); //PressureUnit
+    tmpSysCon.Height_Unit          =    (HEIGHT_UNIT)atoi(tmpStr[10].c_str()); //HeightUnit
+    tmpSysCon.MaxAmplitude         =                 atoi(tmpStr[11].c_str()); //MaxAmplitude
+    tmpSysCon.TeachMode.Teach_mode = (TEACHMODE_TYPE)atoi(tmpStr[12].c_str()); //TeachModeID
 
 	struct tm timeStamp;
 	vxbRtcGet(&timeStamp);
@@ -1659,7 +1669,7 @@ int DBAccessL20DB::QueryConnectivity(char* buffer)
     LOG("QueryConnectivity: %s\n\n", str.c_str());
     LOG("TCP_ServerIP: %s\n\n", Connectivity::EthernetConfig.TCP_ServerIP);
 #endif
-
+    LOG("44444444444444444444444444444444444444444444444444444444: %d\n", Connectivity::EthernetConfig.EthernetType);
     return OK;
 }
 
@@ -1980,54 +1990,64 @@ int DBAccessL20DB::UpdateHeightCalibration(char* buffer)
 /**************************************************************************//**
 * \brief   - Update UserProfiles to DB
 *
-* \param   - char* buffer - PermissionLevel
+* \param   - char* buffer - No used
 *
 * \return  - int - Database status
 *
 ******************************************************************************/
 int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 {
-    auto iter = UserAuthority::_UserProfilesSC->find(*(int* )buffer);
-    if(iter == UserAuthority::_UserProfilesSC->end())
-	{
-	    return ERROR;
-	}
-    User _User = iter->second;
-    //TODO, handle user passwords security in future.
-	string strStore =
-        "update " 	+ string(TABLE_USER_PROFILE) +
-        " set Password='" + _User.m_Password.c_str()+//Password
-        "' where PermissionLevel="+ std::to_string(_User.m_Level)+";";//PermissionLevel
-	int nErrCode = SingleTransaction(strStore);
+	int nErrCode = SQLITE_OK;
+    for(auto iter = UserAuthority::_UserProfilesSC->begin(); iter != UserAuthority::_UserProfilesSC->end(); iter++)
+    {
+		User* _User = &iter->second;
+		//TODO, handle user passwords security in future.
+		string strStore =
+			"update " 	+ string(TABLE_USER_PROFILE) +
+			" set Password='" + _User->m_Password.c_str()+//Password
+			"' where PermissionLevel="+ std::to_string(_User->m_Level)+";";//PermissionLevel
+		nErrCode = SingleTransaction(strStore);
+		if(nErrCode != SQLITE_OK)
+		{
+			LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+			break;
+		}
+    }
 	if(nErrCode != SQLITE_OK)
-		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
-	return nErrCode;
+		return ERROR;
+	else
+		return OK;
 }
 
 /**************************************************************************//**
 * \brief   - Update PrivilegeConfiguration to DB
 *
-* \param   - char* buffer - ScreenIndex
+* \param   - char* buffer - No Used
 *
 * \return  - int - PermissionLevel, or negative Database status if failed
 *
 ******************************************************************************/
 int DBAccessL20DB::UpdatePrivilegeConfigure(char* buffer)
 {
-    map<int,int>::iterator st = UserAuthority::_UserPrivilegesSC->find(*(int* )buffer);
-    if(st == UserAuthority::_UserPrivilegesSC->end())
+	int nErrCode = SQLITE_OK;
+	for(auto iter = UserAuthority::_UserPrivilegesSC->begin(); iter != UserAuthority::_UserPrivilegesSC->end(); iter++)
 	{
-	    return SQLITE_ERROR;
+		string strStore = 
+				"update " 	+ string(TABLE_PRIVILEGE_CONFIG) +
+				" set PermissionLevel=" + std::to_string(iter->second)+//PermissionLevel
+				" where ScreenIndex="+std::to_string(iter->first)+";";
+		nErrCode = SingleTransaction(strStore);
+		if(nErrCode != SQLITE_OK)
+		{
+			LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
+			break;
+		}
+		
 	}
-
-    string strStore = 
-            "update " 	+ string(TABLE_PRIVILEGE_CONFIG) +
-            " set PermissionLevel=" + std::to_string(st->second)+//PermissionLevel
-            " where ScreenIndex="+std::to_string(st->first)+";";
-	int nErrCode = SingleTransaction(strStore);
 	if(nErrCode != SQLITE_OK)
-		LOGERR((char*) "Database_T: Single Transaction Error. %d\n", nErrCode, 0, 0);
-	return nErrCode;
+		return ERROR;
+	else
+		return OK;
 }
 
 /**************************************************************************//**
@@ -2112,6 +2132,7 @@ int DBAccessL20DB::UpdateSystemConfigure(char* buffer)
         " set FootPedalAbort=" 	+ std::to_string(tmpSysCon.bFootPedalAbort)+
         ", LockOnAlarm=" 		+ std::to_string(tmpSysCon.bLockOnAlarm)+
         ", HeightEncoder=" 		+ std::to_string(tmpSysCon.bHeightEncoder)+
+		", FirstScreen="		+ std::to_string(tmpSysCon.bFirstScreen)+
         ", CoolingOption=" 		+ std::to_string(tmpSysCon.Cooling)+
         ", CoolingDuration=" 	+ std::to_string(tmpSysCon.CoolingDuration)+
         ", CoolingDelay=" 		+ std::to_string(tmpSysCon.CoolingDelay)+
@@ -2169,6 +2190,7 @@ int DBAccessL20DB::UpdateActiveRecipe(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateConnectivity(char* buffer)
 {
+	LOG("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&: %d\n", Connectivity::EthernetConfig.EthernetType);
 	string strStore =
         "update " 				+ string(TABLE_CONNECTIVITY) +
         " set EthernetType=" 	+ std::to_string(Connectivity::EthernetConfig.EthernetType)+
@@ -2186,6 +2208,7 @@ int DBAccessL20DB::UpdateConnectivity(char* buffer)
     {   
 		LOGERR((char*) "Database_T: UpdateConnectivity Error. %d\n", nErrCode, 0, 0);
     }
+	LOG("33333333333333333333333333333333333333333333333333333333333333\n");
 	return nErrCode;
 }
 
@@ -2260,17 +2283,17 @@ int DBAccessL20DB::getLatestID(const string table, int* _id)
         "';";
     string str = ExecuteQuery(strQuery, &errorCode);
     if(errorCode == SQLITE_OK)
-        {
+	{
 	    if(_id == nullptr)
         {   
 #if UNITTEST_DATABASE
             LOG("latest id of table %s is %u\n", table.c_str(), atoi(str.c_str()));
 #endif
             errorCode = SQLITE_ERROR;
-        }
+		}
         else
         	*_id = atoi(str.c_str());
-        }
+	}
     return errorCode;
 }
 

@@ -105,13 +105,19 @@ void AUPSTask::PDODownloadRequest()
 	PCStateMachine::PC_TX->Frequency = ADC_AD7689::GetFrequency();
 	PCStateMachine::PC_TX->Power 	 = ADC_AD7689::GetPower();
 	
-	if(vxbGpioGetValue(GPIO::I_OL_PSOUI) == GPIO_VALUE_HIGH)
-	{
-		SetCoreState(ERR_POWER_OVERLOAD);
-	}
+	if((Tick_1ms % 1000) != 0)
+		return;
 	else
 	{
-		SetCoreState(NO_ERROR);
+		if(vxbGpioGetValue(GPIO::I_OL_PSOUI) == GPIO_VALUE_HIGH)
+		{
+			SetCoreState(ERR_POWER_OVERLOAD);
+		}
+		else
+		{
+			SetCoreState(NO_ERROR);
+			vxbGpioSetValue(GPIO::O_OL_RST_PSI, GPIO_VALUE_LOW);
+		}
 	}
 }
 

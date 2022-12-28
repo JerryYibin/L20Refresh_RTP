@@ -307,11 +307,12 @@ bool CommunicationInterfaceTCP::parseProtocolPackage(MESSAGE* ptrMsg)
 	memset(tmpBuffer.Buffer,0x00,sizeof(tmpBuffer.Buffer));
 	if(findValidMessage(dataVector, &tmpBuffer) == true)
 	{
-		int calchecksum = checksumCalculate(&tmpBuffer.FUNID, tmpBuffer.Length/4+2);
+		int calchecksum = checksumCalculate(&tmpBuffer.FUNID, tmpBuffer.Length+2*4);
 		if(calchecksum == tmpBuffer.Checksum)
 		{
 			ptrMsg->msgID = tmpBuffer.FUNID;
-			memcpy(&ptrMsg->Buffer, tmpBuffer.Buffer, tmpBuffer.Length);
+			memset(ptrMsg->Buffer,0x00,sizeof(ptrMsg->Buffer));
+			memcpy(ptrMsg->Buffer, tmpBuffer.Buffer, tmpBuffer.Length);
 			bresult = true;
 		}				
 	}
@@ -381,7 +382,7 @@ bool CommunicationInterfaceTCP::buildProtocolPackage(const ExternalData::ETHMESS
 	memcpy(onePackage + offset, msgTx._Buffer, msgTx.Length);
 	offset += msgTx.Length;
 
-	msgTx.Checksum = checksumCalculate(onePackage+csstart, msgTx.Length/4+2);
+	msgTx.Checksum = checksumCalculate(onePackage+csstart, msgTx.Length+2*4);
 	memcpy(onePackage + offset, &msgTx.Checksum, sizeof(UINT32));
 	offset += sizeof(UINT32);
 	
@@ -450,8 +451,8 @@ unsigned int CommunicationInterfaceTCP::checksumCalculate(const void *buf,const 
 	UINT64 checksum = 0;
 	for (counter = 0; counter < len; counter++)
 	{
-		checksum += *(unsigned int *)buf;
-	    buf = ((int *) buf) + 1;
+		checksum += *(unsigned char *)buf;
+	    buf = ((char *) buf) + 1;
 	}
 	checksum &= 0xFFFFFFFF;
 	return (unsigned int)checksum;
@@ -476,7 +477,7 @@ bool CommunicationInterfaceTCP::findValidMessage(vector<char>&vtData, RX_DATA_ST
 	{
 		if (vtData[i+HEAD1] == ptrMsg->DLEHEAD1 && vtData[i+HEAD2] == ptrMsg->DLEHEAD2 && vtData[i+HEAD3] == ptrMsg->STXSTHEAD1 && vtData[i+HEAD4] == ptrMsg->STXSTHEAD2)
 		{	
-			len = (int)(vtData[i+LEN1] << 24 | vtData[i+LEN2] << 16 | vtData[i+LEN3] << 8 | vtData[i+LEN4]);
+			len = (int)(vtData[i+LEN4] << 24 | vtData[i+LEN3] << 16 | vtData[i+LEN2] << 8 | vtData[i+LEN1]);
 			if(i+len+MIN_RX_MSG_LEN-1 < vtData.size())
 			{
 				if(vtData[i+len+TAIL1] == ptrMsg->DLETAIL1 && vtData[i+len+TAIL2] == ptrMsg->DLETAIL2 && 

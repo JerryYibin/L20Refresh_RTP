@@ -15,7 +15,6 @@
 #include "PCStateMachine.h"
 #include "commons.h"
 SONICS_TEST TestSonicsWorkFlow::TestResult;
-unsigned int TestSonicsWorkFlow::TriggerCounter = 0;
 /**************************************************************************//**
 * \brief   - Constructor - 
 * 
@@ -26,7 +25,7 @@ unsigned int TestSonicsWorkFlow::TriggerCounter = 0;
 *
 ******************************************************************************/
 TestSonicsWorkFlow::TestSonicsWorkFlow() {
-	TriggerCounter = 0;
+	m_TriggerCounter = 0;
 }
 
 /**************************************************************************//**
@@ -39,7 +38,7 @@ TestSonicsWorkFlow::TestSonicsWorkFlow() {
 *
 ******************************************************************************/
 TestSonicsWorkFlow::~TestSonicsWorkFlow() {
-	TriggerCounter = 0;
+	m_TriggerCounter = 0;
 }
 
 /**************************************************************************//**
@@ -69,7 +68,8 @@ void TestSonicsWorkFlow::InitProcess(void)
 void TestSonicsWorkFlow::TriggerProcess(void)
 {
 	InitProcess();
-	TriggerCounter++;
+	m_TriggerCounter++;
+	m_State = WorkFlow::ONGOING;
 }
 
 /**************************************************************************//**
@@ -98,23 +98,38 @@ int TestSonicsWorkFlow::UpdateResult(void)
 ******************************************************************************/
 int TestSonicsWorkFlow::RunProcess(void)
 {
-	STATE state = WorkFlow::ONGOING;
 	//TODO not sure if there is anything need to do for ACE, because the ACE needs to update curve.
-	if(TriggerCounter != 0)
+	if(m_TriggerCounter > 0)
 	{
-		TriggerCounter--;
-		if(TriggerCounter == 0)
+		m_TriggerCounter--;
+		if(m_TriggerCounter == 0)
 		{
 			SCStateMachine::getInstance()->ExecuteStateAction(SCState::TEST_SONIC_ON);
-			state = WorkFlow::FINISH;
-		}	
+			m_State = WorkFlow::FINISH;
+		}
 	}
-	return state;
+	else if(m_TriggerCounter == 0)
+	{
+		SCStateMachine::getInstance()->ExecuteStateAction(SCState::TEST_SONIC_ON);
+		m_State = WorkFlow::FINISH;
+	}
+	return m_State;
 }
 
+/**************************************************************************//**
+* 
+* \brief   - Reset Test sonics process.
+*
+* \param   - None.
+*
+* \return  - None.
+*
+******************************************************************************/
 void TestSonicsWorkFlow::ResetProcess(void)
 {
-	
+	m_TriggerCounter = 0;
+	SCStateMachine::getInstance()->ExecuteStateAction(SCState::TEST_SONIC_ON);
+	m_State = WorkFlow::INVALID;
 }
 
 /**************************************************************************//**

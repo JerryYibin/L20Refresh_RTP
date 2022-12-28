@@ -53,6 +53,8 @@ private:
 	
 	static unsigned int 	CoreState;
 	static PowerSupplyTask*	_PCObj;
+protected:
+	static UINT32			Tick_1ms;
 	
 };
 

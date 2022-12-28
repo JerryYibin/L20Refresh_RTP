@@ -203,6 +203,9 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_ALARM_LOG_NEXT_PAGE_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_ALARM_LOG_NEXT_PAGE_IDX;
 		break;
+	case REQ_CLEAR_WELD_COUNTER_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_CLEAR_WELD_COUNTER_IDX;
+		break;
 	case REQ_AMPLITUDE_CALIBRATE_SAVE_IDX:
 		message.msgID = UserInterface::TO_UI_TASK_AMPLITUDE_CALIBRATE_SAVE_IDX;
 		break;

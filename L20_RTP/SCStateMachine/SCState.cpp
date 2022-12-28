@@ -11,6 +11,9 @@
 
 #include "SCState.h"
 #include "../AlarmEvent.h"
+#include "../SystemConfiguration.h"
+#include "../ACStateMachine.h"
+#include "SCStateMachine.h"
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -24,6 +27,9 @@ SCState::SCState() {
 	CP = CommonProperty::getInstance();
 	CTL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 	DGTOUT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DGTOUT_T]);
+	m_bStartSwitchLost = false;
+	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::FOOT_PEDAL_ABORT, &m_bStartSwitchLost);
+	m_GeneralAlarmTimer = 0;
 }
 /**************************************************************************//**
 * 
@@ -108,3 +114,28 @@ void SCState::SendMsgToCtrlMsgQ(const ControlTask::MESSAGE_IDENTIFY msgID, const
 	}
 	SendToMsgQ(message, CTL_MSG_Q_ID);
 }
+
+void SCState::CheckStartSwitch()
+{
+	if(m_bStartSwitchLost == true)
+	{
+		if((ACStateMachine::AC_TX->ACInputs & BOTHSTARTSWITCHMASK) == 0)
+			SCStateMachine::getInstance()->SetCoreState(ERR_WELD_ABORT);
+	}
+}
+
+void SCState::ProcessGeneralAlarm()
+{
+	if(m_GeneralAlarmTimer < 100)
+	{
+		vxbGpioSetValue(GPIO::O_BUZZ, GPIO_VALUE_HIGH);
+		m_GeneralAlarmTimer++;
+	}
+	else
+	{
+		vxbGpioSetValue(GPIO::O_BUZZ, GPIO_VALUE_LOW);
+		SCStateMachine::getInstance()->ClearCoreState(ERR_WELD_ABORT);
+		m_GeneralAlarmTimer = 0;
+	}
+}
+
