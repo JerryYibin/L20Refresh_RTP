@@ -547,7 +547,7 @@ void UserInterface::responseSystemInfo()
 	sendMsg.rspCode = 0;
 	string timeStamp;
 
-	char macaddr[6] = {0x00,0x40,0x47,0xE0,0xA8,0x32};
+	unsigned char macaddr[6] = {0x00,0x40,0x47,0xE0,0xA8,0x32};
 	char macAddr[20]={0x00};
 	char ipAddr[SYSINFO_SIZE] = {0};
 	//Get IP address
