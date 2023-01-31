@@ -92,6 +92,12 @@ void SeekSonicOn::Loop()
 		return;
 	}
 	
+	if(CheckWeldAbort() == true)
+	{
+		m_Actions = SCState::FAIL;
+		return;
+	}
+	
 	if (m_Timeout < m_SeekTime)
 	{
 //		if (m_Timeout % 5 == 0)
@@ -135,6 +141,7 @@ void SeekSonicOn::Exit()
 ******************************************************************************/
 void SeekSonicOn::Fail()
 {
+	ResetWeldAbort();
 	m_Actions = SCState::ABORT;
 	LOG("SeekSonicOn Alarm happened!\n");
 }

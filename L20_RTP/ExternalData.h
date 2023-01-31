@@ -33,7 +33,8 @@ public:
 		PWRCURVESEC2,
 		PWRCURVESEC3,
 		PWRCURVESEC4,
-		HEARTBEAT
+		HEARTBEAT,
+		ACTIVERECIPE
 	};
 	ExternalData();
 	virtual int BuildProtocolData(int, char*) = 0;

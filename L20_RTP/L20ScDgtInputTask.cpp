@@ -14,6 +14,7 @@
 #include "L20ScDgtInputTask.h"
 #include "GPIO.h"
 #include "Utils.h"
+#include "AlarmManager.h"
 extern "C"
 {
 	#include "subsys/gpio/vxbGpioLib.h"		
@@ -60,7 +61,11 @@ void L20ScDgtInputTask::GetDgtInputBits()
 	if(vxbGpioGetValue(GPIO::I_OPSIG) == GPIO_VALUE_HIGH)
 		m_UserIO &= ~BIT_MASK(RESET);
 	else
+	{
 		m_UserIO |= BIT_MASK(RESET);
+		//TODO It is the temporary code for remote reset process
+		AlarmManager::GetInstance()->ClearAlarmList();
+	}
 	
 	if(vxbGpioGetValue(GPIO::I_ESTOPNC) == GPIO_VALUE_HIGH)
 		m_UserIO &= ~BIT_MASK(ESTOP);

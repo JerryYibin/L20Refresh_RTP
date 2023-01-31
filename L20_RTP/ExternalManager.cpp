@@ -25,11 +25,11 @@ for outside to call. It works like a Task while it won't need to be a real task
 #include "CommunicationInterfaceTCP.h"
 #include "CommunicationInterfaceDIG.h"
 #include "ExternalDataTCP.h"
-
+#include "DataTask.h"
+#include "Recipe.h"
 using namespace std;
 
 ExternalManager* ExternalManager::ExternalEthobj = nullptr;
-unsigned int ExternalManager::Tick1MS;
 /**************************************************************************//**
 * \brief   - Constructor 
 *
@@ -42,8 +42,10 @@ ExternalManager::ExternalManager()
 {	
 	memcpy(&m_PrevEthernetConfig, &Connectivity::EthernetConfig, sizeof(ETHERNET));
 	refreshExternalEthobj();
-	Tick1MS = 0;
 	m_ptrData = nullptr;
+	string Data_Task(CommonProperty::cTaskName[CommonProperty::DATA_T]);
+	DATA_MSG_Q_ID_REQ  = CP->getMsgQId (Data_Task + "/Request");
+	SELF_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::EXT_MANAGER_T]);
 }
 
 /**************************************************************************//**
@@ -60,6 +62,8 @@ ExternalManager::~ExternalManager()
 }
 
 
+
+
 /**************************************************************************//**
 * \brief   - Return the single instance of class.
 *
@@ -72,7 +76,6 @@ ExternalManager* ExternalManager:: GetInstance()
 {
 	return (ExternalEthobj != nullptr) ? ExternalEthobj : (ExternalEthobj = new ExternalManager());
 }
-
 
 /**************************************************************************//**
 * \brief   - Return the CommunicationInterface pointer.
@@ -100,7 +103,7 @@ int ExternalManager::closeSocketEvent()
 	unsigned int errid;
 	TASK_ID tID;
 	
-	if(eventSend(CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXTERNAL_SOCKET_T]), EXTERNAL_CLOSE_EVENT) != OK)
+	if(eventSend(CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXT_SOCKET_T]), EXTERNAL_CLOSE_EVENT) != OK)
 	{
 		LOGERR((char*) "ExternalManager::closeSocket eventSend: Error\n", 0, 0, 0);
 		return ERROR;
@@ -123,7 +126,7 @@ int ExternalManager::linkSocketEvent()
 	unsigned int errid;
 	TASK_ID tID;
 	
-	if(eventSend(CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXTERNAL_SOCKET_T]), EXTERNAL_LINK_EVENT) != OK)
+	if(eventSend(CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXT_SOCKET_T]), EXTERNAL_LINK_EVENT) != OK)
 	{
 		LOGERR((char*) "ExternalManager::linkSocket eventSend: Error\n", 0, 0, 0);
 		return ERROR;
@@ -146,7 +149,7 @@ int ExternalManager::readSocketEvent()
 	unsigned int errid;
 	TASK_ID tID;
 	
-	if(eventSend(CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXTERNAL_SOCKET_T]), EXTERNAL_READ_EVENT) != OK)
+	if(eventSend(CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXT_SOCKET_T]), EXTERNAL_READ_EVENT) != OK)
 	{
 		LOGERR((char*) "ExternalManager::readSocket eventSend: Error\n", 0, 0, 0);
 		return ERROR;
@@ -155,25 +158,6 @@ int ExternalManager::readSocketEvent()
 	return OK;
 }
 
-
-/**************************************************************************//**
-* \brief   - Process commands(Ethernet Close, Ethernet New, Ethernet Reset) 
-*
-* \param   - struct Message&.
-* 
-* \return  - None.
-*
-******************************************************************************/
-void ExternalManager::ProcessTaskMessage(MESSAGE& message)
-{
-	unsigned int tmp;
-	switch(message.msgID)
-	{
-	default:
-		//TODO: To Handle some functions here like DIG heartbeat
-		break;
-	}
-}
 
 /**************************************************************************//**
 * \brief   - Update the pointer to CommunicationInterface according to current ethernet type
@@ -213,42 +197,34 @@ void ExternalManager::refreshExternalEthobj()
 int ExternalManager::Update()
 {
 	int result = FALSE;
-	Tick1MS++;
-	if(Tick1MS % SAMPLE500MSEC!= 0)
+	if(requireUpdateSocket() == true) 
 	{
+		closeSocketEvent();
+		if(m_ptrCom->GetLinkStepIndex()== CommunicationInterface::LINK_CONFIG)
+		{
+			memcpy(&m_PrevEthernetConfig, &Connectivity::EthernetConfig, sizeof(ETHERNET));
+		}
 		return OK;
 	}
-	else
-	{	
-		if(requireUpdateSocket() == true) 
-		{
-			closeSocketEvent();
-			if(m_ptrCom->GetLinkStepIndex()== CommunicationInterface::LINK_CONFIG)
-			{
-				memcpy(&m_PrevEthernetConfig, &Connectivity::EthernetConfig, sizeof(ETHERNET));
-			}
-			return OK;
-		}
-		refreshExternalEthobj();//update the m_ptrCom value according to the latest Ethernet type
-		if(m_ptrCom == nullptr)
-			return OK;
+	refreshExternalEthobj();//update the m_ptrCom value according to the latest Ethernet type
+	if(m_ptrCom == nullptr)
+		return OK;
 		
-		switch(m_ptrCom->GetLinkStepIndex())
-		{
-		case CommunicationInterface::LINK_CONFIG:
-		case CommunicationInterface::LINK_TCPIP:
-		case CommunicationInterface::LINK_ERROR:
-			if(linkSocketEvent() == OK)
-				result = OK;
-			break;
-		case CommunicationInterface::LINK_DONE:
-			if(readSocketEvent() == OK)
-				result = OK;
-			break;
-		default:
-			break;
-		}	
-	}
+	switch(m_ptrCom->GetLinkStepIndex())
+	{
+	case CommunicationInterface::LINK_CONFIG:
+	case CommunicationInterface::LINK_TCPIP:
+	case CommunicationInterface::LINK_ERROR:
+		if(linkSocketEvent() == OK)
+			result = OK;
+		break;
+	case CommunicationInterface::LINK_DONE:
+		if(readSocketEvent() == OK)
+			result = OK;
+		break;
+	default:
+		break;
+	}	
 	return result;
 }
 
@@ -309,63 +285,7 @@ bool ExternalManager::requireUpdateSocket()
 	return do_update;
 }
 
-/**************************************************************************//**
-* \brief   - Send Weld Data via External Ethernet
-* 			 Interface to be called every time after welding is completed.
-* \param   - None
-* 
-* \return  - OK or not.
-*
-******************************************************************************/
-int ExternalManager::Send(int cmd)
-{
-	int result = ERROR;
-	if(m_ptrCom == nullptr)
-		return ERROR;
-	if(m_ptrCom->GetLinkStepIndex()!= CommunicationInterface::LINK_DONE)
-		return ERROR;
-	ExternalData::ETHMESSAGE sendMsg;
-	switch(cmd)
-	{
-	case AFTERWELD:
-		if(Connectivity::EthernetConfig.EthernetType == TCP_IP)
-		{
-			sendMsg.msgID = ExternalData::WELDDATA;
-			result = senddata(&sendMsg);
-			if(Connectivity::EthernetConfig.TCP_RemoteSignature == true)
-			{
-				sendMsg.msgID = ExternalData::POWERCURVE;
-				result = senddata(&sendMsg);
-					
-				sendMsg.msgID = ExternalData::HEIGHTCURVE;
-				result = senddata(&sendMsg);
-					
-				sendMsg.msgID = ExternalData::FREQUENCYCURVE;
-				result = senddata(&sendMsg);
-			}
-		}
-		break;
-	case REPLYWELDDATA:
-		sendMsg.msgID = ExternalData::WELDDATA;
-		result = senddata(&sendMsg);
-		break;	
-	case REPLYPOWERCURVE:
-		sendMsg.msgID = ExternalData::POWERCURVE;
-		result = senddata(&sendMsg);
-		break;
-	case REPLYHEIGHTCURVE:
-		sendMsg.msgID = ExternalData::HEIGHTCURVE;
-		result = senddata(&sendMsg);
-		break;
-	case REPLYFREQUENCYCURVE:
-		sendMsg.msgID = ExternalData::FREQUENCYCURVE;
-		result = senddata(&sendMsg);
-		break;
-	default:
-		break;
-	}
-	return result;
-}
+
 /**************************************************************************//**
 * \brief   - Send specific Weld Data via External Ethernet
 * 			 Interface to be called after receiving inquiry message from Client 
@@ -397,3 +317,137 @@ int ExternalManager::senddata(ExternalData::ETHMESSAGE* message)
 }
 
 
+/**************************************************************************//**
+* \brief   - Process commands sending to ExternalTask 
+*
+* \param   - struct Message&.
+* 
+* \return  - None.
+*
+******************************************************************************/
+void ExternalManager::ProcessTaskMessage(MESSAGE& message)
+{
+	int ErrCode;
+	int tmp;
+	ExternalData::ETHMESSAGE sendMsg;
+	char tmpMsgBuffer[MAX_SIZE_OF_MSG_LENGTH] = {0};
+	MESSAGE tmpMsg;
+	memset(tmpMsg.Buffer, 0, sizeof(tmpMsg.Buffer));
+	while(msgQReceive(SELF_MSG_Q_ID, tmpMsgBuffer, MAX_SIZE_OF_MSG_LENGTH, NO_WAIT) != ERROR)
+	{
+		Decode(tmpMsgBuffer, tmpMsg);
+		switch(tmpMsg.msgID)
+		{
+		case TO_EXT_TASK_AFTER_WELD_REQ:
+			if(Connectivity::EthernetConfig.EthernetType == TCP_IP)
+			{
+				sendMsg.msgID = ExternalData::WELDDATA;
+				senddata(&sendMsg);
+				if(Connectivity::EthernetConfig.TCP_RemoteSignature == true)
+				{
+					sendMsg.msgID = ExternalData::POWERCURVE;
+					senddata(&sendMsg);
+					
+					sendMsg.msgID = ExternalData::HEIGHTCURVE;
+					senddata(&sendMsg);
+					
+					sendMsg.msgID = ExternalData::FREQUENCYCURVE;
+					senddata(&sendMsg);
+				}
+			}
+			break;
+		case TO_EXT_TASK_WELD_DATA_REQ:
+			sendMsg.msgID = ExternalData::WELDDATA;
+			senddata(&sendMsg);
+			break;
+		case TO_EXT_TASK_POWER_CURVE_REQ:
+			sendMsg.msgID = ExternalData::POWERCURVE;
+			senddata(&sendMsg);
+			break;
+		case TO_EXT_TASK_HEIGHT_CURVE_REQ:
+			sendMsg.msgID = ExternalData::HEIGHTCURVE;
+			senddata(&sendMsg);
+			break;
+		case TO_EXT_TASK_FREQUENCY_CURVE_REQ:
+			sendMsg.msgID = ExternalData::FREQUENCYCURVE;
+			senddata(&sendMsg);
+			break;
+		case TO_EXT_TASK_RECALL_RECIPE_REQ:
+			tmpMsg.msgID = DataTask::TO_DATA_TASK_WELD_RECIPE_QUERY_BY_NAME;
+			SendToMsgQ(tmpMsg, DATA_MSG_Q_ID_REQ);
+			break;
+		case TO_EXT_TASK_RECALL_RECIPE_RESPONSE:
+			memcpy(&ErrCode, tmpMsg.Buffer,sizeof(int));
+			if(ErrCode!= ERROR)
+			{
+				if(Recipe::ActiveRecipeSC->m_RecipeID != ErrCode)
+				{
+					Recipe::ActiveRecipeSC->m_RecipeID = ErrCode;
+					tmp = BATCH_SIZE_NUM;
+					WeldResults::_WeldResults->CycleCounter = 0;
+					Recipe::ActiveRecipeSC->Set(&tmp, WeldRecipeSC::BATCH_SIZE);
+					tmpMsg.msgID = DataTask::TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
+					SendToMsgQ(tmpMsg, DATA_MSG_Q_ID_REQ);
+				}
+			}
+			sendMsg.msgID = ExternalData::ACTIVERECIPE;
+			sendMsg.Length = sizeof(int);
+			memset(sendMsg.Buffer, 0x00, sizeof(sendMsg.Buffer));
+			memcpy(sendMsg.Buffer,&ErrCode, sizeof(int));	
+			m_ptrCom->Sending(&sendMsg);
+			break;
+		default:
+			//TODO: To Handle some functions here like DIG heartbeat
+			break;
+		}
+	}
+}
+
+
+/**************************************************************************//**
+* 
+* \brief   - External Manager task entry point
+* The ExternalTask has the responsibility of managering the Ethernet Link of the 
+  External Ethernet Port according to the current Ethernet type selected by user. 
+  It also need handle the incoming event& MsgQ from other task.
+*  
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void ExternalManager::External_Manager_Task(void)
+{
+	MESSAGE			ProcessBuffer;
+	UINT32			events;	
+	ExternalManager *ExternalTask = ExternalManager::GetInstance();
+	if(NULL != ExternalTask)
+	{
+		/* Control Task loop and the bIsTaskRun flag enabled when task created */
+		while(ExternalTask->bIsTaskRunStatus())
+		{
+			if(eventReceive(EXT_500MS | EXTERNAL_TASK_QEVENT, EVENTS_WAIT_ANY, WAIT_FOREVER, &events) != ERROR)
+			{
+
+				if(events & EXT_500MS)
+				{
+					ExternalTask->Update();
+				}
+
+				if(events & EXTERNAL_TASK_QEVENT)
+				{
+					ExternalTask->ProcessTaskMessage(ProcessBuffer);
+				}
+			}	
+		}
+		delete ExternalTask;
+	}
+	else
+	{
+		LOGERR((char *)"External_T : -------------Memory allocation failed-----------",0,0,0);
+	}
+		
+	ExternalTask = NULL;
+	taskSuspend(taskIdSelf());
+
+}

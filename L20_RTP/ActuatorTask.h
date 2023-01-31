@@ -53,7 +53,7 @@ protected:
 	static unsigned int CoreState;
 	static ActuatorTask* _ACObj;
 	static UINT32		Tick_1ms;
-	static UINT32		CoolingTimerOption;		
+	static bool			IsCoolingTimerEnabled;		
 private:
 	int					m_DebounceCount;
 	unsigned int 		m_PB1;

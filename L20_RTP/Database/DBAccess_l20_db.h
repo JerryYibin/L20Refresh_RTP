@@ -77,6 +77,7 @@ public:
 	virtual int 	QueryLatestWeldResult(char *) 			override;
 	virtual int 	QueryWeldSignature(char *) 				override;
 	virtual int 	QueryWeldRecipe(char *) 				override;
+	virtual int     QueryWeldRecipeByName(char*) 		    override;
 	virtual int 	QueryAlarmLogLatestPage(char *)			override;
 	virtual int 	QueryAlarmLogNextPage(char *)			override;
 	virtual int 	QueryBlockAlarmLog(char *) 		  		override;

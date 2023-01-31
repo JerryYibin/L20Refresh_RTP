@@ -27,9 +27,8 @@ SCState::SCState() {
 	CP = CommonProperty::getInstance();
 	CTL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
 	DGTOUT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DGTOUT_T]);
-	m_bStartSwitchLost = false;
-	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::FOOT_PEDAL_ABORT, &m_bStartSwitchLost);
-	m_GeneralAlarmTimer = 0;
+	m_bWeldAbort = false;
+	SystemConfiguration::_SystemConfig->Get(SYSTEMCONFIG::FOOT_PEDAL_ABORT, &m_bWeldAbort);
 }
 /**************************************************************************//**
 * 
@@ -115,27 +114,47 @@ void SCState::SendMsgToCtrlMsgQ(const ControlTask::MESSAGE_IDENTIFY msgID, const
 	SendToMsgQ(message, CTL_MSG_Q_ID);
 }
 
-void SCState::CheckStartSwitch()
+/**************************************************************************//**
+*
+* \brief   - Check Weld Abort, there is the specific option for welder system. 
+* 			 The system needs to check if the start switch is released until the sonics on 
+* 			 when the foot pedal option is enabled.
+*
+* \param   - None
+*
+* \return  - If the start switch is released when foot pedal option is enabled, 
+*            it will return true, otherwise it returns false
+*
+******************************************************************************/
+bool SCState::CheckWeldAbort()
 {
-	if(m_bStartSwitchLost == true)
+	bool bResult = false;
+	if(m_bWeldAbort == true)
 	{
 		if((ACStateMachine::AC_TX->ACInputs & BOTHSTARTSWITCHMASK) == 0)
+		{
 			SCStateMachine::getInstance()->SetCoreState(ERR_WELD_ABORT);
+			bResult = true;
+		}
 	}
+	return bResult;
 }
 
-void SCState::ProcessGeneralAlarm()
+/**************************************************************************//**
+*
+* \brief   - Reset Weld Abort The ERR_WELD_ABORT is the general alarm, even it is not a alarm.
+*            the system only needs to restart weld cycle when it happens.
+*
+* \param   - None
+*
+* \return  - None
+*
+******************************************************************************/
+void SCState::ResetWeldAbort()
 {
-	if(m_GeneralAlarmTimer < 100)
+	if(SCStateMachine::getInstance()->GetCoreState() == ERR_WELD_ABORT)
 	{
-		vxbGpioSetValue(GPIO::O_BUZZ, GPIO_VALUE_HIGH);
-		m_GeneralAlarmTimer++;
-	}
-	else
-	{
-		vxbGpioSetValue(GPIO::O_BUZZ, GPIO_VALUE_LOW);
 		SCStateMachine::getInstance()->ClearCoreState(ERR_WELD_ABORT);
-		m_GeneralAlarmTimer = 0;
 	}
 }
 

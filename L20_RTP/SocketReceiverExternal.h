@@ -17,10 +17,11 @@ class SocketReceiver_External: public SCTask
 public:
     enum EXTERNAL_IDENTITIES
 	{
-    	REQ_WELD_DATA_IDX = 5,
+    	REQ_WELD_DATA_IDX = 6,
 	  	REQ_POWER_CURVE_IDX,
 		REQ_HEIGHT_CURVE_IDX,
-		REQ_FREQUENCY_CURVE_IDX
+		REQ_FREQUENCY_CURVE_IDX,
+		REQ_RECALL_RECIPE_IDX
 	};
 	SocketReceiver_External();
 	~SocketReceiver_External();
@@ -29,7 +30,7 @@ public:
 protected:
 	virtual void	ProcessTaskMessage		        (MESSAGE& message) override;
 private:
-	MSG_Q_ID		UI_MSG_Q_ID;
+	MSG_Q_ID		EXT_MSG_Q_ID;
 };
 
 

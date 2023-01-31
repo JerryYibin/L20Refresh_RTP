@@ -12,6 +12,7 @@
 #include "UserPrivilege.h"
 #include "ScreenIndexUI.h"
 #include "Logger.h"
+#include "commons.h"
 //Key is EntryScreenIndex, Value is premission Level;
 map<int, int>* UserAuthority::_UserPrivilegesSC 			= nullptr;
 //Key is PermissionLevel, Value is User instance;
@@ -31,10 +32,11 @@ UserAuthority* UserAuthority::_UserAuthorityObj				= nullptr;
 UserAuthority::UserAuthority() 
 {
 	int i = 0;
-	PREMISSION_LEVEL levels[] = {EXECUTIVE, TECHNICIAN};
-	int ScreenIndex[] = {MENU_OPTIONS_SCREEN, RECIPE_LIBRARY_SCREEN, MAINTAIN_SCREEN, 
-			SYSTEM_CONFIG_SCREEN, ADMINISTRATOR_SCREEN, DATA_LOG_SCREEN, 
-			CONNECTIVITY_SCREEN, CALIBRATION_SCREEN, SYSTEM_INFORMATION_SCREEN};
+	int levels[] = {EXECUTIVE, TECHNICIAN};
+	int ScreenIndex[] = {MENU_OPTIONS_SCREEN,	RECIPE_LIBRARY_SCREEN,	MAINTAIN_SCREEN, 
+						 SYSTEM_CONFIG_SCREEN,	ADMINISTRATOR_SCREEN,	DATA_LOG_SCREEN, 
+						 CONNECTIVITY_SCREEN,	CALIBRATION_SCREEN,		SYSTEM_INFORMATION_SCREEN, 
+						 SETUP_TEACH_SCREEN};
 	
 	_UserPrivilegesSC 	= new map<int, int>();
 	_UserProfilesSC		= new map<int, User>();
@@ -43,13 +45,13 @@ UserAuthority::UserAuthority()
 	//Init _UserPrivilegesSC
 	for(i = 0; i < (sizeof(ScreenIndex) / sizeof(int)); i++)
 	{
-		_UserPrivilegesSC->insert(pair<int, int>(ScreenIndex[i], 2));
+		_UserPrivilegesSC->insert(pair<int, int>(ScreenIndex[i], TECHNICIAN));
 	}
 	//Init _UserProfilesSC
 	for(i = 0; i< (sizeof(levels) / sizeof(int)); i++)
 	{
 		User tmpUser;
-		tmpUser.m_Level = levels[i];
+		tmpUser.m_Level = (PREMISSION_LEVEL)levels[i];
 		tmpUser.m_Password = "000000";
 		_UserProfilesSC->insert(pair<int, User>(levels[i], tmpUser));
 	}
@@ -106,19 +108,25 @@ UserAuthority*	UserAuthority::GetInstance()
 int UserAuthority::CheckScreenAccessAuthority(const string passcode, const int entryScreenIndex) const
 {
 	int iCheckStatus = PASSWORD_CHECK_FAIL;
-	map<int, int>::iterator privilegesIter;
-	map<int, User>::iterator userIter;
-	privilegesIter = _UserPrivilegesSC->find(entryScreenIndex);
+	auto privilegesIter = _UserPrivilegesSC->find(entryScreenIndex);
+#if ADMIN_DBG
+	LOG("Passcode = %s EntryScreenIndex = %d\n", passcode.c_str(), entryScreenIndex);
+#endif
 	if(privilegesIter != _UserPrivilegesSC->end() )
 	{
 		int iPrivilegesLevel = privilegesIter->second;
+		//TODO Still need to consider how to handle with the passcode checking
 		for(map<int, User>::iterator userIter = _UserProfilesSC->begin(); userIter != _UserProfilesSC->end(); userIter++)
 		{
 			int iPermissionLevel = userIter->second.m_Level;
 			string strPasswordTmp = userIter->second.m_Password;
 			if(passcode == strPasswordTmp && iPermissionLevel <= iPrivilegesLevel)
 			{
+#if ADMIN_DBG
+				LOG("Passcode checking successful\n");
+#endif
 				iCheckStatus = PASSWORD_CHECK_SUCCESS;
+				break;
 			}
 		}
 	}
@@ -143,7 +151,9 @@ int	UserAuthority::UpdateUserPrivileges(const vector<USER_PRIVILEGE>* _Privilege
 		if(mt != _UserPrivilegesSC->end())
 		{
 			mt->second = iter->PermissionLevel;
+#if ADMIN_DBG
 			LOG("Screen index = %d PermissionLevel = %d\n", iter->EntryScreenIndex, iter->PermissionLevel);
+#endif
 		}
 	}
 	return 0;
@@ -167,7 +177,9 @@ int UserAuthority::UpdateUserProfiles(const vector<USER_PROFILE>* _UserList)
 		{
 			mt->second.m_Level = iter->Level;
 			mt->second.m_Password = string(iter->Password);
+#if ADMIN_DBG
 			LOG("level = %d password = %s\n", iter->Level, iter->Password);
+#endif
 		}
 	}
 	

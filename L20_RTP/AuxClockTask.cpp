@@ -25,6 +25,7 @@ extern "C"
 }
 
 AuxClockTask* AuxClockTask::m_AuxTaskObj = nullptr;
+unsigned int AuxClockTask::Tick1MS = 0;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -92,15 +93,19 @@ void AuxClockTask::AuxClock_Task(void* _obj)
 #endif
 	AuxClockTask* auxClockObj = (AuxClockTask*)_obj;
 	SCStateMachine::getInstance()->RunStateMachine();
-	ExternalManager* EthernetObj = ExternalManager::GetInstance();
+
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T]), PS_TASK_RX_EVENT | PS_TASK_TX_EVENT | PS_TASK_1MS_EVENT) != OK)
 		LOGERR((char*) "AUX_T: Power supply eventSend: Error\n", 0, 0, 0);
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]), ACT_TASK_RX_EVENT | ACT_TASK_TX_EVENT | ACT_TASK_1MS_EVENT) != OK)
 		LOGERR((char*) "AUX_T: Actuator eventSend: Error\n", 0, 0, 0);
 	if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::DGTIN_T]), CTRL_1MS) != OK)
 		LOGERR((char*) "AUX_T: System 1ms eventSend: Error\n", 0, 0, 0);
-	if(EthernetObj->Update()!= OK)
-		LOGERR((char*) "AUX_T: External Ethernet Update: Error\n", 0, 0, 0);
+	Tick1MS++;
+	if(Tick1MS % SAMPLE500MSEC == 0)
+	{
+		if(eventSend(auxClockObj->CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXT_MANAGER_T]), EXT_500MS) != OK)
+			LOGERR((char*) "AUX_T: External Ethernet 500ms eventSend: Error\n", 0, 0, 0);
+	}
 //	auxClockObj->debugFlipGPIOLevel();
 }
 

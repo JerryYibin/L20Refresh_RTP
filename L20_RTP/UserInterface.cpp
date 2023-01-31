@@ -33,7 +33,6 @@ UserInterface owned using the class object pointer.
 #include "SystemConfigurationUI.h"
 #include "SonicsTestUI.h"
 #include "Connectivity.h"
-#include "ExternalManager.h"
 #include "RecipeUI.h"
 #include "WeldResultSignature.h"
 #include "AlarmManager.h"
@@ -68,10 +67,8 @@ UserInterface::UserInterface()
 	DATA_MSG_Q_ID_REQ  = CP->getMsgQId (Data_Task + "/Request");
 
 	INTERFACE_MSG_Q_ID	= CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T]);
-	
 	OUTPUT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DGTOUT_T]);
 	INPUT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DGTIN_T]);
-	
 }
 
 /**************************************************************************//**
@@ -102,8 +99,7 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 	INT32 socketStatus = 0;
 	string details;
 	char signal;
-	UINT32 batchSize = BATCH_SIZE_NUM;
-	
+	int tmp = 0;
 	switch(message.msgID)
 	{
 	case TO_UI_TASK_HEART_BEAT:
@@ -231,8 +227,9 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 	case TO_UI_SET_ACTIVE_RECIPE:
 		//The Cycle Counter needs to be reset when the current active recipe is changed.
 		//The Batch Size needs to be reset with default setting when the current active recipe is changed.
+		tmp = BATCH_SIZE_NUM;
 		WeldResults::_WeldResults->CycleCounter = 0;
-		Recipe::ActiveRecipeSC->Set(&batchSize, WeldRecipeSC::BATCH_SIZE);
+		Recipe::ActiveRecipeSC->Set(&tmp, WeldRecipeSC::BATCH_SIZE);
 		message.msgID = DataTask::TO_DATA_TASK_ACTIVE_RECIPE_UPDATE;
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		// TODO: GET ACTIVE
@@ -247,6 +244,10 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_UI_TASK_SONICS_100TEST_REQ:
 		message.msgID = ControlTask::TO_CTRL_SONICS_100TEST;
+		SendToMsgQ(message, CTRL_MSG_Q_ID);
+		break;
+	case TO_UI_TASK_SONICS_STOP_REQ:
+		message.msgID = ControlTask::TO_CTRL_SONICS_STOP;
 		SendToMsgQ(message, CTRL_MSG_Q_ID);
 		break;
 	case TO_UI_TASK_SETUP_CLICKET_PARAM:
@@ -272,7 +273,6 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		setEthernetConfigData(message.Buffer);
 		message.msgID = DataTask::TO_DATA_TASK_CONNECTIVITY_UPDATE;
 		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
-		LOG("1111111111111111111111111111111111111111111111111111111111\n");
 		break;
 	case TO_UI_TASK_ETHERNET_CONFIG_GET:
 		responseEthernetConfigData();
@@ -330,18 +330,6 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 	case TO_UI_TASK_ALARM_LOG_LIBRARY_RESPONSE:
 		responseAlarmLogLib();
 		break;	
-	case TO_UI_TASK_WELD_DATA_EXTERNAL_REQ:
-		ExternalManager::GetInstance()->Send(ExternalManager::REPLYWELDDATA);
-		break;
-	case TO_UI_TASK_POWER_CURVE_EXTERNAL_REQ:
-		ExternalManager::GetInstance()->Send(ExternalManager::REPLYPOWERCURVE);
-		break;
-	case TO_UI_TASK_HEIGHT_CURVE_EXTERNAL_REQ:
-		ExternalManager::GetInstance()->Send(ExternalManager::REPLYHEIGHTCURVE);
-		break;
-	case TO_UI_TASK_FREQUENCY_CURVE_EXTERNAL_REQ:
-		ExternalManager::GetInstance()->Send(ExternalManager::REPLYFREQUENCYCURVE);
-		break;
 	case TO_UI_TASK_PERMISSION_SCREEN_GET:
 		responsePermissionScreenGetRequest();
 		break;
@@ -357,7 +345,7 @@ void UserInterface::ProcessTaskMessage(MESSAGE& message)
 		updateUserPasscode(message.Buffer);
 		//Send message to data task for updating DB.
 		message.msgID = DataTask::TO_DATA_TASK_USER_PROFILE_UPDATE;
-		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);	
+		SendToMsgQ(message, DATA_MSG_Q_ID_DATA);
 		break;
 	case TO_UI_TASK_VALIDATE_PASSCODE:
 		responseCheckPasscodeRequest(message.Buffer);
@@ -423,6 +411,7 @@ void UserInterface::responseHeartbeat()
 	sendMsg.rspCode = 0;
 	m_stHeartbeat.AlarmCode = AlarmManager::GetInstance()->GetAlarmType();
 	m_stHeartbeat.CycleCounter = WeldResults::_WeldResults->CycleCounter;
+	m_stHeartbeat.RecipeNumber = Recipe::ActiveRecipeSC->m_RecipeID;
 	memcpy(sendMsg.Buffer, &m_stHeartbeat, sizeof(HEARTBEAT));
 	sendMsg.msgLen = sizeof(HEARTBEAT);
 	
@@ -547,7 +536,7 @@ void UserInterface::responseSystemInfo()
 	sendMsg.rspCode = 0;
 	string timeStamp;
 
-	unsigned char macaddr[6] = {0x00,0x40,0x47,0xE0,0xA8,0x32};
+	char macaddr[6] = {0x00,0x40,0x47,0xE0,0xA8,0x32};
 	char macAddr[20]={0x00};
 	char ipAddr[SYSINFO_SIZE] = {0};
 	//Get IP address
@@ -1555,3 +1544,6 @@ void UserInterface::responseReadHistoryFrquencyGraphRequest()
 	memcpy(sendMsg.Buffer, &WeldResultSignature::GetInstance()->L20FrquencyGraphCurvePointVector[0], sendMsg.msgLen);
 	CommunicationInterface_HMI::GetInstance()->Sending(&sendMsg);
 }
+
+
+

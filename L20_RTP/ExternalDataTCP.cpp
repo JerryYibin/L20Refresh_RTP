@@ -13,6 +13,7 @@ The file is used to define all the External Ethernet TCP related Data
 ***************************************************************************/
 #include "ExternalDataTCP.h"
 #include "Recipe.h"
+#include "RecipeWrapper.h"
 #include "SystemConfiguration.h"
 #include "WeldResultsDefine.h"
 #include "WeldResultSignature.h"

@@ -14,37 +14,41 @@
 #include "CommunicationInterface.h"
 #include "Connectivity.h"
 #include "ExternalData.h"
-#define SAMPLE500MSEC 500
 class ExternalManager : public SCTask 
 {
 
 public:
-	enum CMD_ID
+
+	enum MESSAGE_IDENTIFY
 	{
-		AFTERWELD,
-		REPLYWELDDATA,
-		REPLYPOWERCURVE,
-		REPLYHEIGHTCURVE,
-		REPLYFREQUENCYCURVE,
-		SENDHEARTBEAT
+		TO_EXT_TASK_AFTER_WELD_REQ,
+		TO_EXT_TASK_WELD_DATA_REQ,
+		TO_EXT_TASK_POWER_CURVE_REQ,
+		TO_EXT_TASK_HEIGHT_CURVE_REQ,
+		TO_EXT_TASK_FREQUENCY_CURVE_REQ,
+		TO_EXT_TASK_RECALL_RECIPE_REQ,
+		TO_EXT_TASK_RECALL_RECIPE_RESPONSE,
 	};
+	
+	
 	virtual ~ExternalManager();
 	virtual int Update();
-	int Send(int cmd);
+	static  void 	External_Manager_Task			(void);
 	static ExternalManager* GetInstance();
 	CommunicationInterface* GetCommunicateObj();
+	
 protected:
 	virtual void 	ProcessTaskMessage					(MESSAGE& message) override;	
-	
 private:
 
 	ExternalManager();
 	static ExternalManager* ExternalEthobj;
 	CommunicationInterface* m_ptrCom;
 	ETHERNET 	m_PrevEthernetConfig;
-	static unsigned int Tick1MS;
 	ExternalData* m_ptrData;
 	
+	MSG_Q_ID		UI_MSG_Q_ID;
+	MSG_Q_ID		DATA_MSG_Q_ID_REQ;
 	int closeSocketEvent();
 	int linkSocketEvent();
 	int readSocketEvent();

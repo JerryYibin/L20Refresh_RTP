@@ -87,6 +87,7 @@ void HeightCalibrateWorkFlow::TriggerProcess(void)
 	{
 		HeightEncoder::HeightProperty.Pressure = m_Pressure;
 		ACStateMachine::AC_RX->TargetPressure = m_Pressure;
+		taskDelay(FIFTY_MS_DELAY);
 		SCStateMachine::getInstance()->ExecuteStateAction(SCState::READY_FOR_TRIGGER);
 		m_State = WorkFlow::ONGOING;
 	}
@@ -170,7 +171,6 @@ int HeightCalibrateWorkFlow::RunProcess(void)
 		if(m_CalibrateStep < m_CalibrateReference.size())
 		{
 			m_Pressure = m_CalibrateReference[m_CalibrateStep] * PRESSURE_FACTOR;
-			TriggerProcess();
 		}
 		else
 		{

@@ -45,6 +45,7 @@ public:
 	virtual int 	QueryLatestWeldResult(char *)			= 0;
 	virtual int 	QueryWeldSignature(char *)				= 0;
 	virtual int 	QueryWeldRecipe(char *)					= 0;
+	virtual int     QueryWeldRecipeByName(char*)      		= 0;
 	virtual int 	QueryAlarmLogLatestPage(char *)			= 0;
 	virtual int 	QueryAlarmLogNextPage(char *)			= 0;
 	virtual int 	QueryBlockAlarmLog(char *)				= 0;

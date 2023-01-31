@@ -13,6 +13,7 @@
 
 #include "SCTask.h"
 #define O_TEST_PIN 0x5d //GPIO3_29
+#define SAMPLE500MSEC 500
 class AuxClockTask: public SCTask 
 {
 public:
@@ -23,6 +24,7 @@ protected:
 	virtual	void        ProcessTaskMessage	(MESSAGE& message){} 
 private:
 	static AuxClockTask	*m_AuxTaskObj;
+	static unsigned int Tick1MS;
 	AuxClockTask();
 	virtual ~AuxClockTask();
 	/* Following code is only for the auxiliary clock debug testing */

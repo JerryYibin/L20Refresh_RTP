@@ -88,6 +88,13 @@ STATUS SCTask::SendToMsgQ (MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks
 			else
 				LOGERR((char *) "PowerSupply Task : SendToMsgQ: eventSend Error\n",0,0,0);
 		}
+		else if(msgQID == CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::EXT_MANAGER_T]))
+		{
+			if(eventSend (CP->getTaskId(CommonProperty::cTaskName[CommonProperty::EXT_MANAGER_T]), EXTERNAL_TASK_QEVENT) == OK)
+				status = OK;
+			else
+				LOGERR((char *) "ExternalManager Task : SendToMsgQ: eventSend Error\n",0,0,0);
+		}
 		else
 			status = OK;
 	}

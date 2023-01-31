@@ -233,6 +233,9 @@ void SocketReceiver_HMI::ProcessTaskMessage(MESSAGE& message)
 	case REQ_READ_WELDRESULTHISTORY_FREQUENCY_GRAPH:
 		message.msgID = UserInterface::TO_UI_TASK_READ_WELDRESULTHISTORY_FREQUENCY_GRAPH;
 		break;
+	case REQ_MAINTAIN_SONICS_STOP_IDX:
+		message.msgID = UserInterface::TO_UI_TASK_SONICS_STOP_REQ;
+		break;
 	default:
 		iResult = ERROR;
 		LOGERR((char *)"SocketReceiver_HMI_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);

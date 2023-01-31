@@ -98,7 +98,6 @@ int WeldWorkFlow::RunProcess(void)
 				WeldResults::_WeldResults->CycleCounter += 1;
 			if(WeldResults::_WeldResults->CycleCounter >= batchCount)
 				SCStateMachine::getInstance()->SetCoreState(ERR_BATCH_SIZE);
-			ExternalManager::GetInstance()->Send(ExternalManager::AFTERWELD);
 		}
 		if(WeldResults::_WeldResults->CycleCounter >= batchCount)
 			m_State = FINISH;

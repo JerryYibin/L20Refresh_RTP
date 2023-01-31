@@ -17,7 +17,7 @@
 #include "RecipeUI.h"
 
 #define HMI_SIGNA_POINT_MAX           200
-#define SELECT_POINT_NUM              198
+#define SELECT_POINT_NUM              197
 #define SELECT_POINT_JUMP_THRESHOLD   0.1
 #define SELECT_POINT_JUMP_MIN         1
 #define SELECT_GRAPH_POINT_MIN        10
@@ -29,6 +29,12 @@ public:
 	  NOT_EXTRENUN = 0,
 	  IS_MIN_POINT,
 	  IS_MAX_POINT
+	};
+	struct ESSENTIAL_CURVE_POINT
+	{
+		GraphCurvePoint stuMinPoint;    //The minimum point
+		GraphCurvePoint stuMaxPoint;    //The maximum point
+		GraphCurvePoint stuLastPoint;   //The last point
 	};
 private:
 	static WeldResultSignatureDefine* ptrWeldSignature;
@@ -50,10 +56,10 @@ private:
 	void getGraphOriginData(vector<int>& vtOriginData, int iGraphType);
 	void selectPointsFromOriginData(vector<int> vtOriginData, vector<GraphCurvePoint>& vtSelectPoint);
 	void returnOriginData(vector<int> vtOriginData, vector<GraphCurvePoint>& vtSelectPoint);
-	void getExtremumPoint(vector<int> vtOriginData, GraphCurvePoint& stuMinPoint, GraphCurvePoint& stuMaxPoint);
-	int  checkIsExtremumPoint(GraphCurvePoint stuFirstPoint, GraphCurvePoint stuMinPoint, GraphCurvePoint stuMaxPoint);
-	void selectSlopeChangePoint(vector<int> vtOriginData, vector<GraphCurvePoint>& vtSelectPointTmp, GraphCurvePoint stuMinPoint, GraphCurvePoint stuMaxPoint);
-	void selectTargetPointFromSlopeChange(vector<GraphCurvePoint> vtSelectPointTmp, GraphCurvePoint stuMinPoint, GraphCurvePoint stuMaxPoint, vector<GraphCurvePoint>& vtSelectPoint);
+	void getEssentialPoint(vector<int> vtOriginData, ESSENTIAL_CURVE_POINT& stuEssentialCurvePoint);
+	int  checkIsExtremumPoint(GraphCurvePoint stuFirstPoint, ESSENTIAL_CURVE_POINT stuEssentialCurvePoint);
+	void selectSlopeChangePoint(vector<int> vtOriginData, vector<GraphCurvePoint>& vtSelectPointTmp, ESSENTIAL_CURVE_POINT stuEssentialCurvePoint);
+	void selectTargetPointFromSlopeChange(vector<GraphCurvePoint> vtSelectPointTmp, ESSENTIAL_CURVE_POINT stuEssentialCurvePoint, vector<GraphCurvePoint>& vtSelectPoint);
 	void selectAveragePointsFromOriginData(vector<int> vtOriginData, vector<GraphCurvePoint>& vtSelectPoint);
 private:
 	static WeldResultSignature	*m_WSObj;

@@ -514,7 +514,7 @@ void FirmwareUpgrade::deleteTasks(void)
 	}
 	else
 	{
-		LOGERR("FW_T:Fail to get ACTUATOR process Task",0,0,0);
+		LOGERR("FW_T:Fail to get  ACTUATOR process Task",0,0,0);
 	}
 	
 	/* Get POWER supply task ID */

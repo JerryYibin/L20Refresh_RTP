@@ -53,6 +53,7 @@ ControlTask::ControlTask()
 	DATA_MSG_Q_ID_CTRL = CP->getMsgQId(Data_Task + "/Control");
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	ACT_MSG_Q_ID  = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::ACTUATOR_SYSTEM_T]);
+	EXT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::EXT_MANAGER_T]);
 }
 
 /**************************************************************************//**
@@ -163,6 +164,11 @@ void ControlTask::updateWorkFlow(char* buff)
 				//TODO The control task to send the message to UI task and UI task will notify HMI then.
 			}
 		}
+		else
+		{
+			if(SCStateMachine::getInstance()->GetStateMachineState() == false)
+				m_OperationMode = SCStateMachine::NO_OPERATION;
+		}
 	}
 	else
 		LOGERR((char *)"CTRL_T : ----------tmpOperationMode------------- : %d",tmpOperationMode, 0, 0);
@@ -218,6 +224,8 @@ void ControlTask::responseStateMachineProcess(MESSAGE& message)
 					int recipeID = Recipe::ActiveRecipeSC->m_RecipeID;
 					memcpy(message.Buffer, &recipeID, sizeof(int));
 					SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
+					message.msgID = ExternalManager::TO_EXT_TASK_AFTER_WELD_REQ;
+					SendToMsgQ(message, EXT_MSG_Q_ID);
 				}
 				message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
 				SendToMsgQ(message, UI_MSG_Q_ID);
@@ -259,6 +267,8 @@ void ControlTask::responseStateMachineProcess(MESSAGE& message)
 					int recipeID = Recipe::ActiveRecipeSC->m_RecipeID;
 					memcpy(message.Buffer, &recipeID, sizeof(int));
 					SendToMsgQ(message, DATA_MSG_Q_ID_CTRL);
+					message.msgID = ExternalManager::TO_EXT_TASK_AFTER_WELD_REQ;
+					SendToMsgQ(message, EXT_MSG_Q_ID);
 				}
 				message.msgID = UserInterface::TO_UI_TASK_LAST_WELD_RESULT;
 				SendToMsgQ(message, UI_MSG_Q_ID);
@@ -290,9 +300,9 @@ void ControlTask::ProcessTaskMessage(MESSAGE& message)
 	case TO_CTRL_OPERATE_MODE_SET:
 		updateWorkFlow(message.Buffer);
 		if((m_OperationMode == SCStateMachine::BATCH_WELD) || (m_OperationMode == SCStateMachine::WELD)) 
-			tmp = TRUE;
+			tmp = true;
 		else
-			tmp = FALSE;
+			tmp = false;
 		memcpy(message.Buffer, &tmp, sizeof(UINT32));
 		message.msgID = ActuatorTask::TO_ACT_TASK_COOLING_TIMER_ENABLE;
 		SendToMsgQ(message, ACT_MSG_Q_ID);
@@ -342,6 +352,10 @@ void ControlTask::ProcessTaskMessage(MESSAGE& message)
 			_TestSonicsProcess->SetAmplitude(tmp);
 			_TestSonicsProcess->TriggerProcess();
 		}
+		break;
+	case TO_CTRL_SONICS_STOP:
+		if(_WorkFlowObj != nullptr)
+			_WorkFlowObj->ResetProcess();
 		break;
 	case TO_CTRL_SC_RESPONSE:
 		responseStateMachineProcess(message);

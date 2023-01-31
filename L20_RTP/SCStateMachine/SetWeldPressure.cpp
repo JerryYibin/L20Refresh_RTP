@@ -113,5 +113,6 @@ void SetWeldPressure::Exit()
 ******************************************************************************/
 void SetWeldPressure::Fail()
 {
+	m_Actions = SCState::ABORT;
 }
 

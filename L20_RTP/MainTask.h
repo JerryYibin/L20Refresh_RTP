@@ -20,7 +20,7 @@
 #define MSG_Q_FIFO				0x00
 
 /* No of task going to create in Supervisory Controller */
-#define NUM_OF_BL_TASK			18
+#define NUM_OF_BL_TASK			19
 #define SHUTDOWN_STATUS			1
 
 /* Priority of tasks in Supervisory Controller */
@@ -45,7 +45,8 @@ enum TASK_PRIORITY
 //	WEBSERVICE_T_PRIORITY,
 	BARCODE_READER_T_PRIORITY,
 	MAINTENANCE_T_PRIORITY,
-	EXTERANL_SOCKET_T_PRIORITY
+	EXT_SOCKET_T_PRIORITY,
+	EXT_MANAGER_T_PRIORITY
 };
 
 /* Stack size of tasks in Supervisory Controller */
@@ -66,8 +67,8 @@ enum TASK_PRIORITY
 #define DGTOUT_T_STACK_SIZE				(1024 * 4)
 #define BARCODE_READER_T_STACK_SIZE		(1024 * 2)
 #define MAINTENANCE_T_STACK_SIZE		(1024 * 8)
-#define EXTERNAL_SOCKET_T_STACK_SIZE	(1024 * 10)
-
+#define EXT_SOCKET_T_STACK_SIZE			(1024 * 10)
+#define EXT_MANAGER_T_STACK_SIZE		(1024 * 20)
 /* Shared data object size for PDO data */
 #define SD_SIZE					512
 

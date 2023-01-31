@@ -17,6 +17,7 @@ need to handle the real role change according to the events receiving from other
 #include "CommunicationInterfaceTCP.h"
 #include "CommunicationInterfaceDIG.h"
 #include "UserInterface.h"
+#include "ControlTask.h"
 #include "Connectivity.h"
 #include "ExternalManager.h"
 #include "ExternalData.h"
@@ -36,7 +37,7 @@ extern "C"
 ******************************************************************************/
 SocketReceiver_External::SocketReceiver_External()
 {
-	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
+	EXT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::EXT_MANAGER_T]);
 }
 
 /**************************************************************************//**
@@ -63,27 +64,32 @@ SocketReceiver_External::~SocketReceiver_External()
  ******************************************************************************/
 void SocketReceiver_External::ProcessTaskMessage(MESSAGE& message)
 {
-
-	ExternalData::ETHMESSAGE sendmsg;
-	sendmsg.msgID = message.msgID;
+	int iResult = OK;
 	switch(message.msgID)
 	{
 	case REQ_WELD_DATA_IDX:
-		message.msgID = UserInterface::TO_UI_TASK_WELD_DATA_EXTERNAL_REQ;
+		message.msgID = ExternalManager::TO_EXT_TASK_WELD_DATA_REQ;
 		break;
 	case REQ_POWER_CURVE_IDX:
-		message.msgID = UserInterface::TO_UI_TASK_POWER_CURVE_EXTERNAL_REQ;
+		message.msgID = ExternalManager::TO_EXT_TASK_POWER_CURVE_REQ;
 		break;
 	case REQ_HEIGHT_CURVE_IDX:
-		message.msgID = UserInterface::TO_UI_TASK_HEIGHT_CURVE_EXTERNAL_REQ;
+		message.msgID = ExternalManager::TO_EXT_TASK_HEIGHT_CURVE_REQ;
 		break;
 	case REQ_FREQUENCY_CURVE_IDX:
-		message.msgID = UserInterface::TO_UI_TASK_FREQUENCY_CURVE_EXTERNAL_REQ;
+		message.msgID = ExternalManager::TO_EXT_TASK_FREQUENCY_CURVE_REQ;
 		break;
+	case REQ_RECALL_RECIPE_IDX:
+		message.msgID = ExternalManager::TO_EXT_TASK_RECALL_RECIPE_REQ;
+		break;
+	
 	default:
+		iResult = ERROR;
+		LOGERR((char *)"SocketReceiver_External_T : --------Unknown Message ID----------- : %d\n", message.msgID, 0, 0);
 		break;
-	}	
-	SendToMsgQ(message, UI_MSG_Q_ID);
+	}
+	if(iResult == OK)
+		SendToMsgQ(message, EXT_MSG_Q_ID);
 }
 
 /**************************************************************************//**

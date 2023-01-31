@@ -106,8 +106,7 @@ void WaitForTrigger::Loop()
 		m_Actions = SCState::FAIL;
 	}
 	
-	CheckStartSwitch();
-	if((SCStateMachine::getInstance()->GetCoreState() & ERR_WELD_ABORT) == ERR_WELD_ABORT)
+	if(CheckWeldAbort() == true)
 	{
 		m_Actions = SCState::FAIL;
 		return;
@@ -172,15 +171,8 @@ void WaitForTrigger::Exit()
 ******************************************************************************/
 void WaitForTrigger::Fail()
 {
-	if((SCStateMachine::getInstance()->GetCoreState() & ERR_WELD_ABORT) == ERR_WELD_ABORT)
-	{
-		
-		ProcessGeneralAlarm();
-	}
-	else
-	{
-		m_Actions = SCState::ABORT;
-		LOG("Trigger Alarm happened!\n");
-	}
+	ResetWeldAbort();
+	m_Actions = SCState::ABORT;
+	LOG("Trigger Alarm happened!\n");
 }
 

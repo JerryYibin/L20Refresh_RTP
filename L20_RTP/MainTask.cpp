@@ -35,6 +35,7 @@
 #include "UserAuthority.h"
 #include "SystemConfiguration.h"
 #include "SocketReceiverExternal.h"
+#include "ExternalManager.h"
 #include <sysLib.h>
 #include <sdLib.h>
 extern "C"
@@ -80,7 +81,12 @@ MainTask::MainTask()
 										(char *) "ACT_Socket_Task", 
 										(char *) "CAN_Socket_Task",
 										(char *) "FW_Upgrade_Task",
-										(char *) "External_Socket_Task",
+										(char *) "EXT_Socket_Task",
+#if UNITTEST					
+										(char *) "/EXT_Manager_Task", 
+#else
+										(char *) "EXT_Manager_Task",
+#endif
 										(char *) "RtpMain_Task"};
 	
 	for(t_index = 0; t_index < TOTAL_NUM_OF_TASK; t_index++)
@@ -94,20 +100,20 @@ MainTask::MainTask()
 	UINT32	g_Priority[NUM_OF_BL_TASK] 			= {CTRL_T_PRIORITY, ACT_PROCESS_T_PRIORITY, PS_T_PRIORITY, ACT_SYSTEM_T_PRIORITY, UI_T_PRIORITY, DATA_T_PRIORITY, 
 													INTERFACE_T_PRIORITY, ALARM_T_PRIORITY, BARCODE_READER_T_PRIORITY, DGTIN_T_PRIORITY, DGTOUT_T_PRIORITY,
 													MAINTENANCE_T_PRIORITY, CONSOLE_T_PRIORITY, HMI_SOCKET_T_PRIORITY, ACT_SOCKET_T_PRIORITY, CAN_SOCKET_T_PRIORITY,
-													FW_UPGRADE_T_PRIORITY, EXTERANL_SOCKET_T_PRIORITY};
+													FW_UPGRADE_T_PRIORITY, EXT_SOCKET_T_PRIORITY,EXT_MANAGER_T_PRIORITY};
 	
 	FUNC*	g_TaskFunc[NUM_OF_BL_TASK] 			= {ControlTask::Control_Task, Actuator_Process_Task, PowerSupplyTask::PowerSupply_Task, 
 													ActuatorTask::Actuator_System_Task, UserInterface::UserInterface_Task, DataTask::Data_Task, 
 													DataInterface::DataInterface_Task, Alarm_Task, BarcodeReader_Task, ScDgtInputTask::ScDgtInput_Task,
 													ScDgtOutputTask::ScDgtOutput_Task, Maintenance_Task, ConsoleApp_Task, SocketReceiver_HMI::Socket_HMI_Task,
 													Socket_ACT_Task, SocketReceiver_CAN::Socket_CAN_Task, FirmwareUpgrade_Task, 
-													SocketReceiver_External::Socket_External_Task};
+													SocketReceiver_External::Socket_External_Task,ExternalManager::External_Manager_Task};
 	
 	UINT32	g_StackSize[NUM_OF_BL_TASK]			= {CTRL_T_STACK_SIZE, ACT_PROCESS_T_STACK_SIZE, PS_T_STACK_SIZE, ACT_SYSTEM_T_STACK_SIZE, 
 													UI_T_STACK_SIZE, DATA_T_STACK_SIZE, INTERFACE_T_STACK_SIZE, ALARM_T_STACK_SIZE, 
 													BARCODE_READER_T_STACK_SIZE, DGTIN_T_STACK_SIZE, DGTOUT_T_STACK_SIZE,
 													MAINTENANCE_T_STACK_SIZE, CONSOLE_T_STACK_SIZE, HMI_SOCKET_T_STACK_SIZE, ACT_SOCKET_T_STACK_SIZE,
-													CAN_SOCKET_T_STACK_SIZE, FW_UPGRADE_T_STACK_SIZE, EXTERNAL_SOCKET_T_STACK_SIZE};
+													CAN_SOCKET_T_STACK_SIZE, FW_UPGRADE_T_STACK_SIZE, EXT_SOCKET_T_STACK_SIZE, EXT_MANAGER_T_STACK_SIZE};
 	
 	for(t_index=0; t_index < NUM_OF_BL_TASK; t_index++)
 	{			
@@ -129,7 +135,7 @@ MainTask::MainTask()
 bool MainTask::CreateMsgQ()
 {
 
-#if UNITTEST_DATABASE
+#if UNITTEST
 
 	const char* MsgQName[TOTAL_NUM_OF_TASK] = {
 										(const char *) "/CtrlMsgQ",
@@ -149,7 +155,8 @@ bool MainTask::CreateMsgQ()
 										(const char *) "/ACTSocketMsgQ",
 										(const char *) "/CANSocketMsgQ",
 										(const char *) "/FWUpgradeMsgQ",
-										(const char *) "/ExternalSocketMsgQ",										
+										(const char *) "/EXTSocketMsgQ",		
+										(const char *) "/EXTManagerMsgQ",
 										(const char *) "/RtpMainMsgQ"};
 #endif
 
@@ -188,7 +195,7 @@ bool MainTask::CreateMsgQ()
 		}
 		else
 		{
-#if UNITTEST_DATABASE
+#if UNITTEST
 			qID = msgQOpen(MsgQName[t_index], MAX_MSG, MAX_MSG_LEN, MSG_Q_FIFO, OM_CREATE, NULL);
 			LOG("MsgQ ID = 0x%x\n",qID);
 #else
@@ -258,11 +265,18 @@ bool MainTask::CreateTasks()
 	else
 		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::POWER_SUPPLY_T], tID);
 	
-	tID = taskSpawn((char *)CommonProperty::cTaskName[CommonProperty::EXTERNAL_SOCKET_T], EXTERANL_SOCKET_T_PRIORITY, VX_FP_TASK, EXTERNAL_SOCKET_T_STACK_SIZE, (FUNCPTR)SocketReceiver_External::Socket_External_Task, 0,0,0,0,0,0,0,0,0,0);
+	tID = taskSpawn((char *)CommonProperty::cTaskName[CommonProperty::EXT_SOCKET_T], EXT_SOCKET_T_PRIORITY, VX_FP_TASK, EXT_SOCKET_T_STACK_SIZE, (FUNCPTR)SocketReceiver_External::Socket_External_Task, 0,0,0,0,0,0,0,0,0,0);
 	if (tID == TASK_ID_ERROR)
 		bSuccess = false;
 	else
-		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::EXTERNAL_SOCKET_T], tID);
+		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::EXT_SOCKET_T], tID);
+	
+	tID = taskSpawn((char *)CommonProperty::cTaskName[CommonProperty::EXT_MANAGER_T], EXT_MANAGER_T_PRIORITY, VX_FP_TASK, EXT_MANAGER_T_STACK_SIZE, (FUNCPTR)ExternalManager::External_Manager_Task, 0,0,0,0,0,0,0,0,0,0);
+	if (tID == TASK_ID_ERROR)
+		bSuccess = false;
+	else
+		CP->setTaskId(CommonProperty::cTaskName[CommonProperty::EXT_MANAGER_T], tID);
+	
 	//TO_BE_DONE - Added ENABLE_DIG_CLIENT #define so that 
 	//other developers using this stream can enable/disable
 	//the DIG  client functionality easily. This #define will 
@@ -519,7 +533,6 @@ int main()
 	UserAuthority::GetInstance();
 	//TODO only for Sonics Test feature testing.
 	SystemConfiguration::_SystemConfig->Init();
-
 	MainTask *MT 		= new(nothrow) MainTask();
 	if(NULL != MT)
 	{

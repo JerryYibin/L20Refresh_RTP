@@ -17,7 +17,7 @@
 unsigned int ActuatorTask::CoreState 				= 0;
 ActuatorTask* ActuatorTask::_ACObj 					= nullptr;
 UINT32 ActuatorTask::Tick_1ms 						= 0;
-UINT32 ActuatorTask::CoolingTimerOption				= FALSE;
+bool ActuatorTask::IsCoolingTimerEnabled			= false;
 /**************************************************************************//**
 * \brief   - Constructor - 
 *
@@ -76,7 +76,7 @@ void ActuatorTask::ProcessTaskMessage(MESSAGE & message)
 			ActuatorTask::GetInstance()->DoAuxMotion(motion);
 			break;
 		case TO_ACT_TASK_COOLING_TIMER_ENABLE:
-			memcpy(&CoolingTimerOption, tmpMsg.Buffer, sizeof(UINT32));
+			memcpy(&IsCoolingTimerEnabled, tmpMsg.Buffer, sizeof(UINT32));
 			break;
 		default:
 			LOGERR((char*)"Actuator_T: --------Unknown Message ID----------- : %d", tmpMsg.msgID, 0, 0);

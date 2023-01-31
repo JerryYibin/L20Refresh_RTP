@@ -28,6 +28,7 @@ DataTask class owned using the class object pointer.
 #include "EEPROM.h"
 #include "Utility.h"
 #include "CommonProperty.h"
+#include "ExternalManager.h"
 extern "C"
 {
 	#include "customSystemCall.h"	
@@ -54,7 +55,7 @@ DataTask::DataTask()
 	UI_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::UI_T]);
 	INTERFACE_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::DATA_INTERFACE_T]);
 	CTRL_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::CTRL_T]);
-	
+	EXT_MSG_Q_ID = CP->getMsgQId(CommonProperty::cTaskName[CommonProperty::EXT_MANAGER_T]);
 
 }
 
@@ -359,7 +360,6 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		break;
 	case TO_DATA_TASK_CONNECTIVITY_UPDATE:
         _ObjDBConn->UpdateConnectivity(message.Buffer);
-        LOG("222222222222222222222222222222222222222222222\n");
 		break;
 
 	case TO_DATA_TASK_WELD_RECIPE_DELETE:
@@ -417,6 +417,13 @@ void DataTask::ProcessTaskMessage(MESSAGE& message)
 		_ObjDBConn->QueryWeldSignature(message.Buffer);
 		message.msgID = UserInterface::TO_UI_TASK_GET_WELDRESULTHISTORY_FREQUENCY_DATA;
 		SendToMsgQ(message, UI_MSG_Q_ID);
+		break;
+	case TO_DATA_TASK_WELD_RECIPE_QUERY_BY_NAME:
+		ErrCode = _ObjDBConn->QueryWeldRecipeByName(message.Buffer);
+		message.msgID = ExternalManager::TO_EXT_TASK_RECALL_RECIPE_RESPONSE;
+		memset(message.Buffer, 0x00, sizeof(message.Buffer));
+		memcpy(message.Buffer, &ErrCode, sizeof(int));
+		SendToMsgQ(message, EXT_MSG_Q_ID);
 		break;
 	default:
 		LOGERR((char* )"DataTask: --------Unknown Message ID----------- : %d", message.msgID, 0, 0);

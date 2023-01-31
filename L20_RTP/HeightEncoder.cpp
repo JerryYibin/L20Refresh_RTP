@@ -46,7 +46,7 @@ HeightEncoder::HeightEncoder()
 	tmpHeight.TopCount = HEIGHT_HOME_COUNT;
 	tmpHeight.ZeroCount = HEIGHT_BASIC_COUNT;
 	//TODO the code is for different level2 machine calbe only.
-	//vxbEqepSwapDirection(1);
+//	vxbEqepSwapDirection(1);
 //	SetInitCount(HEIGHT_BASIC_COUNT);
 	SetMaxCount(HEIGHT_MAXIMUM_COUNT);
 	for(int i = 0; i < PRESSURE_NUM; i++)

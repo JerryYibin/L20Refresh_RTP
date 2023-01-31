@@ -29,6 +29,7 @@ public:
 		TO_CTRL_HEIGHT_CORRECT,
 		TO_CTRL_SONICS_TEST,
 		TO_CTRL_SONICS_100TEST,
+		TO_CTRL_SONICS_STOP,
 		TO_CTRL_SC_RESPONSE,
 		TO_CTRL_ALARM_EVENT
 	};
@@ -45,7 +46,7 @@ private:
 	MSG_Q_ID 				UI_MSG_Q_ID;
 	MSG_Q_ID 				DATA_MSG_Q_ID_CTRL;
 	MSG_Q_ID				ACT_MSG_Q_ID;
-	
+	MSG_Q_ID                EXT_MSG_Q_ID;
 	int						m_OperationMode;
 	static WorkFlow*		_WorkFlowObj;				
 private:

@@ -234,7 +234,7 @@ void L20ActuatorTask::InitMovingProcess()
 ******************************************************************************/
 void L20ActuatorTask::RunCoolingTimer()
 {
-	if(CoolingTimerOption == FALSE)
+	if(IsCoolingTimerEnabled == false)
 		return;
 	if (CoolingTimer.Delay != 0)
 	{

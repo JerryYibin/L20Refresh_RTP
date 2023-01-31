@@ -320,7 +320,9 @@ int SCStateMachine::LoadStatesHandler(int operation)
 			LOGERR((char *) "SC State Machine: State Missing, the current State: %d is not in the State Map.",m_objState->m_State, 0, 0);
 		}
 	}
-	else
+	//TODO the following code should be a separate function. Once the states of list is removed, 
+	//the list should be loaded the new sequence directly without waiting for the next loop.
+	if(_objStateList->size() == 0)
 	{
 		switch(operation)
 		{

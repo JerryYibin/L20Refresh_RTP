@@ -245,7 +245,7 @@ void  WeldResultSignature::returnOriginData(vector<int> vtOriginData, vector<Gra
 	for(iDataIndex = 0; iDataIndex < iOriginDataSize; iDataIndex++)
 	{
 		GraphCurvePoint stuPointTmp;
-		stuPointTmp.m_pointX = iDataIndex;
+		stuPointTmp.m_pointX = iDataIndex + SELECT_POINT_JUMP_MIN;
 		stuPointTmp.m_pointY = vtOriginData[iDataIndex];
 		vtSelectPoint.push_back(stuPointTmp);
 	}
@@ -262,63 +262,67 @@ void  WeldResultSignature::returnOriginData(vector<int> vtOriginData, vector<Gra
  ******************************************************************************/
  void  WeldResultSignature::selectPointsFromOriginData(vector<int> vtOriginData, vector<GraphCurvePoint>& vtSelectPoint)
  {
-	 GraphCurvePoint stuMinPoint;
-	 GraphCurvePoint stuMaxPoint;
+	 ESSENTIAL_CURVE_POINT stuEssentialCurvePoint;
 	 vector<GraphCurvePoint> vtSelectSlopePoint;
-	 //1. Find the maximum and minimum coordinates of the original data
-	 getExtremumPoint(vtOriginData, stuMinPoint, stuMaxPoint);
-	 //2. Find the point where the slope changes from the original data
-	 selectSlopeChangePoint(vtOriginData, vtSelectSlopePoint, stuMinPoint, stuMaxPoint);
-	 //3. Pick targets point for drawing the curve from the points where the slope changes
-	 selectTargetPointFromSlopeChange(vtSelectSlopePoint, stuMinPoint, stuMaxPoint, vtSelectPoint);
+
+	 //2. Find the maximum and minimum coordinates of the original data
+	 getEssentialPoint(vtOriginData, stuEssentialCurvePoint);
+	 //3. Find the point where the slope changes from the original data
+	 selectSlopeChangePoint(vtOriginData, vtSelectSlopePoint, stuEssentialCurvePoint);
+	 //4. Pick targets point for drawing the curve from the points where the slope changes
+	 selectTargetPointFromSlopeChange(vtSelectSlopePoint, stuEssentialCurvePoint, vtSelectPoint);
  }
 
 /******************************************************************************
- * \brief   - Find the maximum and minimum points of the original data
+ * \brief   - Find the maximum ,minimum and last points of the original data
  *
  * \param   - vector<int> vtOriginData
- *            GraphCurvePoint& stuMinPoint
- *            GraphCurvePoint& stuMaxPoint
+ *          - ESSENTIAL_CURVE_POINT& stuEssentialCurvePoint
  *              
  *
  * \return  - None
  *
  ******************************************************************************/
- void WeldResultSignature::getExtremumPoint(vector<int> vtOriginData, GraphCurvePoint& stuMinPoint, GraphCurvePoint& stuMaxPoint)
+ void WeldResultSignature::getEssentialPoint(vector<int> vtOriginData, ESSENTIAL_CURVE_POINT& stuEssentialCurvePoint)
  {
+	 int iOriginDataSize = vtOriginData.size();
 	 //1. maximum point
 	 int iMaxValue    = *max_element(vtOriginData.begin(),vtOriginData.end()); 
 	 int iMaxPosition = max_element(vtOriginData.begin(),vtOriginData.end()) - vtOriginData.begin();
 	 //2. minimum point
 	 int iMinValue    = *min_element(vtOriginData.begin(),vtOriginData.end());
 	 int iMinPosition = min_element(vtOriginData.begin(),vtOriginData.end()) - vtOriginData.begin();
+	 //3.last point
+	 int iLastValue    = vtOriginData[iOriginDataSize - 1];
+	 int iLastPosition = iOriginDataSize - 1;
 	 //3. Return the maximum and minimum points
-	 stuMaxPoint.m_pointX = iMaxPosition;
-	 stuMaxPoint.m_pointY = iMaxValue;
-	 stuMinPoint.m_pointX = iMinPosition;
-	 stuMinPoint.m_pointY = iMinValue;
+	 stuEssentialCurvePoint.stuMaxPoint.m_pointX = iMaxPosition;
+	 stuEssentialCurvePoint.stuMaxPoint.m_pointY = iMaxValue;
+	 stuEssentialCurvePoint.stuMinPoint.m_pointX = iMinPosition;
+	 stuEssentialCurvePoint.stuMinPoint.m_pointY = iMinValue;
+	 stuEssentialCurvePoint.stuLastPoint.m_pointX = iLastPosition;
+	 stuEssentialCurvePoint.stuLastPoint.m_pointY = iLastValue;
  }
 
 /******************************************************************************
  * \brief   - Check if this point is an extreme point
  *
  * \param   - GraphCurvePoint stuFirstPoint
- *            GraphCurvePoint stuMinPoint
- *            GraphCurvePoint stuMaxPoint
+ *          - ESSENTIAL_CURVE_POINT stuEssentialCurvePoint
  *              
  *
  * \return  - None
  *
  ******************************************************************************/
-int WeldResultSignature::checkIsExtremumPoint(GraphCurvePoint stuFirstPoint, GraphCurvePoint stuMinPoint, GraphCurvePoint stuMaxPoint)
+int WeldResultSignature::checkIsExtremumPoint(GraphCurvePoint stuFirstPoint, ESSENTIAL_CURVE_POINT stuEssentialCurvePoint)
 {
     int iIsExtremumPoint = 0;
     // Check if the first point is the maximum or minimum point
-    if((stuFirstPoint.m_pointX == stuMinPoint.m_pointX) && (stuFirstPoint.m_pointY == stuMinPoint.m_pointY))
+    if((stuFirstPoint.m_pointX == stuEssentialCurvePoint.stuMinPoint.m_pointX) && (stuFirstPoint.m_pointY == stuEssentialCurvePoint.stuMinPoint.m_pointY))
     {
       iIsExtremumPoint = IS_MIN_POINT;
     }
-    else if((stuFirstPoint.m_pointX == stuMaxPoint.m_pointX) && (stuFirstPoint.m_pointY == stuMaxPoint.m_pointY))
+    else if((stuFirstPoint.m_pointX == stuEssentialCurvePoint.stuMaxPoint.m_pointX) && (stuFirstPoint.m_pointY == stuEssentialCurvePoint.stuMaxPoint.m_pointY))
     {
       iIsExtremumPoint = IS_MAX_POINT;
     }
@@ -335,21 +339,20 @@ int WeldResultSignature::checkIsExtremumPoint(GraphCurvePoint stuFirstPoint, Gra
  *
  * \param   - vector<int> vtOriginData 
  *            vector<GraphCurvePoint>& vtSelectPointTmp
- *            GraphCurvePoint stuMinPoint
- *            GraphCurvePoint stuMaxPoint
+ *            ESSENTIAL_CURVE_POINT stuEssentialCurvePoint
  *              
  *
  * \return  - None
  *
  ******************************************************************************/
-void WeldResultSignature::selectSlopeChangePoint(vector<int> vtOriginData, vector<GraphCurvePoint>& vtSelectPointTmp, GraphCurvePoint stuMinPoint, GraphCurvePoint stuMaxPoint)
+void WeldResultSignature::selectSlopeChangePoint(vector<int> vtOriginData, vector<GraphCurvePoint>& vtSelectPointTmp, ESSENTIAL_CURVE_POINT stuEssentialCurvePoint)
 {
 	int i = 0;
 	int iOriginDataSize = vtOriginData.size();
 	GraphCurvePoint stuPointPreTmp;
 	float fSlopeTmp = 0.0;
   
-	for(i=0; i<iOriginDataSize; i++)
+	for(i=0; i < iOriginDataSize - 1; i++)
 	{
 		float fSlopePre;
 		GraphCurvePoint stuPointPre;
@@ -358,7 +361,7 @@ void WeldResultSignature::selectSlopeChangePoint(vector<int> vtOriginData, vecto
 		int iDetaX = abs(stuPointPre.m_pointX - stuPointPreTmp.m_pointX);
 		int iDetaY = abs(stuPointPre.m_pointY - stuPointPreTmp.m_pointY);
 		//1. If it is an extreme point,jump over
-		if(checkIsExtremumPoint(stuPointPre, stuMinPoint, stuMaxPoint) != NOT_EXTRENUN)
+		if(checkIsExtremumPoint(stuPointPre, stuEssentialCurvePoint) != NOT_EXTRENUN)
 		{
 			continue;
 		}
@@ -382,15 +385,14 @@ void WeldResultSignature::selectSlopeChangePoint(vector<int> vtOriginData, vecto
  * \brief   - Pick target points for drawing the curve from the points where the slope changes
  *
  * \param   - vector<GraphCurvePoint> vtSelectPointTmp
- *            GraphCurvePoint stuMinPoint
- *            GraphCurvePoint stuMaxPoint
+ *            ESSENTIAL_CURVE_POINT stuEssentialCurvePoint
  *            vector<GraphCurvePoint>& vtSelectPoint
  *              
  *
  * \return  - None
  *
  ******************************************************************************/
-void WeldResultSignature::selectTargetPointFromSlopeChange(vector<GraphCurvePoint> vtSelectPointTmp, GraphCurvePoint stuMinPoint, GraphCurvePoint stuMaxPoint, vector<GraphCurvePoint>& vtSelectPoint)
+void WeldResultSignature::selectTargetPointFromSlopeChange(vector<GraphCurvePoint> vtSelectPointTmp, ESSENTIAL_CURVE_POINT stuEssentialCurvePoint, vector<GraphCurvePoint>& vtSelectPoint)
 {
 	int iSelectPointSize = vtSelectPointTmp.size();
 	int i = 0;
@@ -428,10 +430,12 @@ void WeldResultSignature::selectTargetPointFromSlopeChange(vector<GraphCurvePoin
 		vtSelectPointX.push_back(vtSelectPointTmp[i].m_pointX);
 		iCountNum++;
 	}
-	vtSelectPointTarget.push_back(stuMinPoint);
-	vtSelectPointTarget.push_back(stuMaxPoint);
-	vtSelectPointX.push_back(stuMinPoint.m_pointX);
-	vtSelectPointX.push_back(stuMaxPoint.m_pointX);
+	vtSelectPointTarget.push_back(stuEssentialCurvePoint.stuMinPoint);
+	vtSelectPointTarget.push_back(stuEssentialCurvePoint.stuMaxPoint);
+	vtSelectPointTarget.push_back(stuEssentialCurvePoint.stuLastPoint);
+	vtSelectPointX.push_back(stuEssentialCurvePoint.stuMinPoint.m_pointX);
+	vtSelectPointX.push_back(stuEssentialCurvePoint.stuMaxPoint.m_pointX);
+	vtSelectPointX.push_back(stuEssentialCurvePoint.stuLastPoint.m_pointX);
 	//3. Sort by abscissa from smallest to largest
 	sort(vtSelectPointX.begin(), vtSelectPointX.end());
 	for(i = 0; i < vtSelectPointX.size(); i++)
@@ -440,7 +444,10 @@ void WeldResultSignature::selectTargetPointFromSlopeChange(vector<GraphCurvePoin
 		{
 			if(vtSelectPointX[i] == vtSelectPointTarget[j].m_pointX)
 			{
-				vtSelectPoint.push_back(vtSelectPointTarget[j]);
+				GraphCurvePoint stuGraphCurvePointTmp;
+				stuGraphCurvePointTmp.m_pointX = vtSelectPointTarget[j].m_pointX + SELECT_POINT_JUMP_MIN;
+				stuGraphCurvePointTmp.m_pointY = vtSelectPointTarget[j].m_pointY;
+				vtSelectPoint.push_back(stuGraphCurvePointTmp);
 				break;
 			}
 		}
@@ -476,7 +483,7 @@ void  WeldResultSignature::selectAveragePointsFromOriginData(vector<int> vtOrigi
 		for(i =0; i < vtOriginDataSize; i = i + intervalNum)
 		{
 			GraphCurvePoint GraphCurvePointTmp;
-			GraphCurvePointTmp.m_pointX = i;
+			GraphCurvePointTmp.m_pointX = i + SELECT_POINT_JUMP_MIN;
 			GraphCurvePointTmp.m_pointY = vtOriginData[i];
 			vtSelectPoint.push_back(GraphCurvePointTmp);
 		}

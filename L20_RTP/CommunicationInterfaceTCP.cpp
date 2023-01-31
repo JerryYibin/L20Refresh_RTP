@@ -356,6 +356,9 @@ bool CommunicationInterfaceTCP::buildProtocolPackage(const ExternalData::ETHMESS
 	case ExternalData::FREQUENCYCURVE:
 		msgTx.FUNID = FREQUENCYCURVEOUTPUT;
 		break;
+	case ExternalData::ACTIVERECIPE:
+		msgTx.FUNID = RECIPERECALLOUTPUT;
+		break;
 	default:
 		return false;
 		break;		

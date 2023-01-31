@@ -61,7 +61,7 @@ void Utility::SetSystemFrequency(const SYSTEMCONFIG::FREQUENCY frequency)
 		SystemFrequency = 40000;
 		break;
 	default:
-		SystemPower = 20000;
+		SystemFrequency = 20000;
 		break;
 	}
 }

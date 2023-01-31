@@ -15,7 +15,6 @@ information.
 
 #ifndef USER_IO_COMMON_H_
 #define USER_IO_COMMON_H_
-#include "Utils.h"
 enum USER_IO_BIT
 {
 	RESET = 0, 	//bit 0

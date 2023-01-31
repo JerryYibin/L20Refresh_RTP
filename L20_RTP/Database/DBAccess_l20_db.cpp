@@ -695,6 +695,10 @@ void DBAccessL20DB::assignWeldResult(const string& buffer)
     	ptr_WeldResults->Set(WeldResults::PARALIST::MIN_POST_HEIGHT, 	&m_HeightMin);			//HeightMin
     	ptr_WeldResults->Set(WeldResults::PARALIST::ENERGY_SETTING, 	&m_EnergySetting);  	//EnergySetting
 		WeldResult::WeldResultVector.push_back(ptr_WeldResults);
+#if UNITTEST_DATABASE
+    if(str.size()>0)
+        LOG("assignWeldResult:\n%s\n", str.c_str());
+#endif
 	}
 	tmpStr.clear();
 }
@@ -1067,6 +1071,33 @@ int DBAccessL20DB::QueryWeldRecipe(char* buffer)
     
     return OK;
 }
+/**************************************************************************//**
+* \brief   - Query Specific Weld Recipe from DB by name
+*
+* \param   - char* buffer - RecipeName
+*
+* \return  - Founded RecipeID or ERROR
+*
+******************************************************************************/
+//TODO Is it temporary code for test only, because there is not any return?
+int DBAccessL20DB::QueryWeldRecipeByName(char* buffer)
+{
+	int RecipeID = NONE;
+	char RecipeName[RECIPE_LEN];
+	memcpy(RecipeName, buffer, RECIPE_LEN);
+    string strQuery =
+        "select ID from "+string(TABLE_WELD_RECIPE)+
+        " where RecipeName='"+RecipeName+"';";
+    string str = ExecuteQuery(strQuery);
+    if(str.size()==0)
+        return ERROR;
+#if UNITTEST_DATABASE
+    if(str.size()>0)
+        LOG("QueryWeldRecipeByName:\n%s\n", str.c_str());
+#endif
+    RecipeID = atoi(str.c_str());
+    return RecipeID;
+}
 
 /**************************************************************************//**
 * \brief   - Query latest Alarm log records from DB
@@ -1298,8 +1329,8 @@ int DBAccessL20DB::QueryBlockUserProfiles(char* buffer)
 			iter->second.m_Level = tmpUser.m_Level;
 			iter->second.m_Password = tmpUser.m_Password;
 #if UNITTEST_DATABASE
-            LOG("\tm_Level(%d)\n", iter->second.m_Level);
-            LOG("\tm_Password(%s)\n", iter->second.m_Password.c_str());
+            LOG("\tm_Level(%d)\n", iter->second->m_Level);
+            LOG("\tm_Password(%s)\n", iter->second->m_Password.c_str());
 #endif
 		}
 	}
@@ -1665,7 +1696,7 @@ int DBAccessL20DB::QueryConnectivity(char* buffer)
     LOG("QueryConnectivity: %s\n\n", str.c_str());
     LOG("TCP_ServerIP: %s\n\n", Connectivity::EthernetConfig.TCP_ServerIP);
 #endif
-    LOG("44444444444444444444444444444444444444444444444444444444: %d\n", Connectivity::EthernetConfig.EthernetType);
+
     return OK;
 }
 
@@ -1680,11 +1711,12 @@ int DBAccessL20DB::QueryConnectivity(char* buffer)
 int DBAccessL20DB::QueryGatewayMachine(char* buffer)
 {
 #if UNITTEST_DATABASE
-    if(Connectivity::_DIGMachinesSC == nullptr)
+    if(Connectivity::_DIGMachinesUI == nullptr)
         {
 		Connectivity::GetInstance();
-        LOG("new _DIGMachinesSC\n");
+        LOG("new _DIGMachinesUI\n");
         }
+    Connectivity::_DIGMachinesUI->clear();
 #endif
 	vector<string> tmpStr;
     string str;
@@ -1705,9 +1737,9 @@ int DBAccessL20DB::QueryGatewayMachine(char* buffer)
 			memcpy(iter->second.DIG_MachineIP, tmpStr[count*TABLE_GATEWAY_MACHINE_MEM+3].c_str(), IP_ADD_LEN); /* ServerIP */
 	#if UNITTEST_DATABASE
 			LOG("ID: %s\n", tmpStr[count*TABLE_GATEWAY_MACHINE_MEM].c_str());
-			LOG("DIG_MachineName: %s\n", iter->second.DIG_MachineName);
-			LOG("DIG_MachinePort: %d\n", iter->second.DIG_MachinePort);
-			LOG("DIG_MachineIP: %s\n", iter->second.DIG_MachineIP);
+			LOG("DIG_MachineName: %s\n", machine.DIG_MachineName);
+			LOG("DIG_MachinePort: %d\n", machine.DIG_MachinePort);
+			LOG("DIG_MachineIP: %s\n", machine.DIG_MachineIP);
 			LOG("\n");
 	#endif
         }
@@ -2013,7 +2045,6 @@ int DBAccessL20DB::UpdateUserProfiles(char* buffer)
 	else
 		return OK;
 }
-
 /**************************************************************************//**
 * \brief   - Update PrivilegeConfiguration to DB
 *
@@ -2185,7 +2216,6 @@ int DBAccessL20DB::UpdateActiveRecipe(char* buffer)
 ******************************************************************************/
 int DBAccessL20DB::UpdateConnectivity(char* buffer)
 {
-	LOG("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&: %d\n", Connectivity::EthernetConfig.EthernetType);
 	string strStore =
         "update " 				+ string(TABLE_CONNECTIVITY) +
         " set EthernetType=" 	+ std::to_string(Connectivity::EthernetConfig.EthernetType)+
@@ -2203,7 +2233,6 @@ int DBAccessL20DB::UpdateConnectivity(char* buffer)
     {   
 		LOGERR((char*) "Database_T: UpdateConnectivity Error. %d\n", nErrCode, 0, 0);
     }
-	LOG("33333333333333333333333333333333333333333333333333333333333333\n");
 	return nErrCode;
 }
 
@@ -2555,8 +2584,7 @@ int DBAccessL20DB::String2Vector(const string str, vector<shared_ptr<WeldResultS
 {
 
 	int iResult = ERROR;
-	shared_ptr<WeldResultSignatureDefine> _Signature = WeldResultSignatureDefine::GetWeldSignature();
-
+	
 	if (str.empty() == true)
 		return ERROR;
 	if (_ptrVector == nullptr)
@@ -2571,6 +2599,7 @@ int DBAccessL20DB::String2Vector(const string str, vector<shared_ptr<WeldResultS
 	{
 		vectorIndex = 0;
     	tmpStringData.clear();
+    	shared_ptr<WeldResultSignatureDefine> _Signature = WeldResultSignatureDefine::GetWeldSignature();
 		if (Utility::StringToTokens(tmpStringlist[i], ',', tmpStringData) > 0)
 		{
 			for (int j = 0; (j < WeldResultSignatureDefine::TOTAL) && (j<tmpStringData.size()); j++)

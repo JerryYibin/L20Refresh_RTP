@@ -93,16 +93,15 @@ public:
 	void					SendMsgToCtrlMsgQ		(const ControlTask::MESSAGE_IDENTIFY msgID, const char* _event = nullptr);
 	void 					ChangeExtDgtOutput		(const ScDgtOutputTask::MESSAGE_IDENTIFY msgID);
 protected:
-	void					CheckStartSwitch		();
-	void					ProcessGeneralAlarm		();
+	bool					CheckWeldAbort			();
+	void					ResetWeldAbort			();
 private:
 	CommonProperty*							CP;
-	unsigned int	m_GeneralAlarmTimer;
 	STATUS			SendToMsgQ 				(MESSAGE& msgBuffer, const MSG_Q_ID& msgQID, _Vx_ticks_t waitType = NO_WAIT);
 protected:
 	MSG_Q_ID	CTL_MSG_Q_ID;
 	MSG_Q_ID	DGTOUT_MSG_Q_ID;
-	bool		m_bStartSwitchLost;
+	bool		m_bWeldAbort;
 };
 
 #endif /* SCSTATE_H_ */
